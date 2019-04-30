@@ -105,6 +105,7 @@ class Manymailerplus_mcp
 			case 'compose':
 			case 'send':
 			case 'sent':
+			case 'view_templates':
 				$vars = ee()->mail_funcs->{$func}();
 				break;
 			case 'resend':

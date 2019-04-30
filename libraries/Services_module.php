@@ -342,7 +342,7 @@ class Services_module {
 			return explode('_', $k)[0];
 		}, array_keys($active_services));
 		return json_encode($acts);
-	}
+	} 
 
 	function ee_version()
 	{

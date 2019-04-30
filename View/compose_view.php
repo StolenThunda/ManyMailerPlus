@@ -13,7 +13,8 @@
 			<?=lang($current_action .'_text')?>
 		</div>
 	<?php elseif (isset($table)) : ?>
-		<?php $this->embed(EXT_SHORT_NAME.":email/sent", $table); ?>
+
+		<?php $this->embed(EXT_SHORT_NAME. ((isset($emails)) ? ":email/sent" : ":email/templates"), $table); ?>
 	<?php else: ?>		
 		<?php $this->embed('ee:_shared/form', $vars)?>
 	<?php endif; ?>

@@ -218,6 +218,14 @@ class Composer {
 					)
 				),
 				array(
+					'title' => 'save_as_template',
+					'fields' => array(
+						'save_as_template' => array(
+							'type' => 'yes_no'
+						)
+					)
+				),
+				array(
 					'title' => 'email_body',
 					'fields' => array(
 						'message' => array(
@@ -1003,18 +1011,10 @@ class Composer {
 						}
 						break;				
 					case 'mandrill':
-						$key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
-						$test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : "";
-						$test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
-						$active_key = $test_mode ? $test_key : $key;
-						$log_message = sprintf(lang('using_alt_credentials'), $service, $active_key, $service, $str_settings);
-						if ($test_mode) console_message($log_message,__METHOD__);
-						if($active_key !== ""){
+						$key = $this->_get_mandrill_api($settings);
+						if($key !== ""){
 							$subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
-							$sent = $this->_send_mandrill($active_key, $subaccount);
-							console_message($log_message, __METHOD__);
-							
-							// ee()->session->set_flashdata(array('message_error' => $log_message));
+							$sent = $this->_send_mandrill($key, $subaccount);
 							$missing_credentials = false;
 						}
 						break;
@@ -1047,7 +1047,7 @@ class Composer {
 						}
 						break;
 				}
-				
+				console_message($sent, __METHOD__, TRUE);
 				if($missing_credentials == true)
 				{
 					ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
@@ -1163,7 +1163,16 @@ class Composer {
 		// ee()->logger->developer($content);
 		return $this->_curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $headers, $content);
 	}
-	
+	function _get_mandrill_api($settings = array()){
+		$settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
+		// $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
+		$key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
+		$test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : "";
+		$test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
+		$active_key = $test_mode ? $test_key : $key;
+		// console_message("Act Key: $active_key", __METHOD__);
+		return $active_key;
+	}
 	function _mandrill_lookup_to_merge($lookup){
 		$merge_vars = array();
 		foreach(array_keys($lookup) as $key){
@@ -1175,11 +1184,26 @@ class Composer {
 		return $merge_vars;
 	}	
 	
+	function _get_service_templates($service = 'mandrill'){
+		
+		$headers = array(
+	    	'Accept: application/json',
+			'Content-Type: application/json',
+		);
+		$content = array(
+			'key' => $this->_get_mandrill_api()
+		);
+		console_message($content, __METHOD__);
+		$templates = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/list.json', $headers, $content, TRUE);
+		console_message($templates, __METHOD__);
+		return $templates;
+	}
 	/**
 		Ultimately sends the email to each server.
 	**/	
-	function _curl_request($server, $headers = array(), $content, $htpw = null)
+	function _curl_request($server, $headers = array(), $content, $return_data = FALSE, $htpw = null)
 	{	
+		// console_message($content, __METHOD__);
 		$ch = curl_init($server);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -1207,14 +1231,18 @@ class Composer {
 			curl_setopt($ch, CURLOPT_USERPWD, $htpw);
 		}
 		
+		//return response instead of outputting
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
 		$status = curl_exec($ch);
 		console_message($status,__METHOD__);
 		$curl_error = curl_error($ch);
 		console_message($curl_error,__METHOD__);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$result = ($return_data) ? curl_getinfo($ch) : TRUE;
 		curl_close($ch);
-		
-		return ($http_code != 200) ? false : true;
+		console_message($status,__METHOD__);
+		return ($http_code != 200) ? false : $result;
 	}	
 	
 
@@ -1641,6 +1669,187 @@ class Composer {
 		return $vars;
 	}
 
+
+	/**
+	 * View templates
+	 */
+	public function view_templates($service_name = 'mandrill')
+	{
+		/*
+		Sample mandrill list templates value
+		/templates/list.json
+		[
+			{
+				"slug": "example-template",
+				"name": "Example Template",
+				"code": "<div>example code</div>",
+				"publish_code": null,
+				"created_at": "2019-04-19 04:45:58.84257",
+				"updated_at": "2019-04-19 04:45:58.84259",
+				"publish_name": "Example Template",
+				"labels": [
+					"example-label"
+				],
+				"text": "Example text content",
+				"publish_text": null,
+				"subject": "example subject",
+				"publish_subject": null,
+				"from_email": "from_email@example.com",
+				"publish_from_email": null,
+				"from_name": "Example Name",
+				"publish_from_name": null
+			}
+		]
+		*/
+
+		$table = ee('CP/Table', array('sort_col' => 'date', 'sort_dir' => 'desc'));
+		$table->setColumns(
+			array(
+				'name',
+				'created_at',
+				'subject',
+				'from_name',
+				'publish_from_name',
+				'manage' => array(
+					'type'	=> Table::COL_TOOLBAR
+				),
+				array(
+					'type'	=> Table::COL_CHECKBOX
+				)
+			)
+		);
+
+		$table->setNoResultsText('no_cached_templates', 'create_new_template', ee('CP/URL',EXT_SETTINGS_PATH.'/email/compose'));
+
+		$page = ee()->input->get('page') ? ee()->input->get('page') : 1;
+		$page = ($page > 0) ? $page : 1;
+
+		$offset = ($page - 1) * 50; // Offset is 0 indexed
+
+		// $count = 0;
+
+		// // $emails =ee('Model')->get(EXT_SHORT_NAME.':');
+		// $emails =ee('Model')->get('EmailCache');
+
+		// $search = $table->search;
+		// if ( ! empty($search))
+		// {
+		// 	$emails = $emails->filterGroup()
+		// 		               ->filter('subject', 'LIKE', '%' . $table->search . '%')
+		// 		               ->orFilter('message', 'LIKE', '%' . $table->search . '%')
+		// 		               ->orFilter('from_name', 'LIKE', '%' . $table->search . '%')
+		// 		               ->orFilter('from_email', 'LIKE', '%' . $table->search . '%')
+		// 		               ->orFilter('recipient', 'LIKE', '%' . $table->search . '%')
+		// 		               ->orFilter('cc', 'LIKE', '%' . $table->search . '%')
+		// 		               ->orFilter('bcc', 'LIKE', '%' . $table->search . '%')
+		// 				     ->endFilterGroup();
+		// }
+
+		// $count = $emails->count();
+
+		// console_message($count, __METHOD__);
+		// $sort_map = array(
+		// 	'date' => 'cache_date',
+		// 	'subject' => 'subject',
+		// 	'status' => 'status',
+		// 	'total_sent' => 'total_sent',
+		// );
+
+		// $emails = $emails->order($sort_map[$table->sort_col], $table->sort_dir)
+		// 	->limit(20)
+		// 	->offset($offset)
+		// 	->all();
+		// $emails = $emails->all();
+		
+		
+		$vars['templates'] = $this->_get_service_templates($service_name);
+		console_message($vars, __METHOD__);
+		$data = array();
+		// foreach ($emails as $email)
+		// {
+		// 	// Prepare the $email object for use in the modal
+		// 	$email->text_fmt = ($email->text_fmt != 'none') ?: 'br'; // Some HTML formatting for plain text
+		// 	// $email->subject = htmlentities($this->censorSubject($email), ENT_QUOTES, 'UTF-8');
+
+
+		// 	$data[] = array(
+		// 		$email->subject,
+		// 		ee()->localize->human_time($email->cache_date->format('U')),
+		// 		$email->total_sent,
+		// 		array('toolbar_items' => array(
+		// 			'view' => array(
+		// 				'title' => lang('view_email'),
+		// 				'href' => '',
+		// 				'id' => $email->cache_id,
+		// 				'rel' => 'modal-email-' . $email->cache_id,
+		// 				'class' => 'm-link'
+		// 			),
+		// 			'sync' => array(
+		// 				'title' => lang('resend'),
+		// 				'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/resend/'. $email->cache_id)
+		// 			))
+		// 		),
+		// 		array(
+		// 			'name'  => 'selection[]',
+		// 			'value' => $email->cache_id,
+		// 			'data'	=> array(
+		// 				'confirm' => lang('view_email_cache') . ': <b>' . $email->subject . '(x' . $email->total_sent . ')</b>'
+		// 			)
+		// 		)
+		// 	);
+
+		// 	ee()->load->library('typography');
+		// 	ee()->typography->initialize(array(
+		// 		'bbencode_links' => FALSE,
+		// 		'parse_images'	=> FALSE,
+		// 		'parse_smileys'	=> FALSE
+		// 	));
+
+		// 	$email->message = ee()->typography->parse_type($email->message, array(
+		// 		'text_format'    => ($email->text_fmt == 'markdown') ? 'markdown' : 'xhtml',
+		// 		'html_format'    => 'all',
+		// 		'auto_links'	 => 'n',
+		// 		'allow_img_url'  => 'y'
+		// 	));
+
+		// 	$vars['emails'][] = $email;
+		// }
+
+		// console_message($vars, __METHOD__);
+		$table->setData($data);
+		$count = 1;
+		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/templates');
+		$vars['table'] = $table->viewData($base_url);
+
+		$vars['pagination'] = ee('CP/Pagination', $count)
+			->currentPage($page)
+			->render($vars['table']['base_url']);
+
+		// Set search results heading
+		if ( ! empty($vars['table']['search']))
+		{
+			ee()->view->cp_heading = sprintf(
+				lang('search_results_heading'),
+				$vars['table']['total_rows'],
+				htmlspecialchars($vars['table']['search'], ENT_QUOTES, 'UTF-8')
+			);
+		}
+
+		$vars['cp_page_title'] = lang('view_template_cache');
+		ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache') . ': <b>### ' . lang('templates') . '</b>');
+
+		// ee()->cp->add_js_script(array( 'file' => array('cp/confirm_remove'),));
+		$vars['base_url'] = $base_url;
+		$vars['cp_page_title'] = lang('view_template_cache');
+		ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache') . ': <b>### ' . lang('templates') . '</b>');
+		$vars['current_service'] = __FUNCTION__;
+		$vars['save_btn_text'] = "";
+		$vars['save_btn_text_working'] = "";
+		$vars['sections'] = array();
+
+		console_message($vars, __METHOD__);
+		return $vars;
+	}
 	/**
 	 * Check for recipients
 	 *
