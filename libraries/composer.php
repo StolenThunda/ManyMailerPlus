@@ -18,6 +18,10 @@ class Composer {
 	private $attachments = array();
 	private $csv_lookup = array();
 	private $csv_email_column = "{{email}}";
+	private $headers = array(
+		'Accept: application/json',
+		'Content-Type: application/json',
+	);
 
 	/**
 	 * Constructor
@@ -310,6 +314,181 @@ class Composer {
 		return $vars;
 	}
 
+	public function edit_template($template_name = "")
+	{
+		console_message("TEMP NAME: ".$template_name, __METHOD__);
+		if ($template_name != "") $template_name = str_replace('_', " ", $template_name);
+		$default = array(
+			"template_name" => "",
+			"from_email" => ee()->session->userdata('email'),
+			"from_name" => ee()->session->userdata('screen_name'),
+			"subject" => "",
+			"code" => "",
+			"text" => "",
+			"publish_code" => false,
+			"created_at" => "",
+			"labels" => array(),
+		);
+
+			console_message("TEMP NAME: ".$template_name, __METHOD__);
+
+		if ( $template_name !== "")
+		{
+			$template = $this->_get_service_templates('info', $template_name );
+			console_message($template, __METHOD__);
+			$default['template_name'] = $template['name'];
+			$default['from_email'] = $template['from_email'];
+			$default['from_name'] = $template['from_name'];
+			$default['code'] = $template['code'];
+			$default['subject'] = $template['subject'];
+			$default['text'] = $template['text'];
+			$default['publish_code'] = $template['publish_code'];
+			$default['labels'] = $template['labels'];
+			$default['created_at'] = $template['created_at'];
+		}
+		
+		$vars['sections'] = array(
+			array(
+				array(
+					'title' => 'created_at',
+					'fields' => array(
+						'created_at' => array(
+							'type' => 'text',
+							'value' => $default['created_at'],
+							'disabled' => TRUE
+						)
+					)
+				),array(
+					'fields' => array(
+						'created_at_hidden' => array(
+							'type' => 'hidden',
+							'value' => $default['created_at'],
+						)
+					)
+				),
+				array(
+					'title' => 'from_email',
+					'fields' => array(
+						'from_email' => array(
+							'type' => 'text',
+							'value' => $default['from_email'],
+							'required' => TRUE
+						)
+					)
+				),
+				array(
+					'title' => 'from_name',
+					'fields' => array(
+						'from_name' => array(
+							'type' => 'text',
+							'value' => $default['from_name'],
+						)
+					)
+				),
+				array(
+					'title' => 'template_name',
+					'fields' => array(
+						'template_name' => array(
+							'type' => 'text',
+							'value' => $default['template_name'],
+							'required' => TRUE,
+						)
+					)
+				),
+				array(
+					'title' => 'subject',
+					'fields' => array(
+					  'subject' => array(
+						'type' => 'text',
+						'value' => $default['subject']
+						)
+					)
+				),
+				array(
+					'title' => 'code',
+					'desc' => 'code_desc',
+					'fields' => array(
+						'code' => array(
+							'type' => 'textarea',
+							'value' => $default['code'],
+						)
+					)
+				),
+				array(
+					'title' => 'text',
+					'fields' => array(
+					  'text' => array(
+						'type' => 'text',
+						'value' => $default['text']
+						)
+					)
+				),
+				array(
+					'title' => 'publish_code',
+					'fields' => array(
+						'pusblish_code' => array(
+						'type' => 'text',
+						'value' => $default['publish_code']
+						)
+					)
+						),		
+			)
+		);
+				
+		$vars['cp_page_title'] = lang(__FUNCTION__);
+		// $vars['categories'] = array_keys($this->sidebar_options);
+		$vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/save_template');
+		$vars['save_btn_text'] = lang('save_template');
+		$vars['save_btn_text_working'] = lang('saving_template');
+		
+		console_message($vars, __METHOD__);
+		return $vars;
+	}
+	
+	public function save_template(){
+		$form_fields = array(
+			"created_at_hidden",
+			"template_name",
+			"from_email",
+			"from_name",
+			"subject" ,
+			"code",
+			"text",
+			"publish_code",
+			// "labels",
+		);
+		
+		console_message($_POST, __METHOD__);
+		foreach ($_POST as $key => $val)
+		{
+			if (in_array($key, $form_fields))
+			{
+				$$key = ee()->input->get_post($key);
+				console_message("$key : ".ee()->input->post($key),__METHOD__); 
+			}
+		}
+		$cache_data = json_encode(array(
+			'key' => $this->_get_mandrill_api(),
+			"name" => (isset($template_name) ? $template_name : ""),
+			"from_email" => (isset($from_email) ? $from_email  : ""),
+			"from_name" => (isset($from_name) ? $from_name  : ""),
+			"name" => (isset($template_name) ? $template_name  : ""),
+			"subject" => (isset($subject) ? $subject  : ""),
+			"code" => (isset($code) ? $code  : ""),
+			"text" => (isset($text) ? $text  : ""),
+			// "labels" => explode(',', $labels),
+		));
+		$function = ( isset($created_at_hidden) && $created_at_hidden !== "") ? 'update' : 'add';
+		console_message($function, __METHOD__);
+		// console_message($created_at_hidden, __METHOD__);
+		console_message($cache_data, __METHOD__);
+		$result = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/'. $function.'.json', $this->headers, json_encode($cache_data), TRUE);
+		if ($result['status'] !== "success"){
+			console_message($result['status'] . " : ". $result['message'], __METHOD__);
+		} 
+		ee()->view->set_message($result['status'], $result['message'], NULL, TRUE);
+		ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.$template_name));
+	}
 	/**
 	 * Prepopulate form to send to specific member
 	 *
@@ -1143,11 +1322,6 @@ class Composer {
 
 		$content['message']['auto_text'] = TRUE;
 		$content['message']['merge_vars'] = $merge_vars;
-						
-		$headers = array(
-	    	'Accept: application/json',
-			'Content-Type: application/json',
-		);
 		
 		if(ee()->extensions->active_hook('pre_send'))
 		{
@@ -1161,7 +1335,7 @@ class Composer {
 		console_message($content,__METHOD__);	
 		//TODO: save email data to table
 		// ee()->logger->developer($content);
-		return $this->_curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $headers, $content);
+		return $this->_curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
 	}
 	function _get_mandrill_api($settings = array()){
 		$settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
@@ -1184,17 +1358,15 @@ class Composer {
 		return $merge_vars;
 	}	
 	
-	function _get_service_templates($service = 'mandrill'){
+	function _get_service_templates($func = 'list', $template_name = NULL){
 		
-		$headers = array(
-	    	'Accept: application/json',
-			'Content-Type: application/json',
-		);
-		$content = json_encode(array(
+		
+		$content = array(
 			"key" => $this->_get_mandrill_api()
-		));
+		);
+		if (! is_null($template_name)) $content['name'] = $template_name;
 		console_message($content, __METHOD__);
-		$templates = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/list.json', $headers, $content, TRUE);
+		$templates = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/'.$func.'.json', $this->headers, json_encode($content), TRUE);
 		console_message($templates, __METHOD__);
 		return $templates;
 	}
@@ -1239,9 +1411,8 @@ class Composer {
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		$result = ($return_data) ? json_decode($status) : TRUE;
-		
-		console_message($result,__METHOD__);
-		return ($http_code != 200) ? false : $result;
+		console_message($result, __METHOD__);
+		return ($http_code != 200 && ! $return_data) ? false : json_decode(json_encode($result), TRUE);
 	}	
 	
 
@@ -1706,9 +1877,9 @@ class Composer {
 			array(
 				'name',
 				'created_at',
-				'subject',
-				'from_name',
-				'publish_from_name',
+				// 'subject',
+				// 'from_name',
+				// 'publish_from_name',
 				'manage' => array(
 					'type'	=> Table::COL_TOOLBAR
 				),
@@ -1724,67 +1895,26 @@ class Composer {
 		$page = ($page > 0) ? $page : 1;
 
 		$offset = ($page - 1) * 50; // Offset is 0 indexed
-
-		// $count = 0;
-
-		// // $emails =ee('Model')->get(EXT_SHORT_NAME.':');
-		// $emails =ee('Model')->get('EmailCache');
-
-		// $search = $table->search;
-		// if ( ! empty($search))
-		// {
-		// 	$emails = $emails->filterGroup()
-		// 		               ->filter('subject', 'LIKE', '%' . $table->search . '%')
-		// 		               ->orFilter('message', 'LIKE', '%' . $table->search . '%')
-		// 		               ->orFilter('from_name', 'LIKE', '%' . $table->search . '%')
-		// 		               ->orFilter('from_email', 'LIKE', '%' . $table->search . '%')
-		// 		               ->orFilter('recipient', 'LIKE', '%' . $table->search . '%')
-		// 		               ->orFilter('cc', 'LIKE', '%' . $table->search . '%')
-		// 		               ->orFilter('bcc', 'LIKE', '%' . $table->search . '%')
-		// 				     ->endFilterGroup();
-		// }
-
-		// $count = $emails->count();
-
-		// console_message($count, __METHOD__);
-		// $sort_map = array(
-		// 	'date' => 'cache_date',
-		// 	'subject' => 'subject',
-		// 	'status' => 'status',
-		// 	'total_sent' => 'total_sent',
-		// );
-
-		// $emails = $emails->order($sort_map[$table->sort_col], $table->sort_dir)
-		// 	->limit(20)
-		// 	->offset($offset)
-		// 	->all();
-		// $emails = $emails->all();
 		
-		
-		$templates = $this->_get_service_templates($service_name);
-		console_message($templates, __METHOD__);
+		$templates = $this->_get_service_templates();
 		$data = array();
 		foreach ($templates as $template)
 		{
 			$template = json_decode(json_encode($template), TRUE);
-			console_message($template['name'], __METHOD__);
 			$data[] = array(
 				$template['name'],
 				$template['created_at'],
-				$template['subject'],
-				$template['from_name'],
-				$template['publish_from_name'],
 				array('toolbar_items' => array(
 					'view' => array(
 						'title' => lang('view_template'),
 						'href' => '',
 						'id' => $template['slug'],
-						'rel' => 'modal-email-' . $template['slug'],
+						'rel' => 'modal-template-' . $template['slug'],
 						'class' => 'm-link'
 					),
-					'sync' => array(
-						'title' => lang('resend'),
-						'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/view_templates/'. $template['slug'])
+					'edit' => array(
+						'title' => lang('edit_template'),
+						'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/edit_template/'. $template['name'])
 					))
 				),
 				array(
@@ -1799,7 +1929,7 @@ class Composer {
 			$vars['templates'][] = $template;
 		}
 
-		console_message($vars, __METHOD__);
+		//console_message($vars, __METHOD__);
 		$table->setData($data);
 		$count = 1;
 		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/templates');
@@ -1831,7 +1961,7 @@ class Composer {
 		$vars['save_btn_text_working'] = "";
 		$vars['sections'] = array();
 
-		console_message($vars, __METHOD__);
+		//console_message($vars, __METHOD__);
 		return $vars;
 	}
 	/**

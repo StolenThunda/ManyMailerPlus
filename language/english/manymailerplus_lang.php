@@ -119,4 +119,9 @@ $lang = array(
 	'view_email_cache' => 'Sent Emails',
 	'no_cached_emails' => 'No Sent Email',
 	'search_emails_button' => 'Search Emails',
+	'view_template_cache' => 'Saved Templates',
+	'view_templates_name' => 'View Saved Templates',
+	'created_at' => 'Created',
+	'search_templates_button' => 'Search Templates'
+
 );
