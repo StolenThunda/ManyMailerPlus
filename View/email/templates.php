@@ -25,23 +25,26 @@
 	</div>
 </div>
 <?php if ( ! empty($templates)): ?>
-	<?php foreach($templates as $template): ?>
-		<?php ee('CP/Modal')->startModal('template-' . $template->cache_id); ?>
-		<div class="modal-wrap modal-template-<?=$template->cache_id?> hidden">
+	<?php foreach($templates as $template):
+		$template = json_decode(json_encode($template), TRUE);
+		?>
+		<?php ee('CP/Modal')->startModal('template-' . $template['slug']); ?>
+		<div class="modal-wrap modal-template-<?=$template['slug']?> hidden">
 			<div class="modal">
 				<div class="col-group">
 					<div class="col w-16">
 						<a class="m-close" href="#"></a>
 						<div class="box">
-							<h1><?=$template->subject?></h1>
+							<h1><?=$template['name']?></h1>
 							<div class="txt-wrap">
 								<ul class="checklist mb">
 									<li>
-										<b><?=lang('sent')?>:</b> 
-										<?php echo ee()->localize->human_time($template->cache_date->format('U'))?> 
-										<?=lang('to')?> <?=$template->total_sent?> <?=lang('recipients')?></li>
+										<b><?=$template['subject']?>:</b> 
+										<?=$template['updated_at']?> 
+										<?=lang('from')?> <?=$template['from_email']?> <?=$template['from_email']?>
+									</li>
 								</ul>
-								<?=ee('Security/XSS')->clean($template->message)?>
+								
 							</div>
 						</div>
 					</div>

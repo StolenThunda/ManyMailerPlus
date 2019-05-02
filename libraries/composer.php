@@ -1047,7 +1047,7 @@ class Composer {
 						}
 						break;
 				}
-				console_message($sent, __METHOD__, TRUE);
+				// console_message($sent, __METHOD__, TRUE);
 				if($missing_credentials == true)
 				{
 					ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
@@ -1190,9 +1190,9 @@ class Composer {
 	    	'Accept: application/json',
 			'Content-Type: application/json',
 		);
-		$content = array(
-			'key' => $this->_get_mandrill_api()
-		);
+		$content = json_encode(array(
+			"key" => $this->_get_mandrill_api()
+		));
 		console_message($content, __METHOD__);
 		$templates = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/list.json', $headers, $content, TRUE);
 		console_message($templates, __METHOD__);
@@ -1232,16 +1232,15 @@ class Composer {
 		}
 		
 		//return response instead of outputting
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		if ($return_data) curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$status = curl_exec($ch);
-		console_message($status,__METHOD__);
 		$curl_error = curl_error($ch);
-		console_message($curl_error,__METHOD__);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		$result = ($return_data) ? curl_getinfo($ch) : TRUE;
 		curl_close($ch);
-		console_message($status,__METHOD__);
+		$result = ($return_data) ? json_decode($status) : TRUE;
+		
+		console_message($result,__METHOD__);
 		return ($http_code != 200) ? false : $result;
 	}	
 	
@@ -1762,60 +1761,45 @@ class Composer {
 		// $emails = $emails->all();
 		
 		
-		$vars['templates'] = $this->_get_service_templates($service_name);
-		console_message($vars, __METHOD__);
+		$templates = $this->_get_service_templates($service_name);
+		console_message($templates, __METHOD__);
 		$data = array();
-		// foreach ($emails as $email)
-		// {
-		// 	// Prepare the $email object for use in the modal
-		// 	$email->text_fmt = ($email->text_fmt != 'none') ?: 'br'; // Some HTML formatting for plain text
-		// 	// $email->subject = htmlentities($this->censorSubject($email), ENT_QUOTES, 'UTF-8');
+		foreach ($templates as $template)
+		{
+			$template = json_decode(json_encode($template), TRUE);
+			console_message($template['name'], __METHOD__);
+			$data[] = array(
+				$template['name'],
+				$template['created_at'],
+				$template['subject'],
+				$template['from_name'],
+				$template['publish_from_name'],
+				array('toolbar_items' => array(
+					'view' => array(
+						'title' => lang('view_template'),
+						'href' => '',
+						'id' => $template['slug'],
+						'rel' => 'modal-email-' . $template['slug'],
+						'class' => 'm-link'
+					),
+					'sync' => array(
+						'title' => lang('resend'),
+						'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/view_templates/'. $template['slug'])
+					))
+				),
+				array(
+					'name'  => 'selection[]',
+					'value' => $template['slug'],
+					'data'	=> array(
+						'confirm' => lang('view_template_cache') . ': <b>' . $template['subject'] . '</b>'
+					)
+				)
+			);
+			
+			$vars['templates'][] = $template;
+		}
 
-
-		// 	$data[] = array(
-		// 		$email->subject,
-		// 		ee()->localize->human_time($email->cache_date->format('U')),
-		// 		$email->total_sent,
-		// 		array('toolbar_items' => array(
-		// 			'view' => array(
-		// 				'title' => lang('view_email'),
-		// 				'href' => '',
-		// 				'id' => $email->cache_id,
-		// 				'rel' => 'modal-email-' . $email->cache_id,
-		// 				'class' => 'm-link'
-		// 			),
-		// 			'sync' => array(
-		// 				'title' => lang('resend'),
-		// 				'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/resend/'. $email->cache_id)
-		// 			))
-		// 		),
-		// 		array(
-		// 			'name'  => 'selection[]',
-		// 			'value' => $email->cache_id,
-		// 			'data'	=> array(
-		// 				'confirm' => lang('view_email_cache') . ': <b>' . $email->subject . '(x' . $email->total_sent . ')</b>'
-		// 			)
-		// 		)
-		// 	);
-
-		// 	ee()->load->library('typography');
-		// 	ee()->typography->initialize(array(
-		// 		'bbencode_links' => FALSE,
-		// 		'parse_images'	=> FALSE,
-		// 		'parse_smileys'	=> FALSE
-		// 	));
-
-		// 	$email->message = ee()->typography->parse_type($email->message, array(
-		// 		'text_format'    => ($email->text_fmt == 'markdown') ? 'markdown' : 'xhtml',
-		// 		'html_format'    => 'all',
-		// 		'auto_links'	 => 'n',
-		// 		'allow_img_url'  => 'y'
-		// 	));
-
-		// 	$vars['emails'][] = $email;
-		// }
-
-		// console_message($vars, __METHOD__);
+		console_message($vars, __METHOD__);
 		$table->setData($data);
 		$count = 1;
 		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/templates');
