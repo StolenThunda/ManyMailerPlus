@@ -119,32 +119,9 @@ $lang = array(
 	'view_email_cache' => 'Sent Emails',
 	'no_cached_emails' => 'No Sent Email',
 	'search_emails_button' => 'Search Emails',
-	'template_error' => 'Error Saving Template',
-	'template_name' => 'Template Name',
-	'template_name_desc' => 'the name for the new template - must be unique. <b><i> (Validation: required)</i></b>',
-	'edit_template_name' => 'Create/Edit Templates',
-	'edit_template' => 'Create/Edit Template',
 	'view_template_cache' => 'Saved Templates',
-	'save_template' => 'Save Template',
 	'view_templates_name' => 'View Saved Templates',
 	'created_at' => 'Created',
-	'search_templates_button' => 'Search Templates',
-	'from_name' => 'Senders Name',
-	'from_name_desc' => 'a default name to be used',
-	'from_email' => 'Sender\'s Email',
-	'from_email_desc' => 'a default sending address for emails sent using this template. <b><i>(Validation: email)</i></b>',
-	'code' => 'Html Code',
-	'code_desc' => 'the HTML code for the template with mc:edit attributes for the editable elements',
-	'text' => 'Default Text',
-	'text_desc' => 'a default text part to be used when sending with this template.',
-	'subject' => 'Subject',
-	'subject_desc' =>'Default Subject Line',
-	'publish' => 'Publish',
-	'publish_desc' => 'set to false to add a draft template without publishing',
-	'labels' => 'Labels',
-	'labels_desc' => 'an optional array of up to 10 labels to use for filtering purposes',
-	'save_template_error' => 'Error Saving Template',
-	'save_template_error_desc' => 'We were unable to save this template in it\'s current state. Please fix errors below'
-	
+	'search_templates_button' => 'Search Templates'
 
 );

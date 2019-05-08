@@ -104,17 +104,16 @@ class Manymailerplus_mcp
 		$id = ee()->uri->segment(7, "");
 		switch ($func) {
 			case 'edit_template':
-				if ($id != "") {
+
+				if ($id !== "") {
 					$vars = ee()->mail_funcs->{$func}($id);
 					break;
 				}
-
 			case 'compose':
 			case 'send':
 			case 'sent':
 			case 'save_template':
 			case 'view_templates':
-			case 'delete_template':
 				$vars = ee()->mail_funcs->{$func}();
 				break;
 			case 'resend':

@@ -39,17 +39,9 @@
 							<div class="txt-wrap">
 								<ul class="checklist mb">
 									<li>
-										<b><?=$template['subject']?>:</b><br />
-										<?=lang('updated')?> :<?=$template['updated_at']?> <br><br>
-										<?=lang('from')?> <?=$template['from_email']?> <?=$template['from_email']?><br><br>
-										<div>
-										
-										<?=$template['code']?> 
-										</div>
-										<br><br>
-										<pre>
-										<?=$template['text']?> 
-										</pre>
+										<b><?=$template['subject']?>:</b> 
+										<?=$template['updated_at']?> 
+										<?=lang('from')?> <?=$template['from_email']?> <?=$template['from_email']?>
 									</li>
 								</ul>
 								

@@ -222,9 +222,9 @@ class Composer {
 					)
 				),
 				array(
-					'title' => 'use_template',
+					'title' => 'save_as_template',
 					'fields' => array(
-						'use_template' => array(
+						'save_as_template' => array(
 							'type' => 'yes_no'
 						)
 					)
@@ -305,9 +305,6 @@ class Composer {
 		$vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
 		$vars['save_btn_text'] = lang('compose_send_email');
 		$vars['save_btn_text_working'] = lang('compose_sending_email');
-		ee()->cp->add_js_script(array(
-			'file' => array('cp/form_group'),
-		  ));
 		ee()->cp->add_to_foot(link_tag(array(
 			'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
 			'rel' => 'stylesheet',
@@ -319,26 +316,7 @@ class Composer {
 
 	public function edit_template($template_name = "")
 	{
-		$message =  ee()->session->flashdata('result');
-		if ($message){
-			$message = explode(':', ee()->session->flashdata('result'));
-			console_message("Msg: ".implode(':', $message), __METHOD__);
-			ee('CP/Alert')->makeInline("result")
-						->asIssue()
-						->withTitle(lang('template_'.$message[0]))
-						->addToBody(end($message))
-						->canClose()
-						->now();
-			
-			ee('CP/Alert')->makeInline("save_template_req")
-						->asIssue()
-						->withTitle( ee()->session->flashdata('save_endpoint'))
-						->addToBody(ee()->session->flashdata('save_api_data'))
-						->canClose()
-						->now();
-			
-		}
-		
+		console_message("TEMP NAME: ".$template_name, __METHOD__);
 		if ($template_name != "") $template_name = str_replace('_', " ", $template_name);
 		$default = array(
 			"template_name" => "",
@@ -347,79 +325,59 @@ class Composer {
 			"subject" => "",
 			"code" => "",
 			"text" => "",
-			"publish" => false,
+			"publish_code" => false,
 			"created_at" => "",
 			"labels" => array(),
 		);
-		console_message("TEMP NAME: ".$template_name, __METHOD__);
+
+			console_message("TEMP NAME: ".$template_name, __METHOD__);
 
 		if ( $template_name !== "")
 		{
 			$template = $this->_get_service_templates('info', $template_name );
-			// console_message($template, __METHOD__);
-			if (isset($template['status'])){
-				ee()->session->set_flashdata('result', $template['status'] . ':' . $template['message']);
-				ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template'));
-			}
+			console_message($template, __METHOD__);
 			$default['template_name'] = $template['name'];
 			$default['from_email'] = $template['from_email'];
 			$default['from_name'] = $template['from_name'];
 			$default['code'] = $template['code'];
 			$default['subject'] = $template['subject'];
 			$default['text'] = $template['text'];
-			$default['publish'] = isset($template['publish_code']);
+			$default['publish_code'] = $template['publish_code'];
 			$default['labels'] = $template['labels'];
 			$default['created_at'] = $template['created_at'];
 		}
-		$has_template_name = ($default['template_name'] !== "");
+		
 		$vars['sections'] = array(
 			array(
 				array(
-					'title' => 'template_name',
-					'desc' => 'template_name_desc',
+					'title' => 'created_at',
 					'fields' => array(
-						'orig_template_name' => array(
-							'type' => 'hidden',
-							'value' => $default['template_name']
-						),
-						'template_name' => array(
-							'type' => 'text',
-							'value' => $default['template_name'],
-							'disabled' => $has_template_name,
-							'required' => !$has_template_name,
-						)
-					)
-				),
-				array(
-					'title' => ($default['created_at'] === "") ? '' : 'created_at',
-					'fields' => array(
-						'created_at_hidden' => array(
-							'type' => 'hidden',
-							'value' => $default['created_at'],
-						),
 						'created_at' => array(
-							'type' => ($default['created_at'] === "") ? 'hidden' : 'text',
+							'type' => 'text',
 							'value' => $default['created_at'],
 							'disabled' => TRUE
 						)
 					)
+				),array(
+					'fields' => array(
+						'created_at_hidden' => array(
+							'type' => 'hidden',
+							'value' => $default['created_at'],
+						)
+					)
 				),
-			), 
-			'template_info' => array(
-				
 				array(
 					'title' => 'from_email',
-					'desc' => 'from_email_desc',
 					'fields' => array(
 						'from_email' => array(
 							'type' => 'text',
-							'value' => $default['from_email']
+							'value' => $default['from_email'],
+							'required' => TRUE
 						)
 					)
 				),
 				array(
 					'title' => 'from_name',
-					'desc' => 'from_name_desc',
 					'fields' => array(
 						'from_name' => array(
 							'type' => 'text',
@@ -427,10 +385,18 @@ class Composer {
 						)
 					)
 				),
-				
+				array(
+					'title' => 'template_name',
+					'fields' => array(
+						'template_name' => array(
+							'type' => 'text',
+							'value' => $default['template_name'],
+							'required' => TRUE,
+						)
+					)
+				),
 				array(
 					'title' => 'subject',
-					'desc' => 'subject_desc',
 					'fields' => array(
 					  'subject' => array(
 						'type' => 'text',
@@ -450,7 +416,6 @@ class Composer {
 				),
 				array(
 					'title' => 'text',
-					'desc' => 'text_desc',
 					'fields' => array(
 					  'text' => array(
 						'type' => 'text',
@@ -459,19 +424,14 @@ class Composer {
 					)
 				),
 				array(
-					'title' => 'publish',
-					'desc' => 'publish_desc',
+					'title' => 'publish_code',
 					'fields' => array(
-						'publish' => array(
-						'type' => 'yes_no',
-						'choices' => array(
-							'y' => TRUE,
-							'n' => FALSE
-						),
-						'value' => $default['publish']
+						'pusblish_code' => array(
+						'type' => 'text',
+						'value' => $default['publish_code']
 						)
 					)
-				),	
+						),		
 			)
 		);
 				
@@ -488,64 +448,46 @@ class Composer {
 	public function save_template(){
 		$form_fields = array(
 			"created_at_hidden",
-			"orig_template_name",
 			"template_name",
 			"from_email",
 			"from_name",
 			"subject" ,
 			"code",
 			"text",
-			"publish",
+			"publish_code",
 			// "labels",
 		);
 		
-		
-		// console_message($_POST, __METHOD__);
+		console_message($_POST, __METHOD__);
 		foreach ($_POST as $key => $val)
 		{
-			// console_message("$key : ".ee()->input->post($key),__METHOD__); 
 			if (in_array($key, $form_fields))
 			{
 				$$key = ee()->input->get_post($key);
-				// console_message("$key : ".ee()->input	->post($key),__METHOD__); 
+				console_message("$key : ".ee()->input->post($key),__METHOD__); 
 			}
 		}
-		
-		if (isset($template_name)){
-			ee()->load->library('form_validation');
-			ee()->form_validation->set_rules('template_name', 'lang:template_name', 'required|valid_xss_check');
-			if (ee()->form_validation->run() === FALSE)
-			{
-				ee()->view->set_message('issue', lang('save_template_error'), lang('save_template_error_desc'));
-				echo "<pre>";
-				print_r($_POST);
-				echo "</pre>";
-				return $this->edit_template($template_name);
-			}
-		}
-		$cache_data = array(
-			"key" => $this->_get_mandrill_api(),
-			"name" => (isset($template_name) ? $template_name : $orig_template_name),
-			"from_email" => $from_email ,
-			"from_name" => $from_name,
-			"subject" => $subject,
-			"code" => utf8_encode($code),
-			"text" => $text,
-			"publish" => ($publish == 'y'),
+		$cache_data = json_encode(array(
+			'key' => $this->_get_mandrill_api(),
+			"name" => (isset($template_name) ? $template_name : ""),
+			"from_email" => (isset($from_email) ? $from_email  : ""),
+			"from_name" => (isset($from_name) ? $from_name  : ""),
+			"name" => (isset($template_name) ? $template_name  : ""),
+			"subject" => (isset($subject) ? $subject  : ""),
+			"code" => (isset($code) ? $code  : ""),
+			"text" => (isset($text) ? $text  : ""),
 			// "labels" => explode(',', $labels),
-		);
-		$function = ($created_at_hidden !== "") ? 'update' : 'add';
-		
-		
-		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'. $function.'.json';
-		// console_message($api_endpoint . json_encode($cache_data), __METHOD__);
-		$result = $this->curl_request($api_endpoint, $this->headers, $cache_data, TRUE);
-		if (isset($result['status'])){
-			ee()->view->set_message($result['status'], $result['message'], NULL, TRUE);
-			ee()->session->set_flashdata('result', $result['status'] . ':' . $result['message']);
-		}
-		
-		ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.(isset($template_name) ? $template_name : $orig_template_name)));
+		));
+		$function = ( isset($created_at_hidden) && $created_at_hidden !== "") ? 'update' : 'add';
+		console_message($function, __METHOD__);
+		// console_message($created_at_hidden, __METHOD__);
+		console_message($cache_data, __METHOD__);
+		$result = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/'. $function.'.json', $this->headers, json_encode($cache_data), TRUE);
+		if ($result['status'] !== "success"){
+			console_message($result['status'] . " : ". $result['message'], __METHOD__);
+		} 
+		ee()->view->set_message($result['status'], $result['message'], NULL, TRUE);
+		ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.$template_name));
 	}
 	/**
 	 * Prepopulate form to send to specific member
@@ -1393,7 +1335,7 @@ class Composer {
 		console_message($content,__METHOD__);	
 		//TODO: save email data to table
 		// ee()->logger->developer($content);
-		return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
+		return $this->_curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
 	}
 	function _get_mandrill_api($settings = array()){
 		$settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
@@ -1417,25 +1359,25 @@ class Composer {
 	}	
 	
 	function _get_service_templates($func = 'list', $template_name = NULL){
-		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-		$data = array(
+		
+		
+		$content = array(
 			"key" => $this->_get_mandrill_api()
 		);
-		if (! is_null($template_name)) $data['name'] = $template_name;
-		$content = json_encode($data);
-		console_message($api_endpoint . $content, __METHOD__);
-		$templates = $this->curl_request($api_endpoint, $this->headers, $content, TRUE);
-		// console_message($templates, __METHOD__);
+		if (! is_null($template_name)) $content['name'] = $template_name;
+		console_message($content, __METHOD__);
+		$templates = $this->_curl_request('https://mandrillapp.com/api/1.0/templates/'.$func.'.json', $this->headers, json_encode($content), TRUE);
+		console_message($templates, __METHOD__);
 		return $templates;
 	}
 	/**
 		Ultimately sends the email to each server.
 	**/	
-	function curl_request($server, $headers = array(), $content, $return_data = FALSE, $htpw = null)
+	function _curl_request($server, $headers = array(), $content, $return_data = FALSE, $htpw = null)
 	{	
-		$content = (is_array($content) ? json_encode($content) : $content);
-		// console_message($server  . $content, __METHOD__);
+		// console_message($content, __METHOD__);
 		$ch = curl_init($server);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($ch, CURLOPT_POST, 1);
 	    // Convert @ fields to CURLFile if available
@@ -1468,9 +1410,8 @@ class Composer {
 		$curl_error = curl_error($ch);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
-		$result = ($return_data) ? json_decode($status, TRUE) : TRUE;
+		$result = ($return_data) ? json_decode($status) : TRUE;
 		console_message($result, __METHOD__);
-		// ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
 		return ($http_code != 200 && ! $return_data) ? false : json_decode(json_encode($result), TRUE);
 	}	
 	
@@ -1904,20 +1845,41 @@ class Composer {
 	 */
 	public function view_templates($service_name = 'mandrill')
 	{
-		if (ee()->input->post('bulk_action') == 'remove')
-		{
-			foreach (ee()->input->get_post('selection') as $slug){
-				$selection = str_replace('_', " ", $slug);
-				$return = $this->delete_template($selection);
+		/*
+		Sample mandrill list templates value
+		/templates/list.json
+		[
+			{
+				"slug": "example-template",
+				"name": "Example Template",
+				"code": "<div>example code</div>",
+				"publish_code": null,
+				"created_at": "2019-04-19 04:45:58.84257",
+				"updated_at": "2019-04-19 04:45:58.84259",
+				"publish_name": "Example Template",
+				"labels": [
+					"example-label"
+				],
+				"text": "Example text content",
+				"publish_text": null,
+				"subject": "example subject",
+				"publish_subject": null,
+				"from_email": "from_email@example.com",
+				"publish_from_email": null,
+				"from_name": "Example Name",
+				"publish_from_name": null
 			}
-			ee()->view->set_message('success', lang('templates_removed'), '');
-			ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates/'));		
-		}
+		]
+		*/
+
 		$table = ee('CP/Table', array('sort_col' => 'date', 'sort_dir' => 'desc'));
 		$table->setColumns(
 			array(
 				'name',
 				'created_at',
+				// 'subject',
+				// 'from_name',
+				// 'publish_from_name',
 				'manage' => array(
 					'type'	=> Table::COL_TOOLBAR
 				),
@@ -1927,7 +1889,7 @@ class Composer {
 			)
 		);
 
-		$table->setNoResultsText('no_cached_templates', 'create_new_template', ee('CP/URL',EXT_SETTINGS_PATH.'/email/edit_template'));
+		$table->setNoResultsText('no_cached_templates', 'create_new_template', ee('CP/URL',EXT_SETTINGS_PATH.'/email/compose'));
 
 		$page = ee()->input->get('page') ? ee()->input->get('page') : 1;
 		$page = ($page > 0) ? $page : 1;
@@ -1942,20 +1904,18 @@ class Composer {
 			$data[] = array(
 				$template['name'],
 				$template['created_at'],
-				array(
-					'toolbar_items' => array(
-						'view' => array(
-							'title' => lang('view_template'),
-							'href' => '',
-							'id' => $template['slug'],
-							'rel' => 'modal-template-' . $template['slug'],
-							'class' => 'm-link'
-						),
-						'edit' => array(
-							'title' => lang('edit_template'),
-							'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/edit_template/'. $template['name'])
-						)
-					)
+				array('toolbar_items' => array(
+					'view' => array(
+						'title' => lang('view_template'),
+						'href' => '',
+						'id' => $template['slug'],
+						'rel' => 'modal-template-' . $template['slug'],
+						'class' => 'm-link'
+					),
+					'edit' => array(
+						'title' => lang('edit_template'),
+						'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/edit_template/'. $template['name'])
+					))
 				),
 				array(
 					'name'  => 'selection[]',
@@ -1972,7 +1932,7 @@ class Composer {
 		//console_message($vars, __METHOD__);
 		$table->setData($data);
 		$count = 1;
-		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/view_templates');
+		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/templates');
 		$vars['table'] = $table->viewData($base_url);
 
 		$vars['pagination'] = ee('CP/Pagination', $count)
@@ -2003,15 +1963,6 @@ class Composer {
 
 		//console_message($vars, __METHOD__);
 		return $vars;
-	}
-
-	public function delete_template($template_name){
-		$data = array(
-			"name" => $template_name,
-			"key" => $this->_get_mandrill_api()
-		);
-		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
-		return $this->curl_request($api_endpoint, $this->headers, $data, TRUE);
 	}
 	/**
 	 * Check for recipients

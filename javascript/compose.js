@@ -54,7 +54,6 @@ $(document).ready(function() {
             });
         };
     })(jQuery);
-
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
         .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/list')
@@ -70,24 +69,24 @@ $(document).ready(function() {
             }
             $(this).attr('data-service', list_item);
         });
-    
-        $('.service-list').sortable({
-            axis: 'y',
-            opacity: 0.5,
-            update: function() {
-                var serviceOrder = [];
-                $('.service-list li').each(function() {
-                    serviceOrder.push($(this).data('service'));
-                });
-                $.post($('.service-list').data('actionUrl'), {
-                    service_order: serviceOrder.toString(),
-                    CSRF_TOKEN: EE.CSRF_TOKEN
-                });
-            }
-        });
     } else {
         service_list.hide();
     }
+    $('.service-list').sortable({
+        axis: 'y',
+        opacity: 0.5,
+        update: function() {
+            var serviceOrder = [];
+            $('.service-list li').each(function() {
+                serviceOrder.push($(this).data('service'));
+            });
+            $.post($('.service-list').data('actionUrl'), {
+                service_order: serviceOrder.toString(),
+                CSRF_TOKEN: EE.CSRF_TOKEN
+            });
+        }
+    });
+
     function newFunction() {
         return 'escortService';
     }
