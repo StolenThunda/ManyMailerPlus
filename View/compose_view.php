@@ -7,6 +7,7 @@
 	<?php endif; ?>
 </div>
 <div class="col-group ">
+<!-- <div class="app-notice-wrap"><=//ee('CP/Alert')->getAllInlines()?></div> -->
 	<?php if (isset($current_action)) : ?>
 		<h1><?= lang($current_action.'_heading'); ?></h1>
 		<div class="txt-wrap">
