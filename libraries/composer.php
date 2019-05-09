@@ -1718,6 +1718,7 @@ class Composer {
 		$curl_error = curl_error($ch);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
+		console_message($status, __METHOD__);
 		$result = ($return_data) ? json_decode($status, TRUE) : TRUE;
 		console_message($result, __METHOD__);
 		// ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
