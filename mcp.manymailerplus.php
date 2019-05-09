@@ -103,14 +103,18 @@ class Manymailerplus_mcp
 		);
 		$id = ee()->uri->segment(7, "");
 		switch ($func) {
+			case 'resend':
+			case 'batch':
+				return ee()->mail_funcs->{$func}($id);
+				break;
+			case 'compose2':
+				return ee()->mail_funcs->{$func}();
+				break;
 			case 'edit_template':
 				if ($id != "") {
 					$vars = ee()->mail_funcs->{$func}($id);
 					break;
-				}
-			case 'compose2':
-				return ee()->mail_funcs->{$func}();
-				break;
+				} 
 			case 'compose':
 			case 'send':
 			case 'sent':
@@ -118,10 +122,6 @@ class Manymailerplus_mcp
 			case 'view_templates':
 			case 'delete_template':
 				$vars = ee()->mail_funcs->{$func}();
-				break;
-			case 'resend':
-			case 'batch':
-				return ee()->mail_funcs->{$func}($id);
 				break;
 			default:
 				array_pop($breadcrumbs);
