@@ -1281,8 +1281,10 @@ class Composer {
 		$email->delete();
 
 		$debug_msg = ee()->email->print_debugger(array());
+		$err_msg = lang('compose_error').BR.BR.$debug_msg;
 		console_message($debug_msg, __METHOD__);
-		show_error(lang('error_sending_email').BR.BR.$debug_msg);
+		ee()->logger->developer($err_msg);
+		show_error($err_msg);
 	}
 
 	/**
@@ -1649,7 +1651,7 @@ class Composer {
 		$key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
 		$test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : "";
 		$test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
-		$active_key = $test_mode ? $test_key : $key;
+		$active_key = ($test_mode && $test_key !== "") ? $test_key : $key;
 		// console_message("Act Key: $active_key", __METHOD__);
 		return $active_key;
 	}

@@ -4,7 +4,7 @@
             'index' => array(
             ),
             'email' => array(
-                'links' => array('compose','compose2', 'sent', 'edit_template', 'view_templates' )
+                'links' => array('compose', 'sent', 'edit_template', 'view_templates' )
             ),
             // 'settings' => array(
             //     'links' => array('options')
