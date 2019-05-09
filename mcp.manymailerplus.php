@@ -108,7 +108,9 @@ class Manymailerplus_mcp
 					$vars = ee()->mail_funcs->{$func}($id);
 					break;
 				}
-
+			case 'compose2':
+				return ee()->mail_funcs->{$func}();
+				break;
 			case 'compose':
 			case 'send':
 			case 'sent':

@@ -81,7 +81,7 @@ $lang = array(
 	'compose_send_email' => 'Send Email',
 	'compose_sending_email' => 'Sending Email',
 	'sent_name' => 'View Sent Mail',
-	'your_email' => 'Your Email',
+	'your_email' => 'Sender\'s Email',
 	'email_subject' => 'Email Subject',
 	'email_body' => 'Email Body',
 	'attachment' => 'Attachment',
@@ -144,7 +144,7 @@ $lang = array(
 	'labels' => 'Labels',
 	'labels_desc' => 'an optional array of up to 10 labels to use for filtering purposes',
 	'save_template_error' => 'Error Saving Template',
-	'save_template_error_desc' => 'We were unable to save this template in it\'s current state. Please fix errors below'
-	
+	'save_template_error_desc' => 'We were unable to save this template in it\'s current state. Please fix errors below',
+	'use_template' => 'Use Template'
 
 );

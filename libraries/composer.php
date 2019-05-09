@@ -10,6 +10,7 @@
 use EllisLab\ExpressionEngine\Controller\Utilities;
 use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Model\Email\EmailCache;
+use EllisLab\Addons\FilePicker\FilePicker as FilePicker;
 /**
  * Copy of Communicate Controller
  */
@@ -137,6 +138,16 @@ class Composer {
 						)
 					)
 				),
+				array(
+					'title' => 'your_email',
+					'fields' => array(
+						'from' => array(
+							'type' => 'text',
+							'value' => $default['from'],
+							'required' => TRUE
+						)
+					)
+				),
 			),
 				'recipient_options' => array(
 					array(
@@ -222,10 +233,16 @@ class Composer {
 					)
 				),
 				array(
-					'title' => 'use_template',
+					// 'title' => 'use_template',
 					'fields' => array(
 						'use_template' => array(
-							'type' => 'yes_no'
+							'type' => 'html',
+							'content' => form_button(array(
+								'name' => 'use_template',
+								'id'   => 'use_template',
+								'class' => 'btn',
+								'content' => lang('use_template')
+							))
 						)
 					)
 				),
@@ -316,7 +333,238 @@ class Composer {
 		console_message($vars, __METHOD__);
 		return $vars;
 	}
+/**
+	 * compose
+	 *
+	 * @param	obj	$email	An EmailCache object for use in re-populating the form (see: resend())
+	 */
+	public function compose2(EmailCache $email = NULL)
+	{
+		$default = array(
+			'from'		 	=> ee()->session->userdata('email'),
+			'recipient'  	=> '',
+			'cc'			=> '',
+			'bcc'			=> '',
+			'subject' 		=> '',
+			'message'		=> '',
+			'plaintext_alt'	=> '',
+			'mailtype'		=> ee()->config->item('mail_format'),
+			'wordwrap'		=> ee()->config->item('word_wrap'),
+		);
 
+		$vars['mailtype_options'] = array(
+			'text'		=> lang('plain_text'),
+			'markdown'	=> lang('markdown'),
+			'html'		=> lang('html')
+		);
+
+		$member_groups = array();
+
+		if ( ! is_null($email))
+		{
+			$default['from'] = $email->from_email;
+			$default['recipient'] = $email->recipient;
+			$default['cc'] = $email->cc;
+			$default['bcc'] = $email->bcc;
+			$default['subject'] = str_replace('', '(TEMPLATE) ', $email->subject);
+			$default['message'] = $email->message;
+			$default['plaintext_alt'] = $email->plaintext_alt;
+			$default['mailtype'] = $email->mailtype;
+			$default['wordwrap'] = $email->wordwrap;
+		}
+		// Set up member group emailing options
+		if (ee()->cp->allowed_group('can_email_member_groups'))
+		{
+			$groups = ee('Model')->get('MemberGroup')
+				->filter('site_id', ee()->config->item('site_id'))
+				->all();
+
+			$member_groups = [];
+			$disabled_groups = [];
+			foreach ($groups as $group)
+			{
+				$member_groups[$group->group_id] = $group->group_title;
+
+				if (ee('Model')->get('Member')
+					->filter('group_id', $group->group_id)
+					->count() == 0)
+				{
+					$disabled_groups[] = $group->group_id;
+				}
+			}
+		}
+
+		$csvHTML = array(
+			form_textarea(
+				array(
+					'name' => 'csv_recipient',
+					'id' => 'csv_recipient',
+					'rows' => '10',
+					'class' => 'required',
+				)
+			),
+			form_button('convert_csv','Convert CSV','class="btn"')
+		);
+
+		if ($default['mailtype'] != 'html')
+		{
+			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
+		}
+		
+		// $fp = new FilePicker();
+		// console_message($fp, __METHOD__);
+		// $fp->inject(ee()->view);
+		// $fp_control = ee('CP/URL')->make($fp->controller, array('directory' => 'all', 'type' => 'csv'));
+		
+		
+		$vars['sections'] =	array( 
+			'your_email' => array(
+				'' => form_input(lang('your_email'), $default['from'],'required=true')
+			),
+			'recipient_options' => array(
+				'' => form_hidden('files[]', 0, 'id="files"'),
+				'file_recipient' => BR.form_upload('file_recipient').BR.BR,		
+				'' => form_button(
+						'btnDump',
+						'Dump Hidden Values', 
+						'class="btn" onClick="dumpHiddenVals()" '),
+				'' => form_hidden('csv_object'),
+				'' => form_hidden('mailKey'),
+				'' => '<span id="csv_errors"></span>',
+				'csv_recipient' => form_textarea(
+					array(
+						'name' => 'csv_recipient',
+						'id' => 'csv_recipient',
+						'rows' => '10',
+						'class' => 'required',
+					)
+				).BR.BR,
+				'' => form_button('convert_csv','Convert CSV','class="btn"'),
+				'' =>  form_button('btnReset','Reset CSV Data', 'class="btn"'),		
+				'primary_recipients' => form_input('recipient', $default['recipient']),
+				'' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
+			),
+			'compose_email_detail' =>array(
+				'subject' => form_input('subject', $default['subject']),
+			// 	array(
+			// 		'title' => 'email_subject',
+			// 		'fields' => array(
+			// 			'subject' => array(
+			// 				'type' => 'text',
+			// 				'required' => TRUE,
+			// 				'value' => $default['subject']
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		// 'title' => 'use_template',
+			// 		'fields' => array(
+			// 			'use_template' => array(
+			// 				'type' => 'html',
+			// 				'content' => form_button(array(
+			// 					'name' => 'use_template',
+			// 					'id'   => 'use_template',
+			// 					'class' => 'btn',
+			// 					'content' => lang('use_template')
+			// 				))
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'email_body',
+			// 		'fields' => array(
+			// 			'message' => array(
+			// 				'type' => 'html',
+			// 				'content' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
+			// 					->render($default + $vars),
+			// 				'required' => TRUE
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'plaintext_body',
+			// 		'desc' => 'plaintext_alt',
+			// 		'fields' => array(
+			// 			'plaintext_alt' => array(
+			// 				'type' => 'textarea',
+			// 				'value' => $default['plaintext_alt'],
+			// 				'required' => TRUE
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'attachment',
+			// 		'desc' => 'attachment_desc',
+			// 		'fields' => array(
+			// 			'attachment' => array(
+			// 				'type' => 'file'
+			// 			)
+			// 		)
+			// 	)
+			// ),
+				
+			// 'other_recipient_options' => array(	
+			// 	array(
+			// 		'title' => 'cc_recipients',
+			// 		'desc' => 'cc_recipients_desc',
+			// 		'fields' => array(
+			// 			'cc' => array(
+			// 				'type' => 'text',
+			// 				'value' => $default['cc']
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'bcc_recipients',
+			// 		'desc' => 'bcc_recipients_desc',
+			// 		'fields' => array(
+			// 			'bcc' => array(
+			// 				'type' => 'text',
+			// 				'value' => $default['bcc']
+			// 			)
+					// )
+				)
+			
+		);
+
+		// if (ee()->cp->allowed_group('can_email_member_groups'))
+		// {
+		// 	$vars['sections']['other_recipient_options'][] = array(
+		// 		'title' => 'add_member_groups',
+		// 		'desc' => 'add_member_groups_desc',
+		// 		'fields' => array(
+		// 			'member_groups' => array(
+		// 				'type' => 'checkbox',
+		// 				'choices' => $member_groups,
+		// 				'disabled_choices' => $disabled_groups,
+		// 			)
+		// 		)
+		// 	);
+		// }
+		$vars['cp_page_title'] = lang('compose_heading');
+		// $vars['categories'] = array_keys($this->sidebar_options);
+		$vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
+		$vars['save_btn_text'] = lang('compose_send_email');
+		$vars['save_btn_text_working'] = lang('compose_sending_email');
+		// ee()->cp->add_js_script(array(
+		// 	'file' => array('cp/form_group'),
+		//   ));
+		// ee()->cp->add_to_foot(link_tag(array(
+		// 	'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
+		// 	'rel' => 'stylesheet',
+		// 	'type' => 'text/css',
+		// )));
+		console_message($vars, __METHOD__);
+		return array(
+			'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view2')->render($vars),
+			'breadcrumb' =>array(
+				ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
+				ee('CP/URL')->make(EXT_SETTINGS_PATH .'/email')->compile() => lang('email_title')
+			),
+			'heading' => $vars['cp_page_title']
+			);
+		// return $vars;
+	}
 	public function edit_template($template_name = "")
 	{
 		$message =  ee()->session->flashdata('result');
