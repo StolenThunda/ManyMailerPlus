@@ -187,5 +187,37 @@ span>ul {
     user-select: none;
 }
 
+.form-section {
+    padding-left: 15px;
+    border-left: 2px solid #FF851B;
+    display: none;
+}
+
+.form-section.current {
+    display: inherit;
+}
+.btn1 {
+    background-color: #01bf75;
+    border: 1px solid #01bf75;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    line-height: 1;
+    padding: 6px 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    -moz-box-shadow: 0 1px 0 0 rgba(255,255,255,.3)inset,0 1px 4px 0 rgba(0,0,0,.1);
+    -webkit-box-shadow: 0 1px 0 0 rgba(255,255,255,.3)inset,0 1px 4px 0 rgba(0,0,0,.1);
+    box-shadow: 0 1px 0 0 rgba(255,255,255,.3)inset,0 1px 4px 0 rgba(0,0,0,.1);
+}
+.btn-info,
+.btn-default {
+    margin-top: 10px;
+}
+
 
 /* Endo of Line number CSS  */

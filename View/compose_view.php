@@ -7,13 +7,15 @@
 	<?php endif; ?>
 </div>
 <div class="col-group ">
+<!-- <div class="app-notice-wrap"><=//ee('CP/Alert')->getAllInlines()?></div> -->
 	<?php if (isset($current_action)) : ?>
 		<h1><?= lang($current_action.'_heading'); ?></h1>
 		<div class="txt-wrap">
 			<?=lang($current_action .'_text')?>
 		</div>
 	<?php elseif (isset($table)) : ?>
-		<?php $this->embed(EXT_SHORT_NAME.":email/sent", $table); ?>
+
+		<?php $this->embed(EXT_SHORT_NAME. ((isset($emails)) ? ":email/sent" : ":email/templates"), $table); ?>
 	<?php else: ?>		
 		<?php $this->embed('ee:_shared/form', $vars)?>
 	<?php endif; ?>

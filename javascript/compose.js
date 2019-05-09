@@ -54,6 +54,45 @@ $(document).ready(function() {
             });
         };
     })(jQuery);
+    var $sections = $('.form-section');
+
+    function navigateTo(index) {
+        // Mark the current section with the class 'current'
+        $sections.removeClass('current').eq(index).addClass('current');
+        // Show only the navigation buttons that make sense for the current section:
+        $('.form-navigation .previous').toggle(index > 0);
+        var atTheEnd = index >= $sections.length - 1;
+        $('.form-navigation .next').toggle(!atTheEnd);
+        $('.form-navigation [type=submit]').toggle(atTheEnd);
+    }
+
+    function curIndex() {
+        // Return the current index by looking at which section has the class 'current'
+        return $sections.index($sections.filter('.current'));
+    }
+
+    // Previous button is easy, just go back
+    $('.form-navigation .previous').click(function() {
+        navigateTo(curIndex() - 1);
+    });
+
+    // Next button goes forward iff current block validates
+    $('.form-navigation .next').click(function() {
+        $('.demo-form')
+            .parsley()
+            .whenValidate({
+                group: 'block-' + curIndex()
+            })
+            .done(function() {
+                navigateTo(curIndex() + 1);
+            });
+    });
+
+    // Prepare sections by setting the `data-parsley-group` attribute to 'block-0', 'block-1', etc.
+    $sections.each(function(index, section) {
+        $(section).find(':input').attr('data-parsley-group', 'block-' + index);
+    });
+    navigateTo(0); // Start at the beginning
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
         .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/list')
@@ -69,23 +108,24 @@ $(document).ready(function() {
             }
             $(this).attr('data-service', list_item);
         });
+
+        $('.service-list').sortable({
+            axis: 'y',
+            opacity: 0.5,
+            update: function() {
+                var serviceOrder = [];
+                $('.service-list li').each(function() {
+                    serviceOrder.push($(this).data('service'));
+                });
+                $.post($('.service-list').data('actionUrl'), {
+                    service_order: serviceOrder.toString(),
+                    CSRF_TOKEN: EE.CSRF_TOKEN
+                });
+            }
+        });
     } else {
         service_list.hide();
     }
-    $('.service-list').sortable({
-        axis: 'y',
-        opacity: 0.5,
-        update: function() {
-            var serviceOrder = [];
-            $('.service-list li').each(function() {
-                serviceOrder.push($(this).data('service'));
-            });
-            $.post($('.service-list').data('actionUrl'), {
-                service_order: serviceOrder.toString(),
-                CSRF_TOKEN: EE.CSRF_TOKEN
-            });
-        }
-    });
 
     function newFunction() {
         return 'escortService';

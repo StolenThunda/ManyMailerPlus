@@ -101,16 +101,27 @@ class Manymailerplus_mcp
 			ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
 			ee('CP/URL')->make(EXT_SETTINGS_PATH .'/email')->compile() => lang('email_title')
 		);
+		$id = ee()->uri->segment(7, "");
 		switch ($func) {
+			case 'resend':
+			case 'batch':
+				return ee()->mail_funcs->{$func}($id);
+				break;
+			case 'compose2':
+				return ee()->mail_funcs->{$func}();
+				break;
+			case 'edit_template':
+				if ($id != "") {
+					$vars = ee()->mail_funcs->{$func}($id);
+					break;
+				} 
 			case 'compose':
 			case 'send':
 			case 'sent':
+			case 'save_template':
+			case 'view_templates':
+			case 'delete_template':
 				$vars = ee()->mail_funcs->{$func}();
-				break;
-			case 'resend':
-			case 'batch':
-				$id = ee()->uri->segment(7, 0);
-				return ee()->mail_funcs->{$func}($id);
 				break;
 			default:
 				array_pop($breadcrumbs);

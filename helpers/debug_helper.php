@@ -200,7 +200,7 @@
             }
             $bt = debug_backtrace();
             $bt_obj = $bt[BT_OFFSET + $unknown_error_offset];
-            // $prev_bt_obj = $bt[BT_OFFSET + $unknown_error_offset + 1];
+            $prev_bt_obj = $bt[BT_OFFSET + $unknown_error_offset + 1];
             $caller = json_encode(array_slice($bt, BT_OFFSET + $unknown_error_offset), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
             $caller_file = (isset($bt_obj['file']) ? $bt_obj['file'] : "");
             // $caller_class = (isset($bt_obj['class'])) ? $bt_obj['class'] : isset($prev_bt_obj['class']) ? $prev_bt_obj['class'] : "";

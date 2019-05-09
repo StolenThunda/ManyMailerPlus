@@ -10,6 +10,7 @@
 use EllisLab\ExpressionEngine\Controller\Utilities;
 use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Model\Email\EmailCache;
+use EllisLab\Addons\FilePicker\FilePicker as FilePicker;
 /**
  * Copy of Communicate Controller
  */
@@ -18,6 +19,10 @@ class Composer {
 	private $attachments = array();
 	private $csv_lookup = array();
 	private $csv_email_column = "{{email}}";
+	private $headers = array(
+		'Accept: application/json',
+		'Content-Type: application/json',
+	);
 
 	/**
 	 * Constructor
@@ -133,6 +138,16 @@ class Composer {
 						)
 					)
 				),
+				array(
+					'title' => 'your_email',
+					'fields' => array(
+						'from' => array(
+							'type' => 'text',
+							'value' => $default['from'],
+							'required' => TRUE
+						)
+					)
+				),
 			),
 				'recipient_options' => array(
 					array(
@@ -218,6 +233,20 @@ class Composer {
 					)
 				),
 				array(
+					// 'title' => 'use_template',
+					'fields' => array(
+						'use_template' => array(
+							'type' => 'html',
+							'content' => form_button(array(
+								'name' => 'use_template',
+								'id'   => 'use_template',
+								'class' => 'btn',
+								'content' => lang('use_template')
+							))
+						)
+					)
+				),
+				array(
 					'title' => 'email_body',
 					'fields' => array(
 						'message' => array(
@@ -293,6 +322,9 @@ class Composer {
 		$vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
 		$vars['save_btn_text'] = lang('compose_send_email');
 		$vars['save_btn_text_working'] = lang('compose_sending_email');
+		ee()->cp->add_js_script(array(
+			'file' => array('cp/form_group'),
+		  ));
 		ee()->cp->add_to_foot(link_tag(array(
 			'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
 			'rel' => 'stylesheet',
@@ -301,7 +333,460 @@ class Composer {
 		console_message($vars, __METHOD__);
 		return $vars;
 	}
+/**
+	 * compose
+	 *
+	 * @param	obj	$email	An EmailCache object for use in re-populating the form (see: resend())
+	 */
+	public function compose2(EmailCache $email = NULL)
+	{
+		$default = array(
+			'from'		 	=> ee()->session->userdata('email'),
+			'recipient'  	=> '',
+			'cc'			=> '',
+			'bcc'			=> '',
+			'subject' 		=> '',
+			'message'		=> '',
+			'plaintext_alt'	=> '',
+			'mailtype'		=> ee()->config->item('mail_format'),
+			'wordwrap'		=> ee()->config->item('word_wrap'),
+		);
 
+		$vars['mailtype_options'] = array(
+			'text'		=> lang('plain_text'),
+			'markdown'	=> lang('markdown'),
+			'html'		=> lang('html')
+		);
+
+		$member_groups = array();
+
+		if ( ! is_null($email))
+		{
+			$default['from'] = $email->from_email;
+			$default['recipient'] = $email->recipient;
+			$default['cc'] = $email->cc;
+			$default['bcc'] = $email->bcc;
+			$default['subject'] = str_replace('', '(TEMPLATE) ', $email->subject);
+			$default['message'] = $email->message;
+			$default['plaintext_alt'] = $email->plaintext_alt;
+			$default['mailtype'] = $email->mailtype;
+			$default['wordwrap'] = $email->wordwrap;
+		}
+		// Set up member group emailing options
+		if (ee()->cp->allowed_group('can_email_member_groups'))
+		{
+			$groups = ee('Model')->get('MemberGroup')
+				->filter('site_id', ee()->config->item('site_id'))
+				->all();
+
+			$member_groups = [];
+			$disabled_groups = [];
+			foreach ($groups as $group)
+			{
+				$member_groups[$group->group_id] = $group->group_title;
+
+				if (ee('Model')->get('Member')
+					->filter('group_id', $group->group_id)
+					->count() == 0)
+				{
+					$disabled_groups[] = $group->group_id;
+				}
+			}
+		}
+
+		$csvHTML = array(
+			form_textarea(
+				array(
+					'name' => 'csv_recipient',
+					'id' => 'csv_recipient',
+					'rows' => '10',
+					'class' => 'required',
+				)
+			),
+			form_button('convert_csv','Convert CSV','class="btn"')
+		);
+
+		if ($default['mailtype'] != 'html')
+		{
+			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
+		}
+		
+		$vars['sections'] =	array( 
+			'your_email' => array(
+				'' => form_input(lang('your_email'), $default['from'],'required=true')
+			),
+			'recipient_options' => array(
+				'' => form_hidden('files[]', 0, 'id="files"'),
+				'file_recipient' => BR.form_upload('file_recipient').BR.BR,		
+				'' => form_button(
+						'btnDump',
+						'Dump Hidden Values', 
+						'onClick="dumpHiddenVals()" '),
+				'' => form_hidden('csv_object'),
+				'' => form_hidden('mailKey'),
+				'' => '<span id="csv_errors"></span>',
+				'csv_recipient' => form_textarea(
+					array(
+						'name' => 'csv_recipient',
+						'id' => 'csv_recipient',
+						'rows' => '10',
+						'class' => 'required',
+					)
+				).BR.BR.form_button('convert_csv','Convert CSV','class=\'btn1\'').BR.form_button('btnReset','Reset CSV Data','class=\'btn1\'').BR.,		
+				'primary_recipients' => form_input('recipient', $default['recipient']),
+				' ' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
+			),
+			'compose_email_detail' =>array(
+				'subject' => form_input('subject', $default['subject']),
+			// 	array(
+			// 		'title' => 'email_subject',
+			// 		'fields' => array(
+			// 			'subject' => array(
+			// 				'type' => 'text',
+			// 				'required' => TRUE,
+			// 				'value' => $default['subject']
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		// 'title' => 'use_template',
+			// 		'fields' => array(
+			// 			'use_template' => array(
+			// 				'type' => 'html',
+			// 				'content' => form_button(array(
+			// 					'name' => 'use_template',
+			// 					'id'   => 'use_template',
+			// 					'class' => 'btn',
+			// 					'content' => lang('use_template')
+			// 				))
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'email_body',
+			// 		'fields' => array(
+			// 			'message' => array(
+			// 				'type' => 'html',
+			// 				'content' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
+			// 					->render($default + $vars),
+			// 				'required' => TRUE
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'plaintext_body',
+			// 		'desc' => 'plaintext_alt',
+			// 		'fields' => array(
+			// 			'plaintext_alt' => array(
+			// 				'type' => 'textarea',
+			// 				'value' => $default['plaintext_alt'],
+			// 				'required' => TRUE
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'attachment',
+			// 		'desc' => 'attachment_desc',
+			// 		'fields' => array(
+			// 			'attachment' => array(
+			// 				'type' => 'file'
+			// 			)
+			// 		)
+			// 	)
+			// ),
+				
+			// 'other_recipient_options' => array(	
+			// 	array(
+			// 		'title' => 'cc_recipients',
+			// 		'desc' => 'cc_recipients_desc',
+			// 		'fields' => array(
+			// 			'cc' => array(
+			// 				'type' => 'text',
+			// 				'value' => $default['cc']
+			// 			)
+			// 		)
+			// 	),
+			// 	array(
+			// 		'title' => 'bcc_recipients',
+			// 		'desc' => 'bcc_recipients_desc',
+			// 		'fields' => array(
+			// 			'bcc' => array(
+			// 				'type' => 'text',
+			// 				'value' => $default['bcc']
+			// 			)
+					// )
+				)
+			
+		);
+
+		// if (ee()->cp->allowed_group('can_email_member_groups'))
+		// {
+		// 	$vars['sections']['other_recipient_options'][] = array(
+		// 		'title' => 'add_member_groups',
+		// 		'desc' => 'add_member_groups_desc',
+		// 		'fields' => array(
+		// 			'member_groups' => array(
+		// 				'type' => 'checkbox',
+		// 				'choices' => $member_groups,
+		// 				'disabled_choices' => $disabled_groups,
+		// 			)
+		// 		)
+		// 	);
+		// }
+		$vars['cp_page_title'] = lang('compose_heading');
+		// $vars['categories'] = array_keys($this->sidebar_options);
+		$vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
+		$vars['save_btn_text'] = lang('compose_send_email');
+		$vars['save_btn_text_working'] = lang('compose_sending_email');
+		// ee()->cp->add_js_script(array(
+		// 	'file' => array('cp/form_group'),
+		//   ));
+		// ee()->cp->add_to_foot(link_tag(array(
+		// 	'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
+		// 	'rel' => 'stylesheet',
+		// 	'type' => 'text/css',
+		// )));
+		console_message($vars, __METHOD__);
+		return array(
+			'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view2')->render($vars),
+			'breadcrumb' =>array(
+				ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
+				ee('CP/URL')->make(EXT_SETTINGS_PATH .'/email')->compile() => lang('email_title')
+			),
+			'heading' => $vars['cp_page_title']
+			);
+		// return $vars;
+	}
+	public function edit_template($template_name = "")
+	{
+		$message =  ee()->session->flashdata('result');
+		if ($message){
+			$message = explode(':', ee()->session->flashdata('result'));
+			console_message("Msg: ".implode(':', $message), __METHOD__);
+			ee('CP/Alert')->makeInline("result")
+						->asIssue()
+						->withTitle(lang('template_'.$message[0]))
+						->addToBody(end($message))
+						->canClose()
+						->now();
+			
+			ee('CP/Alert')->makeInline("save_template_req")
+						->asIssue()
+						->withTitle( ee()->session->flashdata('save_endpoint'))
+						->addToBody(ee()->session->flashdata('save_api_data'))
+						->canClose()
+						->now();
+			
+		}
+		
+		if ($template_name != "") $template_name = str_replace('_', " ", $template_name);
+		$default = array(
+			"template_name" => "",
+			"from_email" => ee()->session->userdata('email'),
+			"from_name" => ee()->session->userdata('screen_name'),
+			"subject" => "",
+			"code" => "",
+			"text" => "",
+			"publish" => false,
+			"created_at" => "",
+			"labels" => array(),
+		);
+		console_message("TEMP NAME: ".$template_name, __METHOD__);
+
+		if ( $template_name !== "")
+		{
+			$template = $this->_get_service_templates('info', $template_name );
+			// console_message($template, __METHOD__);
+			if (isset($template['status'])){
+				ee()->session->set_flashdata('result', $template['status'] . ':' . $template['message']);
+				ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template'));
+			}
+			$default['template_name'] = $template['name'];
+			$default['from_email'] = $template['from_email'];
+			$default['from_name'] = $template['from_name'];
+			$default['code'] = $template['code'];
+			$default['subject'] = $template['subject'];
+			$default['text'] = $template['text'];
+			$default['publish'] = isset($template['publish_code']);
+			$default['labels'] = $template['labels'];
+			$default['created_at'] = $template['created_at'];
+		}
+		$has_template_name = ($default['template_name'] !== "");
+		$vars['sections'] = array(
+			array(
+				array(
+					'title' => 'template_name',
+					'desc' => 'template_name_desc',
+					'fields' => array(
+						'orig_template_name' => array(
+							'type' => 'hidden',
+							'value' => $default['template_name']
+						),
+						'template_name' => array(
+							'type' => 'text',
+							'value' => $default['template_name'],
+							'disabled' => $has_template_name,
+							'required' => !$has_template_name,
+						)
+					)
+				),
+				array(
+					'title' => ($default['created_at'] === "") ? '' : 'created_at',
+					'fields' => array(
+						'created_at_hidden' => array(
+							'type' => 'hidden',
+							'value' => $default['created_at'],
+						),
+						'created_at' => array(
+							'type' => ($default['created_at'] === "") ? 'hidden' : 'text',
+							'value' => $default['created_at'],
+							'disabled' => TRUE
+						)
+					)
+				),
+			), 
+			'template_info' => array(
+				
+				array(
+					'title' => 'from_email',
+					'desc' => 'from_email_desc',
+					'fields' => array(
+						'from_email' => array(
+							'type' => 'text',
+							'value' => $default['from_email']
+						)
+					)
+				),
+				array(
+					'title' => 'from_name',
+					'desc' => 'from_name_desc',
+					'fields' => array(
+						'from_name' => array(
+							'type' => 'text',
+							'value' => $default['from_name'],
+						)
+					)
+				),
+				
+				array(
+					'title' => 'subject',
+					'desc' => 'subject_desc',
+					'fields' => array(
+					  'subject' => array(
+						'type' => 'text',
+						'value' => $default['subject']
+						)
+					)
+				),
+				array(
+					'title' => 'code',
+					'desc' => 'code_desc',
+					'fields' => array(
+						'code' => array(
+							'type' => 'textarea',
+							'value' => $default['code'],
+						)
+					)
+				),
+				array(
+					'title' => 'text',
+					'desc' => 'text_desc',
+					'fields' => array(
+					  'text' => array(
+						'type' => 'text',
+						'value' => $default['text']
+						)
+					)
+				),
+				array(
+					'title' => 'publish',
+					'desc' => 'publish_desc',
+					'fields' => array(
+						'publish' => array(
+						'type' => 'yes_no',
+						'choices' => array(
+							'y' => TRUE,
+							'n' => FALSE
+						),
+						'value' => $default['publish']
+						)
+					)
+				),	
+			)
+		);
+				
+		$vars['cp_page_title'] = lang(__FUNCTION__);
+		// $vars['categories'] = array_keys($this->sidebar_options);
+		$vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/save_template');
+		$vars['save_btn_text'] = lang('save_template');
+		$vars['save_btn_text_working'] = lang('saving_template');
+		
+		console_message($vars, __METHOD__);
+		return $vars;
+	}
+	
+	public function save_template(){
+		$form_fields = array(
+			"created_at_hidden",
+			"orig_template_name",
+			"template_name",
+			"from_email",
+			"from_name",
+			"subject" ,
+			"code",
+			"text",
+			"publish",
+			// "labels",
+		);
+		
+		
+		// console_message($_POST, __METHOD__);
+		foreach ($_POST as $key => $val)
+		{
+			// console_message("$key : ".ee()->input->post($key),__METHOD__); 
+			if (in_array($key, $form_fields))
+			{
+				$$key = ee()->input->get_post($key);
+				// console_message("$key : ".ee()->input	->post($key),__METHOD__); 
+			}
+		}
+		
+		if (isset($template_name)){
+			ee()->load->library('form_validation');
+			ee()->form_validation->set_rules('template_name', 'lang:template_name', 'required|valid_xss_check');
+			if (ee()->form_validation->run() === FALSE)
+			{
+				ee()->view->set_message('issue', lang('save_template_error'), lang('save_template_error_desc'));
+				echo "<pre>";
+				print_r($_POST);
+				echo "</pre>";
+				return $this->edit_template($template_name);
+			}
+		}
+		$cache_data = array(
+			"key" => $this->_get_mandrill_api(),
+			"name" => (isset($template_name) ? $template_name : $orig_template_name),
+			"from_email" => $from_email ,
+			"from_name" => $from_name,
+			"subject" => $subject,
+			"code" => utf8_encode($code),
+			"text" => $text,
+			"publish" => ($publish == 'y'),
+			// "labels" => explode(',', $labels),
+		);
+		$function = ($created_at_hidden !== "") ? 'update' : 'add';
+		
+		
+		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'. $function.'.json';
+		// console_message($api_endpoint . json_encode($cache_data), __METHOD__);
+		$result = $this->curl_request($api_endpoint, $this->headers, $cache_data, TRUE);
+		if (isset($result['status'])){
+			ee()->view->set_message($result['status'], $result['message'], NULL, TRUE);
+			ee()->session->set_flashdata('result', $result['status'] . ':' . $result['message']);
+		}
+		
+		ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.(isset($template_name) ? $template_name : $orig_template_name)));
+	}
 	/**
 	 * Prepopulate form to send to specific member
 	 *
@@ -788,8 +1273,10 @@ class Composer {
 		$email->delete();
 
 		$debug_msg = ee()->email->print_debugger(array());
+		$err_msg = lang('compose_error').BR.BR.$debug_msg;
 		console_message($debug_msg, __METHOD__);
-		show_error(lang('error_sending_email').BR.BR.$debug_msg);
+		ee()->logger->developer($err_msg);
+		show_error($err_msg);
 	}
 
 	/**
@@ -1003,18 +1490,10 @@ class Composer {
 						}
 						break;				
 					case 'mandrill':
-						$key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
-						$test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : "";
-						$test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
-						$active_key = $test_mode ? $test_key : $key;
-						$log_message = sprintf(lang('using_alt_credentials'), $service, $active_key, $service, $str_settings);
-						if ($test_mode) console_message($log_message,__METHOD__);
-						if($active_key !== ""){
+						$key = $this->_get_mandrill_api($settings);
+						if($key !== ""){
 							$subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
-							$sent = $this->_send_mandrill($active_key, $subaccount);
-							console_message($log_message, __METHOD__);
-							
-							// ee()->session->set_flashdata(array('message_error' => $log_message));
+							$sent = $this->_send_mandrill($key, $subaccount);
 							$missing_credentials = false;
 						}
 						break;
@@ -1047,7 +1526,7 @@ class Composer {
 						}
 						break;
 				}
-				
+				// console_message($sent, __METHOD__, TRUE);
 				if($missing_credentials == true)
 				{
 					ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
@@ -1143,11 +1622,6 @@ class Composer {
 
 		$content['message']['auto_text'] = TRUE;
 		$content['message']['merge_vars'] = $merge_vars;
-						
-		$headers = array(
-	    	'Accept: application/json',
-			'Content-Type: application/json',
-		);
 		
 		if(ee()->extensions->active_hook('pre_send'))
 		{
@@ -1161,9 +1635,18 @@ class Composer {
 		console_message($content,__METHOD__);	
 		//TODO: save email data to table
 		// ee()->logger->developer($content);
-		return $this->_curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $headers, $content);
+		return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
 	}
-	
+	function _get_mandrill_api($settings = array()){
+		$settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
+		// $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
+		$key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
+		$test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : "";
+		$test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
+		$active_key = ($test_mode && $test_key !== "") ? $test_key : $key;
+		// console_message("Act Key: $active_key", __METHOD__);
+		return $active_key;
+	}
 	function _mandrill_lookup_to_merge($lookup){
 		$merge_vars = array();
 		foreach(array_keys($lookup) as $key){
@@ -1175,13 +1658,26 @@ class Composer {
 		return $merge_vars;
 	}	
 	
+	function _get_service_templates($func = 'list', $template_name = NULL){
+		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
+		$data = array(
+			"key" => $this->_get_mandrill_api()
+		);
+		if (! is_null($template_name)) $data['name'] = $template_name;
+		$content = json_encode($data);
+		console_message($api_endpoint . $content, __METHOD__);
+		$templates = $this->curl_request($api_endpoint, $this->headers, $content, TRUE);
+		// console_message($templates, __METHOD__);
+		return $templates;
+	}
 	/**
 		Ultimately sends the email to each server.
 	**/	
-	function _curl_request($server, $headers = array(), $content, $htpw = null)
+	function curl_request($server, $headers = array(), $content, $return_data = FALSE, $htpw = null)
 	{	
+		$content = (is_array($content) ? json_encode($content) : $content);
+		// console_message($server  . $content, __METHOD__);
 		$ch = curl_init($server);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($ch, CURLOPT_POST, 1);
 	    // Convert @ fields to CURLFile if available
@@ -1207,14 +1703,18 @@ class Composer {
 			curl_setopt($ch, CURLOPT_USERPWD, $htpw);
 		}
 		
+		//return response instead of outputting
+		if ($return_data) curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
 		$status = curl_exec($ch);
-		console_message($status,__METHOD__);
 		$curl_error = curl_error($ch);
-		console_message($curl_error,__METHOD__);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
-		
-		return ($http_code != 200) ? false : true;
+		console_message($status, __METHOD__);
+		$result = ($return_data) ? json_decode($status, TRUE) : TRUE;
+		console_message($result, __METHOD__);
+		// ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
+		return ($http_code != 200 && ! $return_data) ? false : json_decode(json_encode($result), TRUE);
 	}	
 	
 
@@ -1641,6 +2141,121 @@ class Composer {
 		return $vars;
 	}
 
+
+	/**
+	 * View templates
+	 */
+	public function view_templates($service_name = 'mandrill')
+	{
+		if (ee()->input->post('bulk_action') == 'remove')
+		{
+			foreach (ee()->input->get_post('selection') as $slug){
+				$selection = str_replace('_', " ", $slug);
+				$return = $this->delete_template($selection);
+			}
+			ee()->view->set_message('success', lang('templates_removed'), '');
+			ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates/'));		
+		}
+		$table = ee('CP/Table', array('sort_col' => 'date', 'sort_dir' => 'desc'));
+		$table->setColumns(
+			array(
+				'name',
+				'created_at',
+				'manage' => array(
+					'type'	=> Table::COL_TOOLBAR
+				),
+				array(
+					'type'	=> Table::COL_CHECKBOX
+				)
+			)
+		);
+
+		$table->setNoResultsText('no_cached_templates', 'create_new_template', ee('CP/URL',EXT_SETTINGS_PATH.'/email/edit_template'));
+
+		$page = ee()->input->get('page') ? ee()->input->get('page') : 1;
+		$page = ($page > 0) ? $page : 1;
+
+		$offset = ($page - 1) * 50; // Offset is 0 indexed
+		
+		$templates = $this->_get_service_templates();
+		$data = array();
+		foreach ($templates as $template)
+		{
+			$template = json_decode(json_encode($template), TRUE);
+			$data[] = array(
+				$template['name'],
+				$template['created_at'],
+				array(
+					'toolbar_items' => array(
+						'view' => array(
+							'title' => lang('view_template'),
+							'href' => '',
+							'id' => $template['slug'],
+							'rel' => 'modal-template-' . $template['slug'],
+							'class' => 'm-link'
+						),
+						'edit' => array(
+							'title' => lang('edit_template'),
+							'href' => ee('CP/URL',EXT_SETTINGS_PATH.'/email/edit_template/'. $template['name'])
+						)
+					)
+				),
+				array(
+					'name'  => 'selection[]',
+					'value' => $template['slug'],
+					'data'	=> array(
+						'confirm' => lang('view_template_cache') . ': <b>' . $template['subject'] . '</b>'
+					)
+				)
+			);
+			
+			$vars['templates'][] = $template;
+		}
+
+		//console_message($vars, __METHOD__);
+		$table->setData($data);
+		$count = 1;
+		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/view_templates');
+		$vars['table'] = $table->viewData($base_url);
+
+		$vars['pagination'] = ee('CP/Pagination', $count)
+			->currentPage($page)
+			->render($vars['table']['base_url']);
+
+		// Set search results heading
+		if ( ! empty($vars['table']['search']))
+		{
+			ee()->view->cp_heading = sprintf(
+				lang('search_results_heading'),
+				$vars['table']['total_rows'],
+				htmlspecialchars($vars['table']['search'], ENT_QUOTES, 'UTF-8')
+			);
+		}
+
+		$vars['cp_page_title'] = lang('view_template_cache');
+		ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache') . ': <b>### ' . lang('templates') . '</b>');
+
+		// ee()->cp->add_js_script(array( 'file' => array('cp/confirm_remove'),));
+		$vars['base_url'] = $base_url;
+		$vars['cp_page_title'] = lang('view_template_cache');
+		ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache') . ': <b>### ' . lang('templates') . '</b>');
+		$vars['current_service'] = __FUNCTION__;
+		$vars['save_btn_text'] = "";
+		$vars['save_btn_text_working'] = "";
+		$vars['sections'] = array();
+
+		//console_message($vars, __METHOD__);
+		return $vars;
+	}
+
+	public function delete_template($template_name){
+		$data = array(
+			"name" => $template_name,
+			"key" => $this->_get_mandrill_api()
+		);
+		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
+		return $this->curl_request($api_endpoint, $this->headers, $data, TRUE);
+	}
 	/**
 	 * Check for recipients
 	 *
