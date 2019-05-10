@@ -411,6 +411,12 @@ class Composer {
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 		
+		// $fp = new FilePicker();
+		// console_message($fp, __METHOD__);
+		// $fp->inject(ee()->view);
+		// $fp_control = ee('CP/URL')->make($fp->controller, array('directory' => 'all', 'type' => 'csv'));
+		
+		
 		$vars['sections'] =	array( 
 			'your_email' => array(
 				'' => form_input(lang('your_email'), $default['from'],'required=true')
@@ -421,7 +427,7 @@ class Composer {
 				'' => form_button(
 						'btnDump',
 						'Dump Hidden Values', 
-						'onClick="dumpHiddenVals()" '),
+						'class="btn" onClick="dumpHiddenVals()" '),
 				'' => form_hidden('csv_object'),
 				'' => form_hidden('mailKey'),
 				'' => '<span id="csv_errors"></span>',
@@ -432,9 +438,11 @@ class Composer {
 						'rows' => '10',
 						'class' => 'required',
 					)
-				).BR.BR.form_button('convert_csv','Convert CSV','class=\'btn1\'').BR.form_button('btnReset','Reset CSV Data','class=\'btn1\'').BR.,		
+				).BR.BR,
+				'' => form_button('convert_csv','Convert CSV','class="btn"'),
+				'' =>  form_button('btnReset','Reset CSV Data', 'class="btn"'),		
 				'primary_recipients' => form_input('recipient', $default['recipient']),
-				' ' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
+				'' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
 			),
 			'compose_email_detail' =>array(
 				'subject' => form_input('subject', $default['subject']),

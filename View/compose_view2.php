@@ -9,7 +9,7 @@
                 <h2><?php echo lang($fieldset);?></h2>
             <?php if (is_array($sections[$fieldset])): ?>    
                 <?php foreach(array_keys($sections[$fieldset]) as $el_name): ?>
-                    <?php if (!in_array($el_name,array('',' '))): ?>                       
+                    <?php if (!in_array($el_name,array('',' '))): ?>        
                         <div class='field-instruct'>
                         <?php echo lang($el_name, $el_name); ?> 
                         <em><?=lang($el_name . '_desc');?></em>
@@ -18,6 +18,7 @@
                     <div class="field_control">
                     <?=$sections[$fieldset][$el_name];?>
                     </div>
+
                 <?php endforeach; ?>       
             <?php else: ?>    
                 <?=$sections[$fieldset];?>
