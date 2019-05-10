@@ -411,12 +411,6 @@ class Composer {
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 		
-		// $fp = new FilePicker();
-		// console_message($fp, __METHOD__);
-		// $fp->inject(ee()->view);
-		// $fp_control = ee('CP/URL')->make($fp->controller, array('directory' => 'all', 'type' => 'csv'));
-		
-		
 		$vars['sections'] =	array( 
 			'your_email' => array(
 				'' => form_input(lang('your_email'), $default['from'],'required=true')
@@ -436,94 +430,27 @@ class Composer {
 						'name' => 'csv_recipient',
 						'id' => 'csv_recipient',
 						'rows' => '10',
-						'class' => 'required',
 					)
-				).BR.BR,
-				'' => form_button('convert_csv','Convert CSV','class="btn"'),
-				'' =>  form_button('btnReset','Reset CSV Data', 'class="btn"'),		
-				'primary_recipients' => form_input('recipient', $default['recipient']),
-				'' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
+				).BR.form_button('convert_csv','Convert CSV','class="btn"').BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,		
+				'primary_recipients' => form_input(array(
+					'name'=> 'recipient',
+					'required' => "true"
+				), $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>',
+				'use_templates' => form_yes_no_toggle('use_templates', 'n')
+			),
+			'view_template_cache' => array(
+				'view_template' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
 			),
 			'compose_email_detail' =>array(
 				'subject' => form_input('subject', $default['subject']),
-			// 	array(
-			// 		'title' => 'email_subject',
-			// 		'fields' => array(
-			// 			'subject' => array(
-			// 				'type' => 'text',
-			// 				'required' => TRUE,
-			// 				'value' => $default['subject']
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		// 'title' => 'use_template',
-			// 		'fields' => array(
-			// 			'use_template' => array(
-			// 				'type' => 'html',
-			// 				'content' => form_button(array(
-			// 					'name' => 'use_template',
-			// 					'id'   => 'use_template',
-			// 					'class' => 'btn',
-			// 					'content' => lang('use_template')
-			// 				))
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'email_body',
-			// 		'fields' => array(
-			// 			'message' => array(
-			// 				'type' => 'html',
-			// 				'content' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
-			// 					->render($default + $vars),
-			// 				'required' => TRUE
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'plaintext_body',
-			// 		'desc' => 'plaintext_alt',
-			// 		'fields' => array(
-			// 			'plaintext_alt' => array(
-			// 				'type' => 'textarea',
-			// 				'value' => $default['plaintext_alt'],
-			// 				'required' => TRUE
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'attachment',
-			// 		'desc' => 'attachment_desc',
-			// 		'fields' => array(
-			// 			'attachment' => array(
-			// 				'type' => 'file'
-			// 			)
-			// 		)
-			// 	)
-			// ),
-				
-			// 'other_recipient_options' => array(	
-			// 	array(
-			// 		'title' => 'cc_recipients',
-			// 		'desc' => 'cc_recipients_desc',
-			// 		'fields' => array(
-			// 			'cc' => array(
-			// 				'type' => 'text',
-			// 				'value' => $default['cc']
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'bcc_recipients',
-			// 		'desc' => 'bcc_recipients_desc',
-			// 		'fields' => array(
-			// 			'bcc' => array(
-			// 				'type' => 'text',
-			// 				'value' => $default['bcc']
-			// 			)
-					// )
-				)
+				'message' =>  ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
+				'plaintext_alt' => form_textarea('plaintext_alt',$default['plaintext_alt']),
+				'attachment' => form_upload('attachment')
+			),
+			'other_recipient_options' => array(
+				'cc_recipients' => form_input('cc_recipients', $default['cc']),
+				'bcc_recipients' => form_input('bcc_recipients', $default['bcc']),
+			),
 			
 		);
 

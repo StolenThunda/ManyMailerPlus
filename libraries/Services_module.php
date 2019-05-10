@@ -59,13 +59,11 @@ class Services_module {
 		$this->services = ee()->config->item('services', 'services'); 
 		$this->settings = $settings;
 		$this->dbg_msgs = new MessageArray();
+		$this->service_order = $this->getServiceOrder($this->get_settings());
 	}
 
-	function settings_form($all_settings)
-	{	    				
-		$settings = $this->get_settings();
+	function getServiceOrder($settings){
 		$services_sorted = array();
-		
 		if(ee('Request')->isAjax() && $services = ee('Request')->post('service_order'))
 		{
 			$all_settings[$this->site_id]['service_order'] = explode(',', $services);
@@ -87,6 +85,35 @@ class Services_module {
 				$services_sorted[$service] = $service_settings;
 			}
 		}
+		return $services_sorted;
+	}
+	function settings_form($all_settings)
+	{	    				
+		$settings = $this->get_settings();
+		$services_sorted = $this->getServiceOrder($settings);
+		
+		// if(ee('Request')->isAjax() && $services = ee('Request')->post('service_order'))
+		// {
+		// 	$all_settings[$this->site_id]['service_order'] = explode(',', $services);
+		// 	$this->model->settings = $all_settings;
+		// 	$this->model->save();
+		// 	exit();
+		// }	
+		// // Look at custom service order
+		// foreach($settings['service_order'] as $service)
+		// {
+		// 	$services_sorted[$service] = $this->services[$service];
+		// }
+
+		// // Add any services were not included in the custom order
+		// foreach($this->services as $service => $service_settings)
+		// {
+		// 	if(empty($services_sorted[$service]))
+		// 	{
+		// 		$services_sorted[$service] = $service_settings;
+		// 	}
+		// }
+		
 		$vars = array(
 			'debug' => $this->debug,
 			'current_service' => false,

@@ -65,7 +65,7 @@
     align-items: flex-start !important;
 }
 
-span>ul {
+span>ul, parsley-errors-list>ul {
     color: red !important;
     padding: 0 20px !important;
     margin: 10px 0 !important;
@@ -198,6 +198,7 @@ span>ul {
 }
 
 .btn1 {
+    display: block !important;
     background-color: #01bf75;
     border: 1px solid #01bf75;
     color: #fff;
