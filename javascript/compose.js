@@ -191,6 +191,8 @@ var $sections = $('.form-section');
         - selected template -> email detail w/ temp
 
 */
+console.log($sections.data('slug'));
+
 function navigateTo(index) {
     index = pageCheck(index);
     // Mark the current section with the class 'current'

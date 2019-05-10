@@ -14,9 +14,14 @@
 
 		<?php if ( ! empty($table['columns']) && ! empty($table['data'])): ?>
 			<fieldset class="tbl-bulk-act hidden">
+				
 				<select name="bulk_action">
 					<option value="">-- <?=lang('with_selected')?> --</option>
-					<option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove"><?=lang('remove')?></option>
+					<?php if ($this->enabled('remove')): ?>
+						<option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove"><?=lang('remove')?></option>
+					<? else: ?>
+						<option value="use" data-confirm-trigger="selected" rel="modal-confirm-use"><?=lang('use')?></option>
+					<?php endif; ?>
 				</select>
 				<button class="btn submit" data-conditional-modal="confirm-trigger" ><?=lang('submit')?></button>
 			</fieldset>

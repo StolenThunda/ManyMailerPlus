@@ -411,6 +411,8 @@ class Composer {
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 		
+		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/templates');
+		$template_view->disable(array('remove', 'data-attribute'));
 		$vars['sections'] =	array( 
 			'your_email' => array(
 				'' => form_input(lang('your_email'), $default['from'],'required=true')
@@ -439,7 +441,7 @@ class Composer {
 				'use_templates' => form_yes_no_toggle('use_templates', 'n')
 			),
 			'view_template_cache' => array(
-				'view_template' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
+				'view_template' => $template_view->render($this->view_templates()),
 			),
 			'compose_email_detail' =>array(
 				'subject' => form_input('subject', $default['subject']),
@@ -453,6 +455,7 @@ class Composer {
 			),
 			
 		);
+
 
 		// if (ee()->cp->allowed_group('can_email_member_groups'))
 		// {
