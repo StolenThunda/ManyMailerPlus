@@ -12,7 +12,7 @@
         </div>
 
     <?php foreach(array_keys($sections) as $fieldset): ?>
-        <div class="form-section">                  
+        <div class="form-section"data-slug="<?=$fieldset;?>">                  
                 <h2>Step <?php echo ++$iter; ?>: <?php echo lang($fieldset);?></h2>
             <?php if (is_array($sections[$fieldset])): ?>    
                 <?php foreach(array_keys($sections[$fieldset]) as $el_name): ?>

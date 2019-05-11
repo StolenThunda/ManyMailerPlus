@@ -410,8 +410,12 @@ class Composer {
 		{
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
-		
+
 		$form_cls = ' class="form-control"';
+
+		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/templates');
+		$template_view->disable(array('remove', 'data-attribute'));
+
 		$vars['sections'] =	array( 
 			'your_email' => array(
 				' ' => form_input(lang('your_email'), $default['from'],'required=true', $form_cls)
@@ -431,23 +435,31 @@ class Composer {
 						'name' => 'csv_recipient',
 						'id' => 'csv_recipient',
 						'rows' => '10',
-						'class' => 'required',
-					), '','required=true', $form_cls
-				).BR.BR.form_button('convert_csv','Convert CSV','class="btn"').BR.BR.form_button('bnReset','Reset CSV Data', 'class="btn"'),		
-				'primary_recipients' => form_input('recipient', $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>',
+
+					)
+				).BR.form_button('convert_csv','Convert CSV','class="btn"').BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,		
+				'primary_recipients' => form_input(array(
+					'name'=> 'recipient',
+					'required' => "true"
+				), $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>',
+				'use_templates' => form_yes_no_toggle('use_templates', 'n')
+			),
+			'view_template_cache' => array(
+				'view_template' => $template_view->render($this->view_templates()),
 			),
 			'compose_email_detail' =>array(
-				'subject' => form_input('subject', $default['subject'],'required=true', $form_cls),
-				'email_body' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
-								->render($default + $vars),
-				'plaintext_body' => form_textarea('plaintext_body',$default['plaintext_alt'] ,'required=true', $form_cls),
-				'attachment' => form_upload('attachment_desc')
+				'subject' => form_input('subject', $default['subject']),
+				'message' =>  ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
+				'plaintext_alt' => form_textarea('plaintext_alt',$default['plaintext_alt']),
+				'attachment' => form_upload('attachment')
 			),
-			'other_recipient_options' => array(	
-				'cc_recipients' => form_input('cc_recipients', $default['cc'],'required=true', $form_cls),
-				'bcc_recipients' => form_input('bcc_recipients', $default['bcc'],'required=true', $form_cls),
-			)
+			'other_recipient_options' => array(
+				'cc_recipients' => form_input('cc_recipients', $default['cc']),
+				'bcc_recipients' => form_input('bcc_recipients', $default['bcc']),
+			),
+
 		);
+
 
 		// if (ee()->cp->allowed_group('can_email_member_groups'))
 		// {
