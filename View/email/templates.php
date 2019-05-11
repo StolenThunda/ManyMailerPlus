@@ -6,7 +6,10 @@
 			<input placeholder="<?=lang('type_phrase')?>" type="text" name="search" value="<?=htmlentities($table['search'], ENT_QUOTES, 'UTF-8')?>">
 			<input class="btn submit" type="submit" value="<?=lang('search_templates_button')?>">
 		</fieldset>
-		<h1><?php echo isset($cp_heading) ? $cp_heading : $cp_page_title?></h1>
+		
+		<h1><?php if ($this->enabled('remove')): ?><?php echo isset($cp_heading) ? $cp_heading : $cp_page_title?><?php endif; ?></h1>
+	
+		
 		<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
 		<?php $this->embed('ee:_shared/table', $table); ?>
 
@@ -19,7 +22,7 @@
 					<option value="">-- <?=lang('with_selected')?> --</option>
 					<?php if ($this->enabled('remove')): ?>
 						<option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove"><?=lang('remove')?></option>
-					<? else: ?>
+					<?php else: ?>
 						<option value="use" data-confirm-trigger="selected" rel="modal-confirm-use"><?=lang('use')?></option>
 					<?php endif; ?>
 				</select>
@@ -66,8 +69,20 @@
 		</div>
 		<?php ee('CP/Modal')->endModal(); ?>
 <?php endforeach; ?>
+
 <?php endif; ?>
 <?php
+$modal_vars = array(
+	'name'      => 'modal-confirm-us',
+	'title'     => 'Use Template',
+	'form_url'	=> $table['base_url'],
+	'hidden'	=> array(
+		'bulk_action'	=> 'use'
+	)
+);
+
+$modal = $this->make('ee:_shared/modal_confirm_remove')->render($modal_vars);
+ee('CP/Modal')->addModal('remove', $modal);
 $modal_vars = array(
 	'name'      => 'modal-confirm-remove',
 	'form_url'	=> $table['base_url'],

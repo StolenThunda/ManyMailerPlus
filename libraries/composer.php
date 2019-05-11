@@ -418,7 +418,7 @@ class Composer {
 
 		$vars['sections'] =	array( 
 			'your_email' => array(
-				' ' => form_input(lang('your_email'), $default['from'],'required=true', $form_cls)
+				'' => form_input(lang('your_email'), $default['from'],'required=true', $form_cls)
 			),
 			'recipient_options' => array(
 				'' => form_hidden('files[]', 0, 'id="files"'),
@@ -440,15 +440,12 @@ class Composer {
 				).BR.form_button('convert_csv','Convert CSV','class="btn"').BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,		
 				'primary_recipients' => form_input(array(
 					'name'=> 'recipient',
-					'required' => "true"
-				), $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>',
-				'use_templates' => form_yes_no_toggle('use_templates', 'n')
-			),
-			'view_template_cache' => array(
-				'view_template' => $template_view->render($this->view_templates()),
+					// 'required' => "true"
+				), $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>'.BR.NBS
 			),
 			'compose_email_detail' =>array(
 				'subject' => form_input('subject', $default['subject']),
+				'use_templates' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()),
 				'message' =>  ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
 				'plaintext_alt' => form_textarea('plaintext_alt',$default['plaintext_alt']),
 				'attachment' => form_upload('attachment')
@@ -497,8 +494,7 @@ class Composer {
 				ee('CP/URL')->make(EXT_SETTINGS_PATH .'/email')->compile() => lang('email_title')
 			),
 			'heading' => $vars['cp_page_title']
-			);
-		// return $vars;
+		);
 	}
 	public function edit_template($template_name = "")
 	{
@@ -1610,7 +1606,7 @@ class Composer {
 		$content = json_encode($data);
 		console_message($api_endpoint . $content, __METHOD__);
 		$templates = $this->curl_request($api_endpoint, $this->headers, $content, TRUE);
-		// console_message($templates, __METHOD__);
+		 console_message($templates, __METHOD__);
 		return $templates;
 	}
 	/**
@@ -1619,7 +1615,7 @@ class Composer {
 	function curl_request($server, $headers = array(), $content, $return_data = FALSE, $htpw = null)
 	{	
 		$content = (is_array($content) ? json_encode($content) : $content);
-		// console_message($server  . $content, __METHOD__);
+		console_message($server  . $content, __METHOD__);
 		$ch = curl_init($server);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($ch, CURLOPT_POST, 1);
@@ -1653,9 +1649,9 @@ class Composer {
 		$curl_error = curl_error($ch);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
-		console_message($status, __METHOD__);
-		$result = ($return_data) ? json_decode($status, TRUE) : TRUE;
-		console_message($result, __METHOD__);
+		console_message($http_code . ' ' . json_encode($status), __METHOD__);
+		$result = ($return_data) ? json_decode($status) : TRUE;
+		// console_message($result, __METHOD__);
 		// ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
 		return ($http_code != 200 && ! $return_data) ? false : json_decode(json_encode($result), TRUE);
 	}	

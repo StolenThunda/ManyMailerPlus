@@ -83,7 +83,10 @@ $lang = array(
 	'sent_name' => 'View Sent Mail',
 	'your_email' => 'Email of Sender',
 	'email_subject' => 'Email Subject',
-	'email_body' => 'Email Body',
+	'message' => 'Email Body',
+	'message_desc' => '',
+	'plaintext_alt' => 'Plain text body',
+	'plaintext_alt_desc' => 'Alternate content for your HTML Email, will be delivered in Plain Text, when an Email application cannot render HTML',
 	'attachment' => 'Attachment',
 	'attachment_desc' => 'Attachments are not saved, after sending.',
 	'recipient_options' => 'CSV Recipient Options',
@@ -145,6 +148,10 @@ $lang = array(
 	'labels_desc' => 'an optional array of up to 10 labels to use for filtering purposes',
 	'save_template_error' => 'Error Saving Template',
 	'save_template_error_desc' => 'We were unable to save this template in it\'s current state. Please fix errors below',
-	'use_template' => 'Use Template'
+	'use_template' => 'Use Template',
+	'no_cached_templates' => 'No <b>mail templates</b> found!',
+	'create_new_template' => 'Create New Template',
+	'use_templates' => 'Use Template',
+	'use_templates_desc' => 'Templates from the first service in the service order will be available'
 
 );

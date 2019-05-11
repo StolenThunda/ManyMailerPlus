@@ -65,7 +65,8 @@
     align-items: flex-start !important;
 }
 
-span>ul, parsley-errors-list>ul {
+span>ul,
+parsley-errors-list>ul {
     color: red !important;
     padding: 0 20px !important;
     margin: 10px 0 !important;
@@ -194,7 +195,7 @@ span>ul, parsley-errors-list>ul {
 }
 
 .form-section.current {
-    display: inherit;
+    display: inherit !important;
 }
 
 .btn1 {
@@ -212,10 +213,11 @@ span>ul, parsley-errors-list>ul {
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
-    -moz-box-shadow: 0 1px 0 0 rgba(255,255,255,.3)inset,0 1px 4px 0 rgba(0,0,0,.1);
-    -webkit-box-shadow: 0 1px 0 0 rgba(255,255,255,.3)inset,0 1px 4px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 0 0 rgba(255,255,255,.3)inset,0 1px 4px 0 rgba(0,0,0,.1);
+    -moz-box-shadow: 0 1px 0 0 rgba(255, 255, 255, .3)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
+    -webkit-box-shadow: 0 1px 0 0 rgba(255, 255, 255, .3)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, .3)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
 }
+
 .btn-info,
 .btn-default {
     margin-top: 10px;
