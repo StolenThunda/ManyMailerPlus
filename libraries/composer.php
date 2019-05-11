@@ -411,15 +411,10 @@ class Composer {
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 		
-		// $fp = new FilePicker();
-		// console_message($fp, __METHOD__);
-		// $fp->inject(ee()->view);
-		// $fp_control = ee('CP/URL')->make($fp->controller, array('directory' => 'all', 'type' => 'csv'));
-		
-		
+		$form_cls = ' class="form-control"';
 		$vars['sections'] =	array( 
 			'your_email' => array(
-				'' => form_input(lang('your_email'), $default['from'],'required=true')
+				' ' => form_input(lang('your_email'), $default['from'],'required=true', $form_cls)
 			),
 			'recipient_options' => array(
 				'' => form_hidden('files[]', 0, 'id="files"'),
@@ -437,108 +432,36 @@ class Composer {
 						'id' => 'csv_recipient',
 						'rows' => '10',
 						'class' => 'required',
-					)
-				).BR.BR,
-				'' => form_button('convert_csv','Convert CSV','class="btn"'),
-				'' =>  form_button('btnReset','Reset CSV Data', 'class="btn"'),		
-				'primary_recipients' => form_input('recipient', $default['recipient']),
-				'' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
+					), '','required=true', $form_cls
+				).BR.BR.form_button('convert_csv','Convert CSV','class="btn"').BR.BR.form_button('bnReset','Reset CSV Data', 'class="btn"'),		
+				'primary_recipients' => form_input('recipient', $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>',
 			),
 			'compose_email_detail' =>array(
-				'subject' => form_input('subject', $default['subject']),
-			// 	array(
-			// 		'title' => 'email_subject',
-			// 		'fields' => array(
-			// 			'subject' => array(
-			// 				'type' => 'text',
-			// 				'required' => TRUE,
-			// 				'value' => $default['subject']
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		// 'title' => 'use_template',
-			// 		'fields' => array(
-			// 			'use_template' => array(
-			// 				'type' => 'html',
-			// 				'content' => form_button(array(
-			// 					'name' => 'use_template',
-			// 					'id'   => 'use_template',
-			// 					'class' => 'btn',
-			// 					'content' => lang('use_template')
-			// 				))
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'email_body',
-			// 		'fields' => array(
-			// 			'message' => array(
-			// 				'type' => 'html',
-			// 				'content' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
-			// 					->render($default + $vars),
-			// 				'required' => TRUE
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'plaintext_body',
-			// 		'desc' => 'plaintext_alt',
-			// 		'fields' => array(
-			// 			'plaintext_alt' => array(
-			// 				'type' => 'textarea',
-			// 				'value' => $default['plaintext_alt'],
-			// 				'required' => TRUE
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'attachment',
-			// 		'desc' => 'attachment_desc',
-			// 		'fields' => array(
-			// 			'attachment' => array(
-			// 				'type' => 'file'
-			// 			)
-			// 		)
-			// 	)
-			// ),
-				
-			// 'other_recipient_options' => array(	
-			// 	array(
-			// 		'title' => 'cc_recipients',
-			// 		'desc' => 'cc_recipients_desc',
-			// 		'fields' => array(
-			// 			'cc' => array(
-			// 				'type' => 'text',
-			// 				'value' => $default['cc']
-			// 			)
-			// 		)
-			// 	),
-			// 	array(
-			// 		'title' => 'bcc_recipients',
-			// 		'desc' => 'bcc_recipients_desc',
-			// 		'fields' => array(
-			// 			'bcc' => array(
-			// 				'type' => 'text',
-			// 				'value' => $default['bcc']
-			// 			)
-					// )
-				)
-			
+				'subject' => form_input('subject', $default['subject'],'required=true', $form_cls),
+				'email_body' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
+								->render($default + $vars),
+				'plaintext_body' => form_textarea('plaintext_body',$default['plaintext_alt'] ,'required=true', $form_cls),
+				'attachment' => form_upload('attachment_desc')
+			),
+			'other_recipient_options' => array(	
+				'cc_recipients' => form_input('cc_recipients', $default['cc'],'required=true', $form_cls),
+				'bcc_recipients' => form_input('bcc_recipients', $default['bcc'],'required=true', $form_cls),
+			)
 		);
 
 		// if (ee()->cp->allowed_group('can_email_member_groups'))
 		// {
 		// 	$vars['sections']['other_recipient_options'][] = array(
-		// 		'title' => 'add_member_groups',
-		// 		'desc' => 'add_member_groups_desc',
-		// 		'fields' => array(
-		// 			'member_groups' => array(
-		// 				'type' => 'checkbox',
-		// 				'choices' => $member_groups,
-		// 				'disabled_choices' => $disabled_groups,
-		// 			)
-		// 		)
+		// 		'add_member_groups' => form_checkbox('add_member_groups', )
+		// 		// 'title' => 'add_member_groups',
+		// 		// 'desc' => 'add_member_groups_desc',
+		// 		// 'fields' => array(
+		// 		// 	'member_groups' => array(
+		// 		// 		'type' => 'checkbox',
+		// 		// 		'choices' => $member_groups,
+		// 		// 		'disabled_choices' => $disabled_groups,
+		// 		// 	)
+		// 		// )
 		// 	);
 		// }
 		$vars['cp_page_title'] = lang('compose_heading');
