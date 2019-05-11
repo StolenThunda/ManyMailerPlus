@@ -1,11 +1,11 @@
-$(document).ready(function () {
+$(document).ready(function() {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
     // Licensed under MIT
-    (function ($) {
+    (function($) {
         // Behind the scenes method deals with browser
         // idiosyncrasies and such
-        $.caretTo = function (el, index) {
+        $.caretTo = function(el, index) {
             if (el.createTextRange) {
                 var range = el.createTextRange();
                 range.move('character', index);
@@ -21,8 +21,8 @@ $(document).ready(function () {
         // jQuery effects.
 
         // Set caret to a particular index
-        $.fn.caretTo = function (index, offset) {
-            return this.queue(function (next) {
+        $.fn.caretTo = function(index, offset) {
+            return this.queue(function(next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
                     if (i == -1) i = $(this).text().indexOf(index);
@@ -42,22 +42,20 @@ $(document).ready(function () {
         };
 
         // Set caret to beginning of an element
-        $.fn.caretToStart = function () {
+        $.fn.caretToStart = function() {
             return this.caretTo(0);
         };
 
         // Set caret to the end of an element
-        $.fn.caretToEnd = function () {
-            return this.queue(function (next) {
+        $.fn.caretToEnd = function() {
+            return this.queue(function(next) {
                 $.caretTo(this, $(this).val().length);
                 next();
             });
         };
     })(jQuery);
 
-
-
-    $('input[readonly]').click(function () {
+    $('input[readonly]').click(function() {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
     var service_list = $('h2:contains("Services")').next('ul');
@@ -66,7 +64,7 @@ $(document).ready(function () {
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
-        $.each(service_list.children(), function () {
+        $.each(service_list.children(), function() {
             var list_item = $(this).text().toLowerCase();
             if (active_services && active_services.indexOf(list_item) > -1) {
                 $(this).addClass('enabled-service');
@@ -79,9 +77,9 @@ $(document).ready(function () {
         $('.service-list').sortable({
             axis: 'y',
             opacity: 0.5,
-            update: function () {
+            update: function() {
                 var serviceOrder = [];
-                $('.service-list li').each(function () {
+                $('.service-list li').each(function() {
                     serviceOrder.push($(this).data('service'));
                 });
                 $.post($('.service-list').data('actionUrl'), {
@@ -98,7 +96,7 @@ $(document).ready(function () {
         return 'escortService';
     }
     $.fn.extend({
-        val_with_linenum: function (v) {
+        val_with_linenum: function(v) {
             return this.each(() => {
                 $(this).val(v).trigger('input');
             });
@@ -111,7 +109,7 @@ $(document).ready(function () {
         rel = e.target.rel;
         sweetAlertbyID(`.${rel}`);
     });
-    $('body').on('click', '*[data-conditional-modal]', function (e) {
+    $('body').on('click', '*[data-conditional-modal]', function(e) {
         e.preventDefault();
         $('.modal-confirm-remove').hide();
         swal
@@ -150,7 +148,7 @@ $(document).ready(function () {
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function (e) {
+                    reader.onload = function(e) {
                         $('#csv_recipient').val_with_linenum(reader.result);
                     };
                     reader.readAsText(file);
@@ -178,7 +176,7 @@ $(document).ready(function () {
         parseData(val.trim());
     });
 
-    $('body').on('click', '*[data-conditional-modal]', function (e) {
+    $('body').on('click', '*[data-conditional-modal]', function(e) {
         e.preventDefault();
     });
 });
@@ -210,18 +208,18 @@ function curIndex() {
 }
 
 // Previous button is easy, just go back
-$('.form-navigation .previous').click(function () {
+$('.form-navigation .previous').click(function() {
     navigateTo(curIndex() - 1);
 });
 
 // Next button goes forward iff current block validates
-$('.form-navigation .next').click(function () {
+$('.form-navigation .next').click(function() {
     $('.demo-form')
         .parsley()
         .whenValidate({
             group: 'block-' + curIndex()
         })
-        .done(function () {
+        .done(function() {
             navigateTo(curIndex() + 1);
         });
 });
@@ -230,31 +228,8 @@ function getCurrentSlug() {
     return $sections.filter('.current').data('slug');
 }
 
-function pageCheck(idx) {
-    current = getCurrentSlug();
-    show_temp_sect = $('input[name=use_templates]:checked').val();
-    console.log(`Current Idx: ${idx}`)
-    debugger;
-    switch (current) {
-        case 'recipient_options':
-
-            if (show_temp_sect === 'n') ++idx;
-            console.log(`ShowTemp: ${show_temp_sect}`);
-            break;
-        case 'compose_email_detail':
-            if (show_temp_sect === 'n') ++idx;
-            console.log(`ShowTemp: ${show_temp_sect}`);
-            break;
-        case 'view_template_cache':
-            // --idx;
-        default:
-            break;
-    }
-    console.log(`PageCk Idx: ${idx}`)
-    return idx;
-}
 // Prepare sections by setting the `data-parsley-group` attribute to 'block-0', 'block-1', etc.
-$sections.each(function (index, section) {
+$sections.each(function(index, section) {
     $(section).find(':input').attr('data-parsley-group', 'block-' + index);
 });
 navigateTo(0); // Start at the beginning
@@ -499,7 +474,7 @@ function showPlaceholders(headers) {
         var test = $('<button/>', {
                 class: 'btn placeholder',
                 text: el,
-                click: function () {
+                click: function() {
                     var plain = $("textarea[name='plaintext_alt']");
                     var msg = $("textarea[name='message']");
                     var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
@@ -649,9 +624,9 @@ function initTable(data) {
     return $('#csv_content').addClass('fixed_header display').DataTable({
         defaultContent: '',
         dom: '<"top"i>rt<"bottom"flp><"clear">',
-        initComplete: function () {
+        initComplete: function() {
             var api = this.api();
-            api.$('td').click(function () {
+            api.$('td').click(function() {
                 api.search(this.innerHTML).draw();
             });
         },
@@ -717,7 +692,7 @@ function sweetAlertbyID(id) {
 
 function dumpHiddenVals() {
     var msg = $('<table/>');
-    $('input[type="hidden"]').each(function () {
+    $('input[type="hidden"]').each(function() {
         var val = $(this).val();
         val = val.length > 100 ? val.substring(0, 100) + '...' : val;
         console.log($(this).attr('name') + ': ' + $(this).val());
@@ -733,7 +708,7 @@ function dumpHiddenVals() {
 
 const TLN = {
     eventList: {},
-    update_line_numbers: function (ta, el) {
+    update_line_numbers: function(ta, el) {
         let lines = ta.value.split('\n').length;
         let child_count = el.children.length;
         let difference = lines - child_count;
@@ -753,7 +728,7 @@ const TLN = {
             difference++;
         }
     },
-    append_line_numbers: function (id) {
+    append_line_numbers: function(id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -777,8 +752,8 @@ const TLN = {
             'keydown',
             'keyup'
         ];
-        const __change_hdlr = (function (ta, el) {
-            return function (e) {
+        const __change_hdlr = (function(ta, el) {
+            return function(e) {
                 if (
                     (+ta.scrollLeft == 10 &&
                         (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
@@ -809,8 +784,8 @@ const TLN = {
             'mousewheel',
             'scroll'
         ];
-        const __scroll_hdlr = (function (ta, el) {
-            return function () {
+        const __scroll_hdlr = (function(ta, el) {
+            return function() {
                 el.scrollTop = ta.scrollTop;
             };
         })(ta, el);
@@ -822,7 +797,7 @@ const TLN = {
             });
         }
     },
-    remove_line_numbers: function (id) {
+    remove_line_numbers: function(id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
