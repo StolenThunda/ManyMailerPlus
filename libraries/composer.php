@@ -126,6 +126,9 @@ class Composer {
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 
+		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/templates');
+		$template_view->disable(array('remove', 'data-attribute'));
+
 		$vars['sections'] = array(
 			array(
 				array(
@@ -137,56 +140,46 @@ class Composer {
 							'required' => TRUE
 						)
 					)
-				),
+				),				
+			),
+			'recipient_options' => array(
 				array(
-					'title' => 'your_email',
+					'title' => 'file_recipient',
+					'desc' => 'file_recipient_desc',
 					'fields' => array(
-						'from' => array(
-							'type' => 'text',
-							'value' => $default['from'],
-							'required' => TRUE
-						)
+						'files' => array(
+							'type' => 'html',
+							'content' => form_input(
+								array(
+									'id' => 'files',
+									'name' => 'files[]',
+									'type' => 'hidden',
+									'value' => '0'
+								)
+							)
+						),
+						'file_recipient' => array(
+							'type' => 'file',
+						'content' => ee('CP/FilePicker')
+								->make()
+								->getLink('Choose File')
+								->withValueTarget('files')
+								->render()
+						),
+						'dump_vars' => array(
+							'type' => 'hidden',
+							'content' => form_button('btnDump','Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"')
+						),
+						'csv_object' => array(
+							'type' => 'hidden',
+							'value' => ''
+						),
+						'mailKey' => array(
+							'type' => 'hidden',
+							'value' => ''
+						),
 					)
 				),
-			),
-				'recipient_options' => array(
-					array(
-						'title' => 'file_recipient',
-						'desc' => 'file_recipient_desc',
-						'fields' => array(
-							'files' => array(
-								'type' => 'html',
-								'content' => form_input(
-									array(
-										'id' => 'files',
-										'name' => 'files[]',
-										'type' => 'hidden',
-										'value' => '0'
-									)
-								)
-							),
-							'file_recipient' => array(
-								'type' => 'file',
-								'content' => ee('CP/FilePicker')
-									->make()
-									->getLink('Choose File')
-									->withValueTarget('files')
-									->render()
-							),
-							'dump_vars' => array(
-								'type' => 'hidden',
-								'content' => form_button('btnDump','Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"')
-							),
-							'csv_object' => array(
-								'type' => 'hidden',
-								'value' => ''
-							),
-							'mailKey' => array(
-								'type' => 'hidden',
-								'value' => ''
-							),
-						)
-					),
 					array(
 						'title' => 'csv_recipient',
 						'desc' => 'csv_recipient_desc',
@@ -233,18 +226,15 @@ class Composer {
 					)
 				),
 				array(
-					// 'title' => 'use_template',
+					'title' => 'use_templates',
+					'desc' => 'use_templates_desc',
 					'fields' => array(
 						'use_template' => array(
 							'type' => 'html',
-							'content' => form_button(array(
-								'name' => 'use_template',
-								'id'   => 'use_template',
-								'class' => 'btn',
-								'content' => lang('use_template')
-							))
+							'content' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()),
+							)
 						)
-					)
+					
 				),
 				array(
 					'title' => 'email_body',
@@ -408,7 +398,8 @@ class Composer {
 
 		if ($default['mailtype'] != 'html')
 		{
-			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
+			ee()->javascript->output('$("div[data-control=\'plaintext_alt\']").hide();');
+			// ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 
 		$form_cls = ' class="form-control"';
@@ -421,8 +412,12 @@ class Composer {
 				'' => form_input(lang('your_email'), $default['from'],'required=true', $form_cls)
 			),
 			'recipient_options' => array(
+				'recipient_entry' => form_dropdown('recipient_entry', array(
+					'file_recipient' => lang('upload'),
+					'csv_recipient' => lang('manual')
+				),'upload').BR.BR.BR.'<hr/>',
 				'' => form_hidden('files[]', 0, 'id="files"'),
-				'file_recipient' => BR.form_upload('file_recipient').BR.BR,		
+				'file_recipient' =>form_upload('file_recipient').BR.BR,		
 				'' => form_button(
 						'btnDump',
 						'Dump Hidden Values', 
@@ -437,11 +432,12 @@ class Composer {
 						'rows' => '10',
 
 					)
-				).BR.form_button('convert_csv','Convert CSV','class="btn"').BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,		
-				'primary_recipients' => form_input(array(
+				).BR.form_button('convert_csv','Convert CSV','class="btn"'),//.BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,		
+				'primary_recipients' =>form_input(array(
 					'name'=> 'recipient',
 					// 'required' => "true"
-				), $default['recipient']).BR.'<table class=\'fixed_header\' id=\'csv_content\'></table>'.BR.NBS
+				), $default['recipient']).BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" '),
+				'recipient_review' => '<table class=\'fixed_header\' id=\'csv_content\'></table>'.BR.NBS
 			),
 			'compose_email_detail' =>array(
 				'subject' => form_input('subject', $default['subject']),
@@ -2095,6 +2091,7 @@ class Composer {
 			ee()->view->set_message('success', lang('templates_removed'), '');
 			ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates/'));		
 		}
+
 		$table = ee('CP/Table', array('sort_col' => 'date', 'sort_dir' => 'desc'));
 		$table->setColumns(
 			array(

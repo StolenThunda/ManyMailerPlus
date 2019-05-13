@@ -223,5 +223,25 @@ parsley-errors-list>ul {
     margin-top: 10px;
 }
 
+[data-control] {
+    padding: 10px 10px 5px 5px;
+}
+
+.pull-left {
+    float: left;
+    margin-left: 10px;
+    position: inherit;
+}
+
+.pull-right {
+    float: right;
+    margin-right: 10px;
+    position: inherit;
+}
+
+.form-section {
+    padding-top: 5.5%
+}
+
 
 /* Endo of Line number CSS  */

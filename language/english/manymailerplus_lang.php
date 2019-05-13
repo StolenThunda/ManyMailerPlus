@@ -113,6 +113,10 @@ $lang = array(
 	'recipient_type' => 'Recipient Entry Method',
 	'recipient_type_desc' => "Default: Type email <br/>{$recip_csv_type}: Paste contents of CSV File <br/> {$recip_file_type}: Upload local CSV File", 
 	'recipients' => 'Recipient(s)',
+	'recipient_entry' => 'Recipient Entry Methods',
+	'recipient_entry_desc' => 'Choose a method of entry',
+	'recipient_review' => 'CSV Data',
+	'recipient_review_desc' => ' ',
 	'cc_recipients' => 'CC recipient(s)',
 	'cc_recipients_desc' => 'CC Email(s). Separate multiple recipients with a comma.',
 	'bcc_recipients' => 'BCC recipient(s)',
@@ -152,6 +156,8 @@ $lang = array(
 	'no_cached_templates' => 'No <b>mail templates</b> found!',
 	'create_new_template' => 'Create New Template',
 	'use_templates' => 'Use Template',
-	'use_templates_desc' => 'Templates from the first service in the service order will be available'
+	'use_templates_desc' => 'Templates from the first service in the service order will be available',
+	'upload' => 'Upload CSV File',
+	'manual' => 'Manual Entry of CSV Data',
 
 );

@@ -149,7 +149,9 @@ $(document).ready(function() {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
                     reader.onload = function(e) {
-                        $('#csv_recipient').val_with_linenum(reader.result);
+                        var selector = 'csv_recipient';
+                        $('#' + selector).val_with_linenum(reader.result);
+                        $('select[name=recipient_entry]').val(selector).trigger('change');
                     };
                     reader.readAsText(file);
                 } else {
@@ -167,9 +169,18 @@ $(document).ready(function() {
     $('input[name=recipient]').prop('readonly', true);
     $('input[name=recipient]').change(countEmails);
     $("select[name='mailtype']").change(messageType);
-    $('input[name=use_templates]').parent().find('div.table-list-wrap').toggle();
+
+    $('div[data-control=recipient_review').toggle();
+    $('div[data-control=csv_recipient').toggle();
+    $('select[name=recipient_entry]').change(function() {
+        $.each(this.options, function() {
+            $('div[data-control=' + $(this).val() + ']').fadeToggle('fast', 'linear')();
+        });
+    });
+
+    $('input[name=use_templates]').parent().find('div.table-list-wrap').fadeToggle('fast', 'linear');
     $('input[name=use_templates]').change(function() {
-        toggle = $(this).val() === 'y';
+        var toggle = $(this).val() === 'y';
         $(this).parent().find('div.table-list-wrap').toggle(toggle);
     });
     $('[name$=linenum], #reset').bind('click', (e) => {
@@ -179,6 +190,7 @@ $(document).ready(function() {
         resetRecipients();
         var val = $('#csv_recipient').val();
         parseData(val.trim());
+        $('select[name=recipient_entry]').val('file_recipient').trigger('change');
     });
 
     $('body').on('click', '*[data-conditional-modal]', function(e) {
@@ -255,6 +267,7 @@ function resetRecipients(all) {
 
     $('#placeholder').parent().remove();
     // reset table
+    $('div[data-control=recipient_review').toggle();
     var parent = $('#csv_content_wrapper').parent();
     parent.empty();
     var table = $("<table id='csv_content' class='fixed_header'></table>");
@@ -265,9 +278,9 @@ function resetRecipients(all) {
 
 function messageType() {
     if ($("select[name='mailtype']").val() === 'html') {
-        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).slideDown();
+        $("div[data-control='plaintext_alt']").slideDown();
     } else {
-        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).slideUp();
+        $("div[data-control='plaintext_alt']").slideUp();
     }
 }
 
