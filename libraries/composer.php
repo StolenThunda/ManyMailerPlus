@@ -9,6 +9,7 @@
  */
 use EllisLab\ExpressionEngine\Controller\Utilities;
 use EllisLab\ExpressionEngine\Library\CP\Table;
+use EllisLab\ExpressionEngine\Library\CP\GridInput;
 use EllisLab\ExpressionEngine\Model\Email\EmailCache;
 use EllisLab\Addons\FilePicker\FilePicker as FilePicker;
 /**
@@ -57,6 +58,7 @@ class Composer {
 	{
 		$default = array(
 			'from'		 	=> ee()->session->userdata('email'),
+			'from_name'     => ee()->session->userdata('screen_name'),
 			'recipient'  	=> '',
 			'cc'			=> '',
 			'bcc'			=> '',
@@ -126,23 +128,31 @@ class Composer {
 			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 
-		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/templates');
-		$template_view->disable(array('remove', 'data-attribute'));
-
+		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
+		
 		$vars['sections'] = array(
-			array(
+			'sender_info' => array(
 				array(
-					'title' => 'your_email',
+					'title' => 'from',
+					'desc' => 'from_email_desc',
 					'fields' => array(
 						'from' => array(
 							'type' => 'text',
-							'value' => $default['from'],
-							'required' => TRUE
+							'value' => $default['from']
+						)
+					)
+				),
+				array(
+					'title' => 'from_name',
+					'desc' => 'from_name_desc',
+					'fields' => array(
+						'from_name' => array(
+							'type' => 'text',
+							'value' => $default['from_name']
 						)
 					)
 				),				
 			),
-			
 			'recipient_options' => array(
 				array(
 					'title' => 'recipient_entry',
@@ -194,59 +204,52 @@ class Composer {
 						),
 					)
 				),
-					array(
-						'title' => 'csv_recipient',
-						'desc' => 'csv_recipient_desc',
-						'fields' => array(
-							'csv_errors' => array(
-								'type' => 'html',
-								'content' => '<span id="csv_errors"></span>'
-							),
-							'csv_recipient' => array(
-								'type' => 'html',
-								'content' => implode('<br />', $csvHTML)
-							),
-						)
-					),
-					array(
-						'title' => 'primary_recipients',
-						'desc' => 'primary_recipients_desc',
-						'fields' => array(
-							'recipient' => array(
-								'type' => 'text',
-								'value' => $default['recipient'],
-								'required' => true
-							),							
-							'csv_reset' => array(
-								'type' => 'html',
-								'content' => form_button('btnReset','Reset CSV Data', 'id="reset" class="btn"')
-							),
-							'csv_content' => array(
-								'type' => 'html',
-								'content' => '<table class=\'fixed_header\' id=\'csv_content\'></table>'
-							)
-						)
-					),
-				),
-			'compose_email_detail' =>array(
-				
 				array(
-					'title' => 'email_subject',
+					'title' => 'csv_recipient',
+					'desc' => 'csv_recipient_desc',
 					'fields' => array(
-						'subject' => array(
+						'csv_errors' => array(
+							'type' => 'html',
+							'content' => '<span id="csv_errors"></span>'
+						),
+						'csv_recipient' => array(
+							'type' => 'html',
+							'content' => implode('<br />', $csvHTML)
+						),
+					)
+				),
+				array(
+					'title' => 'primary_recipients',
+					'desc' => 'primary_recipients_desc',
+					'fields' => array(
+						'recipient' => array(
 							'type' => 'text',
-							'required' => TRUE,
-							'value' => $default['subject']
+							'value' => $default['recipient'],
+							'required' => true
+						),							
+						'csv_reset' => array(
+							'type' => 'html',
+							'content' => form_button('btnReset','Reset CSV Data', 'id="reset" class="btn"')
+						),
+						'csv_content' => array(
+							'type' => 'html',
+							'content' => '<table class=\'fixed_header\' id=\'csv_content\'></table>'
 						)
 					)
 				),
+			),
+			'compose_email_detail' =>array(		
 				array(
 					'title' => 'use_templates',
 					'desc' => 'use_templates_desc',
 					'fields' => array(
 						'use_template' => array(
 							'type' => 'html',
-							'content' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()),
+							'content' => form_yes_no_toggle('use_templates', FALSE),//.BR.BR. $template_view->render($this->view_templates()),
+						),
+						'template_list' => array(
+							'type' => 'html',
+							'content' =>  $template_view->render($this->view_templates()),
 						)
 					)					
 				),
@@ -264,7 +267,17 @@ class Composer {
 					)					
 				),
 				array(
-					'title' => 'email_body',
+					'title' => 'email_subject',
+					'fields' => array(
+						'subject' => array(
+							'type' => 'text',
+							'required' => TRUE,
+							'value' => $default['subject']
+						)
+					)
+				),
+				array(
+					'title' => 'message',
 					'fields' => array(
 						'message' => array(
 							'type' => 'html',
@@ -295,27 +308,27 @@ class Composer {
 				)
 			),
 				
-			'other_recipient_options' => array(	
-				array(
-					'title' => 'cc_recipients',
-					'desc' => 'cc_recipients_desc',
-					'fields' => array(
-						'cc' => array(
-							'type' => 'text',
-							'value' => $default['cc']
-						)
-					)
-				),
-				array(
-					'title' => 'bcc_recipients',
-					'desc' => 'bcc_recipients_desc',
-					'fields' => array(
-						'bcc' => array(
-							'type' => 'text',
-							'value' => $default['bcc']
-						)
+		'other_recipient_options' => array(	
+			array(
+				'title' => 'cc_recipients',
+				'desc' => 'cc_recipients_desc',
+				'fields' => array(
+					'cc' => array(
+						'type' => 'text',
+						'value' => $default['cc']
 					)
 				)
+			),
+			array(
+				'title' => 'bcc_recipients',
+				'desc' => 'bcc_recipients_desc',
+				'fields' => array(
+					'bcc' => array(
+						'type' => 'text',
+						'value' => $default['bcc']
+					)
+				)
+			)
 			)
 		);
 
@@ -358,6 +371,7 @@ class Composer {
 	{
 		$default = array(
 			'from'		 	=> ee()->session->userdata('email'),
+			'from_name'     => ee()->session->userdata('screen_name'),
 			'recipient'  	=> '',
 			'cc'			=> '',
 			'bcc'			=> '',
@@ -424,33 +438,34 @@ class Composer {
 
 		if ($default['mailtype'] != 'html')
 		{
-			ee()->javascript->output('$("div[data-control=\'plaintext_alt\']").hide();');
-			// ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
+			// ee()->javascript->output('$("div[data-control=\'plaintext_alt\']").hide();');
+			ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
 		}
 
 		$form_cls = ' class="form-control"';
 
-		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/templates');
-		$template_view->disable(array('remove', 'data-attribute'));
+		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
+		// $template_view->disable(array('remove', 'data-attribute'));
 
 		$vars['sections'] =	array( 
-			'your_email' => array(
-				'' => form_input(lang('your_email'), $default['from'],'required=true', $form_cls)
+			'sender_info' => array(
+				'from_email' => '*'.form_input('from_email', $default['from'],'required=true', $form_cls),
+				'from_name' => form_input('from_name', $default['from_name'])	
 			),
 			'recipient_options' => array(
 				'recipient_entry' => form_dropdown('recipient_entry', array(
 					'file_recipient' => lang('upload'),
 					'csv_recipient' => lang('manual')
-				),'upload').BR.BR.BR.'<hr/>',
+				),'upload'),
 				'' => form_hidden('files[]', 0, 'id="files"'),
-				'file_recipient' =>form_upload('file_recipient').BR.BR,		
+				'file_recipient' =>form_upload('file_recipient'),		
 				'' => form_button(
 						'btnDump',
 						'Dump Hidden Values', 
 						'class="btn" onClick="dumpHiddenVals()" '),
 				'' => form_hidden('csv_object'),
 				'' => form_hidden('mailKey'),
-				'' => '<span id="csv_errors"></span>',
+				'' => '<span id="csv_errors"></span><hr/>',
 				'csv_recipient' => form_textarea(
 					array(
 						'name' => 'csv_recipient',
@@ -459,16 +474,16 @@ class Composer {
 
 					)
 				).BR.form_button('convert_csv','Convert CSV','class="btn"'),//.BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,		
-				'primary_recipients' =>form_input(array(
+				'primary_recipients' =>'*'.form_input(array(
 					'name'=> 'recipient',
 					// 'required' => "true"
 				), $default['recipient']).BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" '),
 				'recipient_review' => '<table class=\'fixed_header\' id=\'csv_content\'></table>'.BR.NBS
 			),
 			'compose_email_detail' =>array(
-				'subject' => form_input('subject', $default['subject']),
 				'use_templates' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()).BR.BR,
-				'_template_name' => form_input(array('id' => 'template_name')),
+				'_template_name' => form_input(array('id' => 'template_name', 'name' => 'template_name')),
+				'subject' => '*'.form_input('subject', $default['subject']),
 				'message' =>  ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
 				'plaintext_alt' => form_textarea('plaintext_alt',$default['plaintext_alt']),
 				'attachment' => form_upload('attachment')
@@ -476,8 +491,7 @@ class Composer {
 			'other_recipient_options' => array(
 				'cc_recipients' => form_input('cc_recipients', $default['cc']),
 				'bcc_recipients' => form_input('bcc_recipients', $default['bcc']),
-			),
-
+			)
 		);
 
 
@@ -645,8 +659,10 @@ class Composer {
 					'desc' => 'code_desc',
 					'fields' => array(
 						'code' => array(
-							'type' => 'textarea',
-							'value' => $default['code'],
+							'type' => 'html',
+							'content' => form_textarea(array('name' => 'code', 'rows' => 15), $default['code'])
+							// 'type' => 'textarea',
+							// 'value' => $default['code'],
 						)
 					)
 				),
@@ -782,7 +798,7 @@ class Composer {
 	 */
 	public function send()
 	{
-		// console_message($_POST,__METHOD__, TRUE);
+		console_message($_POST,__METHOD__);
 		ee()->load->library('email');
 
 		// Fetch $_POST data
@@ -803,7 +819,8 @@ class Composer {
 			'bcc',
 			'csv_object',
 			'mailKey',
-			'template_name'
+			'template_name',
+			// 'template_content[]'
 		);
 
 		$wordwrap = 'n';
@@ -818,6 +835,7 @@ class Composer {
 			elseif (in_array($key, $form_fields))
 			{
 				$$key = ee()->input->post($key);
+				console_message($key, __METHOD__);
 			}
 		}
 		
@@ -840,8 +858,8 @@ class Composer {
 		$_POST['total_gl_recipients'] = count($groups);
 
 		ee()->load->library('form_validation');
-		ee()->form_validation->set_rules('subject', 'lang:subject', 'required|valid_xss_check');
-		ee()->form_validation->set_rules('message', 'lang:message', 'required');
+		// ee()->form_validation->set_rules('subject', 'lang:subject', 'required|valid_xss_check');
+		// ee()->form_validation->set_rules('message', 'lang:message', 'required');
 		ee()->form_validation->set_rules('from', 'lang:from', 'required|valid_email');
 		ee()->form_validation->set_rules('cc', 'lang:cc', 'valid_emails');
 		ee()->form_validation->set_rules('bcc', 'lang:bcc', 'valid_emails');
@@ -1012,7 +1030,7 @@ class Composer {
 			->withTitle(lang('batchmode_ready_to_begin'))
 			->addToBody(lang('batchmode_warning'))
 			->defer();
-
+		consol_message($cache_data, __METHOD__, TRUE);
 		ee()->functions->redirect(ee('CP/URL',EXT_SETTINGS_PATH.'/email/compose'));
 	}
 
@@ -1358,6 +1376,8 @@ class Composer {
 		$this->email_in['finalbody'] = $this->email_in['message'];
 
 		$this->email_out['html'] = $this->email_in['html'];
+
+		if (isset($this->email_in['template_content'])) $this->email_out['template_content'] = $this->email['template_content'];
 
 		if($this->debug == true)
 		{
@@ -2122,7 +2142,8 @@ class Composer {
 			ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates/'));		
 		}
 
-		$table = ee('CP/Table', array('sort_col' => 'date', 'sort_dir' => 'desc'));
+		// $table = ee('CP/Table', array('sort_col' => 'date', 'sort_dir' => 'desc'));
+		$table = ee('CP/Table', array('fieldname' => 'templates'));
 		$table->setColumns(
 			array(
 				'name',

@@ -7,7 +7,7 @@
 			<input class="btn submit" type="submit" value="<?=lang('search_templates_button')?>">
 		</fieldset>
 		
-		<h1><?php if ($this->enabled('remove')): ?><?php echo isset($cp_heading) ? $cp_heading : $cp_page_title?><?php endif; ?></h1>
+		<h1><?=$cp_heading?></h1>
 	
 		
 		<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
@@ -47,8 +47,7 @@
 										<b><?=$template['subject']?>:</b><br />
 										<?=lang('updated')?> :<?=$template['updated_at']?> <br><br>
 										<?=lang('from')?> <?=$template['from_email']?> <?=$template['from_email']?><br><br>
-										<div>
-										
+										<div id="<?=$template['slug']?>-code" class='template_code'>
 										<?=$template['code']?> 
 										</div>
 										<br><br>
@@ -69,17 +68,6 @@
 
 <?php endif; ?>
 <?php
-$modal_vars = array(
-	'name'      => 'modal-confirm-us',
-	'title'     => 'Use Template',
-	'form_url'	=> $table['base_url'],
-	'hidden'	=> array(
-		'bulk_action'	=> 'use'
-	)
-);
-
-$modal = $this->make('ee:_shared/modal_confirm_remove')->render($modal_vars);
-ee('CP/Modal')->addModal('remove', $modal);
 $modal_vars = array(
 	'name'      => 'modal-confirm-remove',
 	'form_url'	=> $table['base_url'],

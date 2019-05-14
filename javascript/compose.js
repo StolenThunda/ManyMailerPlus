@@ -1,11 +1,11 @@
-$(document).ready(function() {
+$(document).ready(function () {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
     // Licensed under MIT
-    (function($) {
+    (function ($) {
         // Behind the scenes method deals with browser
         // idiosyncrasies and such
-        $.caretTo = function(el, index) {
+        $.caretTo = function (el, index) {
             if (el.createTextRange) {
                 var range = el.createTextRange();
                 range.move('character', index);
@@ -21,8 +21,8 @@ $(document).ready(function() {
         // jQuery effects.
 
         // Set caret to a particular index
-        $.fn.caretTo = function(index, offset) {
-            return this.queue(function(next) {
+        $.fn.caretTo = function (index, offset) {
+            return this.queue(function (next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
                     if (i == -1) i = $(this).text().indexOf(index);
@@ -42,20 +42,20 @@ $(document).ready(function() {
         };
 
         // Set caret to beginning of an element
-        $.fn.caretToStart = function() {
+        $.fn.caretToStart = function () {
             return this.caretTo(0);
         };
 
         // Set caret to the end of an element
-        $.fn.caretToEnd = function() {
-            return this.queue(function(next) {
+        $.fn.caretToEnd = function () {
+            return this.queue(function (next) {
                 $.caretTo(this, $(this).val().length);
                 next();
             });
         };
     })(jQuery);
     $('#csv_recipient').parents('fieldset').toggle();
-    $('input[readonly]').click(function() {
+    $('input[readonly]').click(function () {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
     var service_list = $('h2:contains("Services")').next('ul');
@@ -64,7 +64,7 @@ $(document).ready(function() {
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
-        $.each(service_list.children(), function() {
+        $.each(service_list.children(), function () {
             var list_item = $(this).text().toLowerCase();
             if (active_services && active_services.indexOf(list_item) > -1) {
                 $(this).addClass('enabled-service');
@@ -77,9 +77,9 @@ $(document).ready(function() {
         $('.service-list').sortable({
             axis: 'y',
             opacity: 0.5,
-            update: function() {
+            update: function () {
                 var serviceOrder = [];
-                $('.service-list li').each(function() {
+                $('.service-list li').each(function () {
                     serviceOrder.push($(this).data('service'));
                 });
                 $.post($('.service-list').data('actionUrl'), {
@@ -96,7 +96,7 @@ $(document).ready(function() {
         return 'escortService';
     }
     $.fn.extend({
-        val_with_linenum: function(v) {
+        val_with_linenum: function (v) {
             return this.each(() => {
                 $(this).val(v).trigger('input');
             });
@@ -106,10 +106,10 @@ $(document).ready(function() {
     $('a.m-link').bind('click', (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
-        rel = e.target.rel;
+        var rel = e.target.rel;
         sweetAlertbyID(`.${rel}`);
     });
-    $('body').on('click', '*[data-conditional-modal]', function(e) {
+    $('body').on('click', '*[data-conditional-modal]', function (e) {
         e.preventDefault();
         $('.modal-confirm-remove').hide();
         swal
@@ -147,7 +147,7 @@ $(document).ready(function() {
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function (e) {
                         var selector = 'csv_recipient';
                         $('#' + selector).val_with_linenum(reader.result);
                         $('select[name=recipient_entry]').val(selector).trigger('change');
@@ -169,26 +169,33 @@ $(document).ready(function() {
     $('input[name=recipient]').change(countEmails);
     $("select[name='mailtype']").change(messageType);
 
-    $('input[name=recipient_review').parents('fieldset').toggle();
+    $('fieldset[data-control=recipient_review').toggle();
 
-    $('select[name=recipient_entry]').change(function() {
+    $('select[name=recipient_entry]').change(function () {
         $('input[name=file_recipient]').parents('fieldset').toggle('slow');
         $('#csv_recipient').parents('fieldset').toggle('slow');
     });
 
-    $('input[name=use_templates]').parent().find('div.table-list-wrap').toggle();
+
+    $('#embed_templates').toggle();
     $('#template_name').parents('fieldset').toggle();
-    $('input[name="selection[]"').change(function() {
+    $('input[name="selection[]"').change(function () {
         var selections = $('input[name="selection[]"]:checked');
-        var checked = [];
-        $.each(selections, function() {
-            if (this.checked) checked.push(this.value);
-        });
-        if (checked.length > 0) $('#template_name').val(checked[0]);
-        console.log(checked);
+        var name, subject, message = "";
+        if (selections.length > 0) {
+            var t = selections[0];
+            name = t.value;
+            subject = t.dataset.confirm;
+            message = document.getElementById(t.value + '-code').innerHTML
+        }
+        $('#template_name').val(name);
+        $('input[name=subject]').val(subject);
+        $("textarea[name=message]").val(message);
+
     });
-    $('input[name=use_templates]').change(function() {
-        $(this).parent().find('div.table-list-wrap').toggle('slow');
+    $('input[name=use_templates]').change(function () {
+        // $(this).parent().find('#embed_templates').toggle('slow');
+        $('#embed_templates').toggle('slow');
         $('#template_name').parents('fieldset').toggle('slow');
     });
     $('[name$=linenum], #reset').bind('click', (e) => {
@@ -201,7 +208,7 @@ $(document).ready(function() {
         $('select[name=recipient_entry]').val('file_recipient').trigger('change');
     });
 
-    $('body').on('click', '*[data-conditional-modal]', function(e) {
+    $('body').on('click', '*[data-conditional-modal]', function (e) {
         e.preventDefault();
     });
 });
@@ -232,18 +239,18 @@ function curIndex() {
 }
 
 // Previous button is easy, just go back
-$('.form-navigation .previous').click(function() {
+$('.form-navigation .previous').click(function () {
     navigateTo(curIndex() - 1);
 });
 
 // Next button goes forward iff current block validates
-$('.form-navigation .next').click(function() {
+$('.form-navigation .next').click(function () {
     $('.demo-form')
         .parsley()
         .whenValidate({
             group: 'block-' + curIndex()
         })
-        .done(function() {
+        .done(function () {
             navigateTo(curIndex() + 1);
         });
 });
@@ -253,7 +260,7 @@ function getCurrentSlug() {
 }
 
 // Prepare sections by setting the `data-parsley-group` attribute to 'block-0', 'block-1', etc.
-$sections.each(function(index, section) {
+$sections.each(function (index, section) {
     $(section).find(':input').attr('data-parsley-group', 'block-' + index);
 });
 navigateTo(0); // Start at the beginning
@@ -274,7 +281,7 @@ function resetRecipients(all) {
 
     $('#placeholder').parent().remove();
     // reset table
-    $('fieldset[name=recipient_review').parents('fieldset').eq(0).toggle('slow');
+
     var parent = $('#csv_content_wrapper').parent();
     parent.empty();
     var table = $("<table id='csv_content' class='fixed_header'></table>");
@@ -510,7 +517,7 @@ function showPlaceholders(headers) {
         var test = $('<button/>', {
                 class: 'btn placeholder',
                 text: el,
-                click: function() {
+                click: function () {
                     var plain = $("textarea[name='plaintext_alt']");
                     var msg = $("textarea[name='message']");
                     var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
@@ -657,12 +664,13 @@ function parseData(str) {
 
 function initTable(data) {
     $('#csv_recipient').val_with_linenum('');
+    // $('fieldset[data-control=recipient_review').toggle('slow');
     return $('#csv_content').addClass('fixed_header display').DataTable({
         defaultContent: '',
         dom: '<"top"i>rt<"bottom"flp><"clear">',
-        initComplete: function() {
+        initComplete: function () {
             var api = this.api();
-            api.$('td').click(function() {
+            api.$('td').click(function () {
                 api.search(this.innerHTML).draw();
             });
         },
@@ -728,7 +736,7 @@ function sweetAlertbyID(id) {
 
 function dumpHiddenVals() {
     var msg = $('<table/>');
-    $('input[type="hidden"]').each(function() {
+    $('input[type="hidden"]').each(function () {
         var val = $(this).val();
         val = val.length > 100 ? val.substring(0, 100) + '...' : val;
         console.log($(this).attr('name') + ': ' + $(this).val());
@@ -744,7 +752,7 @@ function dumpHiddenVals() {
 
 const TLN = {
     eventList: {},
-    update_line_numbers: function(ta, el) {
+    update_line_numbers: function (ta, el) {
         let lines = ta.value.split('\n').length;
         let child_count = el.children.length;
         let difference = lines - child_count;
@@ -764,7 +772,7 @@ const TLN = {
             difference++;
         }
     },
-    append_line_numbers: function(id) {
+    append_line_numbers: function (id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -788,8 +796,8 @@ const TLN = {
             'keydown',
             'keyup'
         ];
-        const __change_hdlr = (function(ta, el) {
-            return function(e) {
+        const __change_hdlr = (function (ta, el) {
+            return function (e) {
                 if (
                     (+ta.scrollLeft == 10 &&
                         (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
@@ -820,8 +828,8 @@ const TLN = {
             'mousewheel',
             'scroll'
         ];
-        const __scroll_hdlr = (function(ta, el) {
-            return function() {
+        const __scroll_hdlr = (function (ta, el) {
+            return function () {
                 el.scrollTop = ta.scrollTop;
             };
         })(ta, el);
@@ -833,7 +841,7 @@ const TLN = {
             });
         }
     },
-    remove_line_numbers: function(id) {
+    remove_line_numbers: function (id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
