@@ -142,11 +142,25 @@ class Composer {
 					)
 				),				
 			),
+			
 			'recipient_options' => array(
+				array(
+					'title' => 'recipient_entry',
+					'fields' => array(
+						'recipient_entry' => array(
+							'type' => 'select',
+							'choices' => array(
+								'file_recipient' => lang('upload'),
+								'csv_recipient' => lang('manual')
+							)
+						)
+					)
+				),
 				array(
 					'title' => 'file_recipient',
 					'desc' => 'file_recipient_desc',
 					'fields' => array(
+						
 						'files' => array(
 							'type' => 'html',
 							'content' => form_input(
@@ -192,11 +206,6 @@ class Composer {
 								'type' => 'html',
 								'content' => implode('<br />', $csvHTML)
 							),
-							
-							'csv_reset' => array(
-								'type' => 'html',
-								'content' => form_button('btnReset','Reset CSV Data', 'class="btn"')
-							),
 						)
 					),
 					array(
@@ -205,8 +214,14 @@ class Composer {
 						'fields' => array(
 							'recipient' => array(
 								'type' => 'text',
-								'value' => $default['recipient']
-							),'csv_content' => array(
+								'value' => $default['recipient'],
+								'required' => true
+							),							
+							'csv_reset' => array(
+								'type' => 'html',
+								'content' => form_button('btnReset','Reset CSV Data', 'id="reset" class="btn"')
+							),
+							'csv_content' => array(
 								'type' => 'html',
 								'content' => '<table class=\'fixed_header\' id=\'csv_content\'></table>'
 							)
@@ -232,9 +247,21 @@ class Composer {
 						'use_template' => array(
 							'type' => 'html',
 							'content' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()),
-							)
 						)
-					
+					)					
+				),
+				array(
+					'title' => 'template_name',
+					'desc' => '_template_name',
+					'fields' => array(
+						'template_name' => array(
+							'type' => 'html',
+							'content' => form_input(array(
+								'id' => 'template_name',
+								'name' => 'template_name',
+							))
+						)
+					)					
 				),
 				array(
 					'title' => 'email_body',
@@ -243,7 +270,6 @@ class Composer {
 							'type' => 'html',
 							'content' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')
 								->render($default + $vars),
-							'required' => TRUE
 						)
 					)
 				),
@@ -441,7 +467,8 @@ class Composer {
 			),
 			'compose_email_detail' =>array(
 				'subject' => form_input('subject', $default['subject']),
-				'use_templates' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()),
+				'use_templates' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()).BR.BR,
+				'_template_name' => form_input(array('id' => 'template_name')),
 				'message' =>  ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
 				'plaintext_alt' => form_textarea('plaintext_alt',$default['plaintext_alt']),
 				'attachment' => form_upload('attachment')
@@ -755,6 +782,7 @@ class Composer {
 	 */
 	public function send()
 	{
+		// console_message($_POST,__METHOD__, TRUE);
 		ee()->load->library('email');
 
 		// Fetch $_POST data
@@ -774,7 +802,8 @@ class Composer {
 			'cc',
 			'bcc',
 			'csv_object',
-			'mailKey'
+			'mailKey',
+			'template_name'
 		);
 
 		$wordwrap = 'n';
@@ -1059,7 +1088,8 @@ class Composer {
 			show_error(lang('problem_with_id'));
 		}
 
-		$caches = ee('Model')->get(EXT_SHORT_NAME.':EmailCachePlus', $id)
+		// $caches = ee('Model')->get(EXT_SHORT_NAME.'EmailCachePlus', $id)
+		$caches = ee('Model')->get('EmailCache', $id)
 			->with('MemberGroups')
 			->all();
 

@@ -54,7 +54,7 @@ $(document).ready(function() {
             });
         };
     })(jQuery);
-
+    $('#csv_recipient').parents('fieldset').toggle();
     $('input[readonly]').click(function() {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
@@ -130,8 +130,7 @@ $(document).ready(function() {
     });
     $('#csv_recipient')
         .bind('interact', (e) => {
-            var val = e.currentTarget.value;
-            if (val === '') {
+            if (e.currentTarget.value === '') {
                 TLN.remove_line_numbers('csv_recipient');
             } else {
                 TLN.append_line_numbers('csv_recipient');
@@ -170,18 +169,27 @@ $(document).ready(function() {
     $('input[name=recipient]').change(countEmails);
     $("select[name='mailtype']").change(messageType);
 
-    $('div[data-control=recipient_review').toggle();
-    $('div[data-control=csv_recipient').toggle();
+    $('input[name=recipient_review').parents('fieldset').toggle();
+
     $('select[name=recipient_entry]').change(function() {
-        $.each(this.options, function() {
-            $('div[data-control=' + $(this).val() + ']').fadeToggle('fast', 'linear')();
-        });
+        $('input[name=file_recipient]').parents('fieldset').toggle('slow');
+        $('#csv_recipient').parents('fieldset').toggle('slow');
     });
 
-    $('input[name=use_templates]').parent().find('div.table-list-wrap').fadeToggle('fast', 'linear');
+    $('input[name=use_templates]').parent().find('div.table-list-wrap').toggle();
+    $('#template_name').parents('fieldset').toggle();
+    $('input[name="selection[]"').change(function() {
+        var selections = $('input[name="selection[]"]:checked');
+        var checked = [];
+        $.each(selections, function() {
+            if (this.checked) checked.push(this.value);
+        });
+        if (checked.length > 0) $('#template_name').val(checked[0]);
+        console.log(checked);
+    });
     $('input[name=use_templates]').change(function() {
-        var toggle = $(this).val() === 'y';
-        $(this).parent().find('div.table-list-wrap').toggle(toggle);
+        $(this).parent().find('div.table-list-wrap').toggle('slow');
+        $('#template_name').parents('fieldset').toggle('slow');
     });
     $('[name$=linenum], #reset').bind('click', (e) => {
         resetRecipients(true);
@@ -199,24 +207,23 @@ $(document).ready(function() {
 });
 var $sections = $('.form-section');
 /* TODO: 
-    move pagecheck to next/prev 
-    get section by slug name
-    create template view (hide next/prev) 
-        - cancel button -> email detail
-        - selected template -> email detail w/ temp
+            move pagecheck to next/prev 
+            get section by slug name
+            create template view (hide next/prev) 
+                - cancel button -> email detail
+                - selected template -> email detail w/ temp
 
-*/
+        */
 console.log($sections.data('slug'));
 
 function navigateTo(index) {
-    // index = pageCheck(index);
     // Mark the current section with the class 'current'
     $sections.removeClass('current').eq(index).addClass('current');
     // Show only the navigation buttons that make sense for the current section:
     $('.form-navigation .previous').toggle(index > 0);
     var atTheEnd = index >= $sections.length - 1;
     $('.form-navigation .next').toggle(!atTheEnd);
-    $('.form-navigation [type=submit]').toggle(atTheEnd);
+    $('.form-navigation .submit').toggle(atTheEnd);
 }
 
 function curIndex() {
@@ -267,7 +274,7 @@ function resetRecipients(all) {
 
     $('#placeholder').parent().remove();
     // reset table
-    $('div[data-control=recipient_review').toggle();
+    $('fieldset[name=recipient_review').parents('fieldset').eq(0).toggle('slow');
     var parent = $('#csv_content_wrapper').parent();
     parent.empty();
     var table = $("<table id='csv_content' class='fixed_header'></table>");
@@ -276,11 +283,22 @@ function resetRecipients(all) {
     $('#reset').hide();
 }
 
+function submit_form() {
+    var form = $('.demo-form');
+    console.log(form);
+    swal.fire({
+        title: '',
+        type: 'warning',
+        text: form.attr('action')
+    });
+    form.submit();
+}
+
 function messageType() {
     if ($("select[name='mailtype']").val() === 'html') {
-        $("div[data-control='plaintext_alt']").slideDown();
+        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).toggle('slow');
     } else {
-        $("div[data-control='plaintext_alt']").slideUp();
+        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).toggle('slow');
     }
 }
 
