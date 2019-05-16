@@ -187,6 +187,15 @@ $(document).ready(function () {
             name = t.value;
             subject = t.dataset.confirm;
             message = document.getElementById(t.value + '-code').innerHTML
+            var pattern = /mc:edit="([^"]+)/g;
+            var match = pattern.exec(message);
+            var editables = [];
+            while (match != null) {
+                console.log(match[1]);
+                editables.push(match[1]);
+                match = pattern.exec(message);
+            }
+            if (editables.length > 0) createEC(editables);
         }
         $('#template_name').val(name);
         $('input[name=subject]').val(subject);
@@ -299,6 +308,25 @@ function submit_form() {
         text: form.attr('action')
     });
     form.submit();
+}
+
+function createEC(ids){
+    var parent = $('#template_name').parents('div').eq(0);
+    
+    var fs = $('<fieldset>');
+    parent.append(fs);
+    ids.forEach(id => {      
+        var div1 = $('<div>').addClass('field-instruct')
+        .append(
+        $(`<label>${id}</label>`)
+        ); 
+        div1.appendTo(fs);
+        var div2 = $('<div>').addClass('field-control')
+            .append(
+                $('<input>',{'id': id, 'name': id})
+            );
+            div2.appendTo(fs);
+    });
 }
 
 function messageType() {

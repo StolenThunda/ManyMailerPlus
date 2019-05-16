@@ -191,7 +191,7 @@ class Composer {
 								->render()
 						),
 						'dump_vars' => array(
-							'type' => 'hidden',
+							'type' => 'html',
 							'content' => form_button('btnDump','Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"')
 						),
 						'csv_object' => array(
