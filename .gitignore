@@ -2672,3 +2672,6 @@ node_modules/yargs/locales/zh_TW.json
 node_modules/yargs/README.md
 node_modules/yargs/yargs.js
 patch.diff
+phpcs.phar
+npm-debug.log
+phpcbf.phar

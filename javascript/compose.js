@@ -102,6 +102,9 @@ $(document).ready(function () {
             });
         }
     });
+    $('body').on('click', '#mc-edits legend', function() {
+        $(this).nextAll('div').fadeToggle('slow')
+    });
     // hijacks default 'view email' button for SweetAlert2 action!
     $('a.m-link').bind('click', (e) => {
         e.preventDefault();
@@ -187,16 +190,24 @@ $(document).ready(function () {
             name = t.value;
             subject = t.dataset.confirm;
             message = document.getElementById(t.value + '-code').innerHTML
+            var html = $.parseHTML(message);
+            html.forEach((el) => { 
+                var ec = $(el).attr('mc:edit');
+                if (ec){
+                    createEC(ec, el.innerHTML);
+                } 
+            });
+            $('legend').trigger('click');
         }
         $('#template_name').val(name);
         $('input[name=subject]').val(subject);
-        $("textarea[name=message]").val(message);
+        // $("textarea[name=message]").val(message);
 
     });
     $('input[name=use_templates]').change(function () {
-        // $(this).parent().find('#embed_templates').toggle('slow');
-        $('#embed_templates').toggle('slow');
-        $('#template_name').parents('fieldset').toggle('slow');
+        var toggle = (this.value == 'y') ? 'slow' : false;
+        $('#embed_templates').fadeToggle(toggle);
+        $('#template_name').parents('fieldset').fadeToggle(toggle);
     });
     $('[name$=linenum], #reset').bind('click', (e) => {
         resetRecipients(true);
@@ -213,15 +224,6 @@ $(document).ready(function () {
     });
 });
 var $sections = $('.form-section');
-/* TODO: 
-            move pagecheck to next/prev 
-            get section by slug name
-            create template view (hide next/prev) 
-                - cancel button -> email detail
-                - selected template -> email detail w/ temp
-
-        */
-console.log($sections.data('slug'));
 
 function navigateTo(index) {
     // Mark the current section with the class 'current'
@@ -299,6 +301,31 @@ function submit_form() {
         text: form.attr('action')
     });
     form.submit();
+}
+
+function createEC(id, val){
+    var parent = $('#template_name').parents('fieldset').eq(0);
+    var fs = $('fieldset#mc-edits')
+    if (fs.length == 0){
+        fs = $('<fieldset id="mc-edits" />');
+        var legend = $('<legend class="btn">Editable Content</legend>');
+        fs.append(legend);  
+        parent.after(fs);
+    } 
+    
+    fs.append(
+        $('<div>')
+            .addClass('field-instruct')
+            .append(
+                $(`<label>${id}</label>`)
+            ),
+        $('<div>')
+            .addClass('field-control')
+            .append(
+                $(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`)
+            )
+    );
+    
 }
 
 function messageType() {
