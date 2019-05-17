@@ -2675,3 +2675,6 @@ patch.diff
 phpcs.phar
 npm-debug.log
 phpcbf.phar
+node_modules/.bin/strip-json-comments
+node_modules/.bin/jshint
+node_modules/.bin/shjs
