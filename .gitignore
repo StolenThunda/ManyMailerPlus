@@ -10,6 +10,7 @@ ext.manymailerplus.php
 libraries/ext.manymailerplus.php
 libraries/serialized_email_cache.txt
 node-modules/
+*package*
 *webpack*
 .bashrc
 dist/bundle.js
