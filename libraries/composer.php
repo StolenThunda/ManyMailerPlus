@@ -10,7 +10,6 @@
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Model\Email\EmailCache;
-
 // use ManyMailer\Models\EmailCachePlus as EmailCache;
 
 /**
