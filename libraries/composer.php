@@ -10,6 +10,7 @@
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Model\Email\EmailCache;
+
 // use ManyMailer\Models\EmailCachePlus as EmailCache;
 
 /**
@@ -127,7 +128,7 @@ class Composer
         $vars['sections'] = array(
             'sender_info' => array(
                 array(
-                    'title' => 'from',
+                    'title' => 'from_email',
                     'desc' => 'from_email_desc',
                     'fields' => array(
                         'from' => array(
@@ -906,7 +907,7 @@ class Composer
             'plaintext_alt' => $plaintext_alt,
             'attachments' => $this->attachments,
         );
-        console_message($cache_data, __METHOD__);
+        console_message(array_merge($extras, $cache_data), __METHOD__);
         $email = ee('Model')->make('EmailCache', $cache_data);
         $email->save();
 
@@ -1474,16 +1475,20 @@ class Composer
         );
         console_message($content, __METHOD__);
         if (isset($content['message']['extras'])) {
-            // console_message($content['message']['extras'], __FUNCTION__, true);
-            $content['message']['extras']['from_name'] = (isset($content['message']['extras']['from_name'])) ? $content['message']['from_name'] : $content['message']['extras']['from_name'];
-            if (isset($this->email_out['extras']['template_name'])) {
-                $content['template_name'] = $this->email_out['extras']['template_name'];
+            console_message($content['message']['extras'], __FUNCTION__);
+
+            if (isset($content['message']['extras']['from_name'])) {
+                $content['message']['from_name'] = $content['message']['extras']['from_name'];
+            }
+            if (isset($content['message']['extras']['template_name'])) {
+                $content['template_name'] = $content['message']['extras']['template_name'];
             }
             if (isset($content['template_name']) && isset($content['message']['extras']['mc-edit'])) {
                 $edits = $content['message']['extras']['mc-edit'];
                 $t_content = array();
                 foreach ($edits as $k => $v) {
-                    if (['main', 'content'].includes($k)) {
+                    if (in_array($k, array('main', 'content', 'body_content'))) {
+                        console_message($k, __METHOD__);
                         $v = $content['message']['html'];
                     }
                     array_push($t_content, array('name' => $k, 'content' => $v));
