@@ -7,7 +7,7 @@
 			<input class="btn submit" type="submit" value="<?=lang('search_templates_button')?>">
 		</fieldset>
 		
-		<h1><?=$cp_heading?></h1>
+		<h1><?=$cp_page_title?></h1>
 	
 		
 		<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>

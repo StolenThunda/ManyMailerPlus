@@ -146,6 +146,7 @@ $lang = array(
 	'template_error' => 'Error Saving Template',
 	'template_name_desc' => 'the name for the new template - must be unique. <b><i> (Validation: required)</i></b>',
 	'template_name' => 'Template Name',
+	'_template_name' => '',
 	'text_desc' => 'a default text part to be used when sending with this template.',
 	'text' => 'Default Text',
 	'total_emails_sent' => 'Totals Emails Sent: ',
