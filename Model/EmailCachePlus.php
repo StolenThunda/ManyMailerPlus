@@ -7,8 +7,8 @@
  * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
-
-namespace EllisLab\ExpressionEngine\Model\Email;
+namespace EXT_NAME\EmailCachePlus;
+use EllisLab\ExpressionEngine\Model\Email;
 use EllisLab\ExpressionEngine\Service\Model\Model;
 
 /**
@@ -17,7 +17,7 @@ use EllisLab\ExpressionEngine\Service\Model\Model;
 class EmailCachePlus extends Model {
 
 	protected static $_primary_key = 'cache_id';
-	protected static $_table_name = 'email_cache';
+	protected static $_table_name = 'email_cache_plus';
 
 	protected static $_typed_columns = array(
 		'cache_date'      => 'timestamp',
