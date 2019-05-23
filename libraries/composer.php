@@ -29,7 +29,7 @@ class Composer
     /**
      * Constructor.
      */
-    public function __construct()
+    public function __construct($service = null)
     {
         $CI = ee();
 
@@ -47,6 +47,7 @@ class Composer
             ee()->cp->add_to_foot($script);
         }
         $this->debug = false;
+        $this->init_service = $service;
     }
 
     /**
@@ -1566,14 +1567,21 @@ class Composer
 
     public function _get_mandrill_api($settings = array())
     {
-        $settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
-        // $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
-        $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-        $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-        $test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
-        $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-        // console_message("Act Key: $active_key", __METHOD__);
-        return $active_key;
+        try {
+            $settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
+            // $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
+            $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
+            $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
+            $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
+            $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
+            // console_message("Act Key: $active_key", __METHOD__);
+            return $active_key;
+        } catch (\Throwable $th) {
+            //throw $th;
+            console_message($th, __METHOD__);
+
+            return $th;
+        }
     }
 
     public function _mandrill_lookup_to_merge($lookup)
@@ -1589,8 +1597,24 @@ class Composer
         return $merge_vars;
     }
 
-    public function _get_service_templates($func = 'list', $template_name = null)
+    public function _get_service_templates($service)
     {
+        switch ($service) {
+           case 'mandrill':
+               return $this->_get_mandrill_templates(array(null, null));
+               break;
+
+           default:
+               return array('status' => 'error');
+               // code...
+               break;
+       }
+    }
+
+    public function _get_mandrill_templates($obj)
+    {
+        $func = (isset($obj['func'])) ? $obj['func'] : 'list';
+        $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
         $data = array(
             'key' => $this->_get_mandrill_api(),
@@ -2019,8 +2043,9 @@ class Composer
     /**
      * View templates.
      */
-    public function view_templates($service_name = 'mandrill')
+    public function view_templates($service_name = null)
     {
+        $service_name = is_null($service_name) ? $this->init_service : $service_name;
         if (ee()->input->post('bulk_action') == 'remove') {
             foreach (ee()->input->get_post('selection') as $slug) {
                 $selection = str_replace('_', ' ', $slug);
@@ -2052,11 +2077,12 @@ class Composer
 
         $offset = ($page - 1) * 50; // Offset is 0 indexed
 
-        $templates = $this->_get_service_templates();
+        $templates = $this->_get_service_templates($this->init_service);
         $data = array();
-        foreach ($templates as $template) {
-            $template = json_decode(json_encode($template), true);
-            $data[] = array(
+        if (!isset($templates['status'])) {
+            foreach ($templates as $template) {
+                $template = json_decode(json_encode($template), true);
+                $data[] = array(
                 $template['name'],
                 $template['created_at'],
                 array(
@@ -2083,7 +2109,8 @@ class Composer
                 ),
             );
 
-            $vars['templates'][] = $template;
+                $vars['templates'][] = $template;
+            }
         }
 
         //console_message($vars, __METHOD__);
@@ -2105,7 +2132,7 @@ class Composer
             );
         }
 
-        $vars['cp_page_title'] = lang('view_template_cache');
+        $vars['cp_page_title'] = sprintf(lang('view_template_cache'), (is_null($service_name) ? '' : $service_name['service']));
         ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache').': <b>### '.lang('templates').'</b>');
 
         // ee()->cp->add_js_script(array( 'file' => array('cp/confirm_remove'),));
