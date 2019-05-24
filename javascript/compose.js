@@ -25,7 +25,7 @@ $(document).ready(function() {
             return this.queue(function(next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
-                    if (i == -1) i = $(this).text().indexOf(index);
+                    if (i === -1) i = $(this).text().indexOf(index);
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
@@ -91,7 +91,6 @@ $(document).ready(function() {
                 })
                 .done(function(data){
                     $('.service-list').data('order', data);
-                    debugger;
                     bubble_enable_services(data);
                 });
             }
@@ -253,7 +252,7 @@ var $sections = $('.form-section');
 
 function bubble_enable_services(order){
     if (order === null) order = $('.service-list').data('order');
-    alert(order);
+    // alert(order);
     $('.service-list li').sort((a , b)=>{
         return (($(a).hasClass('enabled-service')) ? -1 : 1);
     }).appendTo('.service-list');

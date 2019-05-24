@@ -358,7 +358,7 @@ function genericErrorHandler($errno, $errstr, $errfile, $errline) {
         $msg .= "[$errno] Uncategorized error type:$errstr";
         break;
     }
-    $this->console_message($msg."::$errline",$errstr, true);
+    console_message($msg."::$errline",$errstr, true);
     /* Don't execute PHP internal error handler */
     exit();
 }

@@ -1403,199 +1403,32 @@ class Composer
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
                 ee()->dbg->console_message($service, __METHOD__);
-                ee()->load->library($service, $settings);
-                $vars = ee()->{$service}->send_email();
-                ee()->dbg->console_message($vars, __METHOD__, TRUE);
-                // switch ($service) {
-                //     case 'mailgun':
-                //         if (!empty($settings['mailgun_api_key']) && !empty($settings['mailgun_domain'])) {
-                //             $sent = $this->_send_mailgun($settings['mailgun_api_key'], $settings['mailgun_domain']);
-                //             $missing_credentials = false;
-                //         }
-                //         break;
-                //     case 'mandrill':
-                            // $key = $this->_get_mandrill_api($settings);
-                            // if ($key !== '') {
-                            //     $subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
-                            //     $sent = $this->_send_mandrill($key, $subaccount);
-                            //     $missing_credentials = false;
-                            // }
-                //         break;
-                //     case 'postageapp':
-                //         if (!empty($settings['postageapp_api_key'])) {
-                //             $sent = $this->_send_postageapp($settings['postageapp_api_key']);
-                //             $missing_credentials = false;
-                //         }
-                //         break;
-                //     case 'postmark':
-                //         if (!empty($settings['postmark_api_key'])) {
-                //             $sent = $this->_send_postmark($settings['postmark_api_key']);
-                //             $missing_credentials = false;
-                //         }
-                //         break;
-                //     case 'sendgrid':
-                //         if (!empty($settings['sendgrid_api_key'])) {
-                //             $sent = $this->_send_sendgrid($settings['sendgrid_api_key']);
-                //             $missing_credentials = false;
-                //         }
-                //         break;
-                //     case 'sparkpost':
-                //         if (!empty($settings['sparkpost_api_key'])) {
-                //             $sent = $this->_send_sparkpost($settings['sparkpost_api_key']);
-                //             $missing_credentials = false;
-                //         }
-                //         break;
-                // }
-                // ee()->dbg->console_message($sent, __METHOD__, TRUE);
-                if ($vars['missing_credentials'] == true) {
-                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
-                } elseif ($vars['sent'] == false) {
-                    ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
-                }
-            }
-            ee()->dbg->console_message($sent, __METHOD__);
-            if ($vars['sent'] == true) {
-                ee()->extensions->end_script = true;
-
-                return true;
+                $svc_lib = 'services/'.$service;
+                if (ee()->load->is_loaded($svc_lib)) {
+                    ee()->dbg->console_message($vars, __METHOD__, TRUE);
+                    ee()->load->library($svc_lib, array('settings' => $settings));
+                    $vars = ee()->{$svc_lib}->send_email();
+                    ee()->dbg->console_message($vars, __METHOD__, TRUE);
+                    if ($vars['missing_credentials'] == true) {
+                        ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
+                    } 
+                    if ($vars['sent'] == false) {
+                        ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
+                    } else {  
+                        ee()->extensions->end_script = true;
+                        return true;
+                    }
+                }else{
+                    $message = sprintf(lang('missing_service_class'), $service);
+                    ee()->dbg->console_message($message, __METHOD__);
+                    ee()->logger->developer($message);
+                }            
+                ee()->dbg->console_message($sent, __METHOD__);
             }
         }
-
         return false;
     }
 
-    // /**
-    //     Sending methods for each of our services follow.
-    //  **/
-    // public function _send_mandrill($api_key, $subaccount)
-    // {
-    //     $content = array(
-    //         'key' => $api_key,
-    //         'async' => true,
-    //         'message' => $this->email_out,
-    //     );
-    //     ee()->dbg->console_message($content, __METHOD__);
-    //     if (isset($content['message']['extras'])) {
-    //         ee()->dbg->console_message($content['message']['extras'], __FUNCTION__);
-
-    //         if (isset($content['message']['extras']['from_name'])) {
-    //             $content['message']['from_name'] = $content['message']['extras']['from_name'];
-    //         }
-    //         if (isset($content['message']['extras']['template_name'])) {
-    //             $content['template_name'] = $content['message']['extras']['template_name'];
-    //         }
-    //         if (isset($content['template_name']) && isset($content['message']['extras']['mc-edit'])) {
-    //             $edits = $content['message']['extras']['mc-edit'];
-    //             $t_content = array();
-    //             foreach ($edits as $k => $v) {
-    //                 if (in_array($k, array('main', 'content', 'body_content'))) {
-    //                     ee()->dbg->console_message($k, __METHOD__);
-    //                     $v = $content['message']['html'];
-    //                 }
-    //                 array_push($t_content, array('name' => $k, 'content' => $v));
-    //             }
-    //             $content['template_content'] = $t_content;
-    //         }
-    //     }
-    //     ee()->dbg->console_message($content, __METHOD__);
-    //     if (!empty($subaccount)) {
-    //         $content['message']['subaccount'] = $subaccount;
-    //     }
-
-    //     $content['message']['from_email'] = $content['message']['from']['email'];
-    //     if (!empty($content['message']['from']['name'])) {
-    //         $content['message']['from_name'] = $content['message']['from']['name'];
-    //     }
-    //     unset($content['message']['from']);
-
-    //     $mandrill_to = array('email' => $content['message']['to']);
-    //     foreach ($content['message']['to'] as $to) {
-    //         $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'to'));
-    //     }
-
-    //     if (!empty($content['message']['cc'])) {
-    //         foreach ($content['message']['cc'] as $to) {
-    //             $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'cc'));
-    //         }
-    //         unset($content['message']['cc']);
-    //     }
-
-    //     if (!empty($content['message']['reply-to'])) {
-    //         $content['message']['headers']['Reply-To'] = $this->_recipient_str($content['message']['reply-to'], true);
-    //     }
-    //     unset($content['message']['reply-to']);
-
-    //     if (!empty($content['message']['bcc'])) {
-    //         foreach ($content['message']['bcc'] as $to) {
-    //             $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'bcc'));
-    //         }
-    //     }
-    //     unset($content['message']['bcc']);
-
-    //     $content['message']['to'] = $mandrill_to;
-
-    //     $content['message']['merge_language'] = 'handlebars';
-
-    //     $content['message']['track_opens'] = true;
-
-    //     $content['message']['tags'][] = EXT_NAME.' '.EXT_VERSION;
-
-    //     $merge_vars = array(
-    //         array(
-    //             'rcpt' => $content['message']['to'][0]['email'],
-    //             'vars' => $this->_mandrill_lookup_to_merge($content['message']['lookup']),
-    //         ),
-    //     );
-    //     unset($content['message']['lookup']);
-
-    //     $content['message']['auto_text'] = true;
-    //     $content['message']['merge_vars'] = $merge_vars;
-
-    //     if (ee()->extensions->active_hook('pre_send')) {
-    //         $content = ee()->extensions->call('pre_send', 'mandrill', $content);
-    //     }
-
-    //     // Did someone set a template? Then we need a different API method.
-    //     $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
-    //     $content = json_encode($content);
-
-    //     ee()->dbg->console_message($content, __METHOD__);
-    //     //TODO: save email data to table
-    //     // ee()->logger->developer($content);
-    //     return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
-    // }
-
-    // public function _get_mandrill_api($settings = array())
-    // {
-    //     try {
-    //         $settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
-    //         // $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
-    //         $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-    //         $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-    //         $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
-    //         $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-    //         // ee()->dbg->console_message("Act Key: $active_key", __METHOD__);
-    //         return $active_key;
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //         ee()->dbg->console_message($th, __METHOD__);
-
-    //         return $th;
-    //     }
-    // }
-
-    // public function _mandrill_lookup_to_merge($lookup)
-    // {
-    //     $merge_vars = array();
-    //     foreach (array_keys($lookup) as $key) {
-    //         $merge_vars[] = array(
-    //             'name' => str_replace(array('{{', '}}'), '', $key),
-    //             'content' => $lookup[$key],
-    //         );
-    //     }
-
-    //     return $merge_vars;
-    // }
 
     public function _get_service_templates($service)
     {
@@ -1610,69 +1443,6 @@ class Composer
                break;
        }
     }
-
-    // public function _get_mandrill_templates($obj)
-    // {
-    //     $func = (isset($obj['func'])) ? $obj['func'] : 'list';
-    //     $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
-    //     $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-    //     $data = array(
-    //         'key' => $this->_get_mandrill_api(),
-    //     );
-    //     if (!is_null($template_name)) {
-    //         $data['name'] = $template_name;
-    //     }
-    //     $content = json_encode($data);
-    //     ee()->dbg->console_message($api_endpoint.$content, __METHOD__);
-    //     $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
-    //     ee()->dbg->console_message($templates, __METHOD__);
-
-    //     return $templates;
-    // }
-
-    // /**
-    //     Ultimately sends the email to each server.
-    //  **/
-    // public function curl_request($server, $headers = array(), $content, $return_data = false, $htpw = null)
-    // {
-    //     $content = (is_array($content) ? json_encode($content) : $content);
-    //     ee()->dbg->console_message($server.$content, __METHOD__);
-    //     $ch = curl_init($server);
-    //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    //     curl_setopt($ch, CURLOPT_POST, 1);
-    //     // Convert @ fields to CURLFile if available
-    //     if (is_array($content) && class_exists('CURLFile')) {
-    //         foreach ($content as $key => $value) {
-    //             if (strpos($value, '@') === 0) {
-    //                 $filename = ltrim($value, '@');
-    //                 $content[$key] = new CURLFile($filename, null, null);
-    //             }
-    //         }
-    //     }
-    //     curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
-    //     if (!empty($headers)) {
-    //         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    //     }
-    //     if (!empty($htpw)) {
-    //         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-    //         curl_setopt($ch, CURLOPT_USERPWD, $htpw);
-    //     }
-
-    //     //return response instead of outputting
-    //     if ($return_data) {
-    //         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    //     }
-
-    //     $status = curl_exec($ch);
-    //     $curl_error = curl_error($ch);
-    //     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    //     curl_close($ch);
-    //     ee()->dbg->console_message($http_code.' '.json_encode($status), __METHOD__);
-    //     $result = ($return_data) ? json_decode($status) : true;
-    //     // ee()->dbg->console_message($result, __METHOD__);
-    //     // ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
-    //     return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
-    // }
 
     /**
         Remove the Q encoding from our subject line
@@ -1779,29 +1549,6 @@ class Composer
         }
     }
 
-    /**
-        Explodes a string which contains either a name and email address or just an email address into an array
-     **/
-    public function _name_and_email($str)
-    {
-        $r = array(
-            'name' => '',
-            'email' => '',
-        );
-
-        $str = str_replace('"', '', $str);
-        if (preg_match('/<([^>]+)>/', $str, $email_matches)) {
-            $r['email'] = trim($email_matches[1]);
-            $str = trim(preg_replace('/<([^>]+)>/', '', $str));
-            if (!empty($str) && $str != $r['email']) {
-                $r['name'] = utf8_encode($str);
-            }
-        } else {
-            $r['email'] = trim($str);
-        }
-
-        return $r;
-    }
 
     /**
         Explodes a comma-delimited string of email addresses into an array

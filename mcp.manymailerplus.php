@@ -9,6 +9,7 @@ class Manymailerplus_mcp
     private $version = EXT_VERSION;
     private $attachments = array();
     private $csv_lookup = array();
+    private $debug = TRUE;
 
     /**
      * Constructor.
@@ -16,7 +17,7 @@ class Manymailerplus_mcp
     public function __construct()
     {
         $CI = ee();
-        $this->debug = true;
+        // $this->debug = true;
         $this->library_config = array(
             'debug' => $this->debug
         );

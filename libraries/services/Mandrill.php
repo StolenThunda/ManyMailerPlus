@@ -3,6 +3,7 @@ use ManyMailer\libraries\services\Service;
 
 class Mandrill extends Service{
     public function __construct($settings = array()){
+        ee()->dbg->console_message($settings, __METHOD__);
         $this->key = $this->_get_mandrill_api($settings);
         $this->settings = $settings;
     }
@@ -171,4 +172,29 @@ class Mandrill extends Service{
 
         return $templates;
     }
+
+    /**
+    *  Explodes a string which contains either a name and email address or just an email address into an array
+    **/
+    public function _name_and_email($str)
+    {
+        $r = array(
+            'name' => '',
+            'email' => '',
+        );
+
+        $str = str_replace('"', '', $str);
+        if (preg_match('/<([^>]+)>/', $str, $email_matches)) {
+            $r['email'] = trim($email_matches[1]);
+            $str = trim(preg_replace('/<([^>]+)>/', '', $str));
+            if (!empty($str) && $str != $r['email']) {
+                $r['name'] = utf8_encode($str);
+            }
+        } else {
+            $r['email'] = trim($str);
+        }
+
+        return $r;
+    }
+
 }
