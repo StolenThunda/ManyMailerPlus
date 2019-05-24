@@ -1,8 +1,8 @@
 <?php
 
-namespace ManyMailerPlus\libraries\Tx_mail_service;
+namespace ManyMailerPlus\libraries\Tx_service;
 
-abstract class Tx_mail_service
+abstract class Tx_service
 {
     private $debug = false;
 

@@ -1410,10 +1410,10 @@ class Composer
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
                 ee()->dbg->console_message($service, __METHOD__);
-                if (ee()->load->is_loaded('tx_mail_service')) {
+                if (ee()->load->is_loaded('tx_service')) {
                     ee()->dbg->console_message($this->vars, __METHOD__, true);
-                    ee()->load->driver('tx_mail_service', array('settings' => $settings));
-                    $vars = ee()->tx_mail_service->{$service}->send_email();
+                    ee()->load->driver('tx_service', array('settings' => $settings));
+                    $vars = ee()->tx_service->{$service}->send_email();
                     ee()->dbg->console_message($vars, __METHOD__, true);
                     if ($vars['missing_credentials'] == true) {
                         ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
@@ -1441,13 +1441,9 @@ class Composer
     {
         try {
             ee()->dbg->console_message($service, __METHOD__);
-            ee()->dbg->console_message(ee()->load->is_loaded('tx_mail_service/drivers/'.$service), __METHOD__);
-            ee()->load->library('tx_mail_service/drivers/'.$service, array('debug' => $this->debug), $service);
-            ee()->dbg->console_message(ee()->load->is_loaded('tx_mail_service/drivers/'.$service), __METHOD__);
-            // if (!ee()->load->is_loaded('service')) {
-            //     ee()->load->driver('service', array('debug' => $this->debug));
-            //     ee()->dbg->console_message(ee()->load->is_loaded('service'), __METHOD__);
-            // }
+            ee()->dbg->console_message(ee()->load->is_loaded('tx_service/drivers/'.$service), __METHOD__);
+            ee()->load->library('tx_service/drivers/'.$service, array('debug' => $this->debug), $service);
+            ee()->dbg->console_message(ee()->load->is_loaded('tx_service/drivers/'.$service), __METHOD__);
 
             return ee()->{$service}->get_templates();
         } catch (\Throwable $th) {

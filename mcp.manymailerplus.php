@@ -6,9 +6,6 @@ if (!defined('BASEPATH')) {
 
 class Manymailerplus_mcp
 {
-    private $version = EXT_VERSION;
-    private $attachments = array();
-    private $csv_lookup = array();
     private $debug = true;
 
     /**
@@ -35,6 +32,7 @@ class Manymailerplus_mcp
         foreach ($external_js as $script) {
             ee()->cp->add_to_foot($script);
         }
+        ee()->load->driver('tx_service');
         ee()->load->library('debughelper', $this->library_config, 'dbg');
         ee()->load->library('services_module', $this->library_config, 'mod_svc');
         ee()->load->library('composer', array_merge($this->library_config, array('service' => ee()->mod_svc->get_initial_service())), 'mail_funcs');
@@ -56,7 +54,7 @@ class Manymailerplus_mcp
 
             return ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($vars);
         } else {
-            $this->makeSidebar();
+            $this->_make_sidebar();
         }
         $this->vars = array(
             'settings' => ee()->mod_svc->get_settings(),
@@ -70,7 +68,7 @@ class Manymailerplus_mcp
         );
     }
 
-    public function makeSidebar()
+    public function _make_sidebar()
     {
         $this->sidebar = ee('CP/Sidebar')->make();
         foreach (array_keys($this->sidebar_options) as $category) {

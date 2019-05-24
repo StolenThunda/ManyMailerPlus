@@ -1,6 +1,6 @@
 <?php
 
-class Mandrill extends \ManyMailerPlus\libraries\Tx_mail_service\Tx_mail_service
+class Mandrill extends \ManyMailerPlus\libraries\Tx_service\Tx_service
 {
     public function __construct($settings = array())
     {
