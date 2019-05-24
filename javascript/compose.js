@@ -98,9 +98,6 @@ $(document).ready(function() {
         service_list.hide();
     }
 
-    function newFunction() {
-        return 'escortService';
-    }
     $.fn.extend({
         val_with_linenum: function(v) {
             return this.each(() => {
