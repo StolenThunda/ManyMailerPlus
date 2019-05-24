@@ -58,40 +58,52 @@ class Services_module
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->services_loaded = ee()->config->load('services', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
-        $this->services = ee()->config->item('services', 'services');
+        $this->service_settings = ee()->config->item('services', 'services');
         $this->settings = $settings;
         $this->dbg_msgs = new MessageArray();
-        $this->service_order = $this->getServiceOrder($this->get_settings());
+        $this->service_order = array_keys($this->getServiceOrder());
     }
 
-    public function getServiceOrder($settings)
+    public function getServiceOrder()
     {
-        $services_sorted = array();
-        if (ee('Request')->isAjax() && $services = ee('Request')->post('service_order')) {
-            $all_settings[$this->site_id]['service_order'] = explode(',', $services);
-            $this->model->settings = $all_settings;
-            $this->model->save();
-            exit();
-        }
+		$settings = $this->get_settings();
+		$services_sorted = array();
+		
         // Look at custom service order
         foreach ($settings['service_order'] as $service) {
-            $services_sorted[$service] = $this->services[$service];
+            $services_sorted[$service] = $this->service_settings[$service];
         }
 
+		ee()->dbg->console_message($settings, __METHOD__.':settings');
+		ee()->dbg->console_message($services_sorted, __METHOD__.':sort');
         // Add any services were not included in the custom order
-        foreach ($this->services as $service => $service_settings) {
+        foreach ($this->service_settings as $service => $service_settings) {
             if (empty($services_sorted[$service])) {
                 $services_sorted[$service] = $service_settings;
             }
         }
-
+		ee()->dbg->console_message($services_sorted, __METHOD__.':f_sort');
         return $services_sorted;
     }
-
+	 
+	public function update_service_order(){
+		$is_ajax = ee('Request')->isAjax();
+		$services = ee('Request')->post('service_order');
+		ee()->dbg->console_message($is_ajax, __METHOD__ . ': is ajax');
+		ee()->dbg->console_message($services, __METHOD__ . ': srvs');
+        if ($is_ajax && $services) {
+			$all_settings[$this->site_id]['service_order'] = explode(',', $services);
+			ee()->dbg->console_message($all_settings, __METHOD__ . ': all_set');
+            $this->model->settings = $all_settings;
+            $this->model->save();
+        	return $all_settings[$this->site_id]['service_order'];
+        }	
+	}
+	
     public function settings_form($all_settings)
     {
         $settings = $this->get_settings();
-        $services_sorted = $this->getServiceOrder($settings);
+        $services_sorted = $this->service_order;
         $vars = array(
             'debug' => $this->debug,
             'current_service' => false,
@@ -101,10 +113,11 @@ class Services_module
             'categories' => array_keys($this->sidebar_options),
         );
         if (ee()->uri->segment(6) !== '') {
-            $vars['current_service'] = $this->current_service = ee()->uri->segment(6);
+			$vars['current_service'] = $this->current_service = ee()->uri->segment(6);
+			$vars['current_action'] = null ;
         }
 
-        if (!empty($this->config)) {
+        if (empty($this->config)) {
             $vars['form_vars']['extra_alerts'] = array('config_warning');
             ee('CP/Alert')->makeInline('config_warning')
                 ->asWarning()
@@ -120,38 +133,65 @@ class Services_module
         $vars['save_btn_text_working'] = 'btn_saving';
         $vars['sections'] = array();
         if ($this->current_service) {
-            $vars = $this->_service_settings($vars, $settings);
-            $vars['cp_page_title'] = lang(''.$this->current_service.'_name');
+            $vars['sections'] = array_merge($vars['sections'], $this->_get_service_detail());
+            $vars['cp_page_title'] = lang($this->current_service.'_name');
         } else {
             $vars['cp_page_title'] = lang('services');
             $vars['current_action'] = 'services';
             unset($vars['current_service']);
         }
-        console_message($vars, __METHOD__);
+        ee()->dbg->console_message($vars, __METHOD__);
 
         return $vars;
+    }
+
+    public function get_settings($all_sites = false)
+    {
+		$all_settings = $this->model->settings;
+		ee()->dbg->console_message($all_settings, __METHOD__);
+        $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
+		ee()->dbg->console_message($settings, __METHOD__.':settings');
+        // Check for config settings - they will override database settings
+        if ($all_sites == false) {
+            // Set a service order if none is set
+            if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
+                $settings['service_order'] = array();
+                foreach ($this->service_settings as $service => $service_settings) {
+                    $settings['service_order'][] = $service;
+                }
+            }
+
+            // Override each setting from config
+            if (!empty($this->config[$this->site_id])) {
+                foreach ($this->config[$this->site_id] as $k => $v) {
+                    $settings[$k] = $v;
+                }
+            }
+        }
+
+        return $settings;
     }
 
     public function save_settings()
     {
         $settings = $this->get_settings(true);
         $current_service = '';
-        console_message($settings, __METHOD__);
-        foreach ($this->services as $service => $service_settings) {
-            console_message($service, __METHOD__);
+        ee()->dbg->console_message($settings, __METHOD__);
+        foreach ($this->service_settings as $service => $service_settings) {
+            ee()->dbg->console_message($service, __METHOD__);
             if ($v = ee('Request')->post($service.'_active')) {
                 $current_service = $service;
                 $settings[$this->site_id][$service.'_active'] = $v;
-                console_message($current_service, __METHOD__);
+                ee()->dbg->console_message($current_service, __METHOD__);
                 foreach ($service_settings as $setting) {
                     $settings[$this->site_id][$setting] = ee('Request')->post($setting);
                 }
             }
         }
-        console_message($settings, __METHOD__);
+        ee()->dbg->console_message($settings, __METHOD__);
         $this->model->settings = $settings;
         $this->model->save();
-        // console_message("$current_service : ".json_encode($settings), __METHOD__, true);
+        // ee()->dbg->console_message("$current_service : ".json_encode($settings), __METHOD__, true);
         ee('CP/Alert')->makeInline('shared-form')
           ->asSuccess()
           ->withTitle(lang('settings_saved'))
@@ -163,28 +203,9 @@ class Services_module
         );
     }
 
-    public function viewDbg(&$vars)
+    private function _get_service_detail()
     {
-        // if ($this->debug){
-        // add any accumalated debug messages
-        $content = $this->dbg_msgs->data;
-
-        // add messages to page
-        ee()->load->helper('html');
-        foreach ($this->dbg_msgs as $msg) {
-            $vars['form_vars']['extra_alerts'][] = array('config_vars');
-            ee('CP/Alert')->makeInline($msg->title)
-                    ->asAttention()
-                    ->withTitle($msg->title)
-                    ->addToBody($msg->msg)
-                    ->canClose()
-                    ->now();
-        }
-        // }
-    }
-
-    private function _service_settings(&$vars, $settings)
-    {
+		$settings = $this->get_settings();
         $sections = array(
             array(
                 'title' => lang('description'),
@@ -204,32 +225,12 @@ class Services_module
             ),
         );
 
-        // $control_type = "text";
-        // $choice_options = FALSE;
-        // $enabled_disabled = array(
-        // 	'y' => lang('enabled'),
-        // 	'n' => lang('disabled')
-        // );
-        if (array_key_exists($this->current_service, $vars['services'])) {
-            foreach ($vars['services'][$this->current_service] as $field_name) {
-                $i = $this->getServiceFields($field_name);
-                console_message($i);
+        if (array_key_exists($this->current_service, $this->service_settings)) {
+			ee()->dbg->console_message($this->service_settings,__METHOD__);
+            foreach ($this->service_settings[$this->current_service] as $field_name) {
+                $i = $this->_getServiceFields($field_name);
+                ee()->dbg->console_message($i);
                 extract($i, EXTR_OVERWRITE);
-
-                // $is_multi_choice = is_array($field_name);
-                // if ($is_multi_choice) {
-                // 	$choice_options = $field_name;
-                // 	$field_name = array_keys($field_name)[0];
-                // 	console_message($choice_options, __METHOD__);
-                // }
-
-                // $is_control = strpos($field_name, '__');
-
-                // if ($is_control !== FALSE){
-                // 	$control_type = substr($field_name, ($is_control + 2 ));
-                // 	console_message("$field_name ( $is_control ) :  $control_type", __METHOD__);
-                // }
-
                 $field = array('type' => $control_type);
                 switch ($control_type) {
                     case 'file':
@@ -273,13 +274,11 @@ class Services_module
                     );
             }
         }
-        console_message($sections, __METHOD__);
-        $vars['sections'] = array($sections);
-
-        return $vars;
+        ee()->dbg->console_message($sections, __METHOD__);
+        return array($sections);
     }
 
-    public function getServiceFields($field_name, $type = 'text')
+    private function _getServiceFields($field_name, $type = 'text')
     {
         $info = array();
         $is_multi_choice = is_array($field_name);
@@ -287,14 +286,14 @@ class Services_module
         if ($is_multi_choice) {
             $choice_options = $field_name;
             $field_name = array_keys($field_name)[0];
-            console_message($choice_options, __METHOD__);
+            ee()->dbg->console_message($choice_options, __METHOD__);
         }
 
         $is_control = strpos($field_name, '__');
 
         if ($is_control !== false) {
             $type = substr($field_name, ($is_control + 2));
-            console_message("$field_name ( $is_control ) :  $type", __METHOD__);
+            ee()->dbg->console_message("$field_name ( $is_control ) :  $type", __METHOD__);
         }
 
         return array(
@@ -308,40 +307,17 @@ class Services_module
         );
     }
 
-    public function get_settings($all_sites = false)
-    {
-        $all_settings = $this->model->settings;
-        $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
-
-        // Check for config settings - they will override database settings
-        if ($all_sites == false) {
-            // Set a service order if none is set
-            if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
-                $settings['service_order'] = array();
-                foreach ($this->services as $service => $service_settings) {
-                    $settings['service_order'][] = $service;
-                }
-            }
-
-            // Override each setting from config
-            if (!empty($this->config[$this->site_id])) {
-                foreach ($this->config[$this->site_id] as $k => $v) {
-                    $settings[$k] = $v;
-                }
-            }
-        }
-
-        return $settings;
-    }
-
     public function get_initial_service()
     {
-        return $this->get_settings()['service_order'][0];
+		$a =  $this->get_settings()['service_order'][0];
+		ee()->dbg->console_message($a, __METHOD__);
+		return $a;
     }
 
     public function getActiveServiceNames()
     {
-        $settings = $this->get_settings();
+		$settings = $this->get_settings();
+		ee()->dbg->console_message($settings, __METHOD__);
         $active_services = array_filter($settings, function ($v, $k) {
             return $v == 'y';
         }, ARRAY_FILTER_USE_BOTH);
@@ -349,7 +325,27 @@ class Services_module
             return explode('_', $k)[0];
         }, array_keys($active_services));
 
-        return json_encode($acts);
+        return json_encode(array_unique($acts));
+    }
+
+    public function viewDbg(&$vars)
+    {
+        // if ($this->debug){
+        // add any accumalated debug messages
+        $content = $this->dbg_msgs->data;
+
+        // add messages to page
+        ee()->load->helper('html');
+        foreach ($this->dbg_msgs as $msg) {
+            $vars['form_vars']['extra_alerts'][] = array('config_vars');
+            ee('CP/Alert')->makeInline($msg->title)
+                    ->asAttention()
+                    ->withTitle($msg->title)
+                    ->addToBody($msg->msg)
+                    ->canClose()
+                    ->now();
+        }
+        // }
     }
 
     public function ee_version()

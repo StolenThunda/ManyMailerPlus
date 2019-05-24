@@ -57,7 +57,7 @@ class Settings {
 		
 
 		
-		console_message($vars, __METHOD__);
+		ee()->dbg->console_message($vars, __METHOD__);
 		return $vars;
 	}
 

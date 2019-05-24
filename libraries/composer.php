@@ -353,7 +353,7 @@ class Composer
             'rel' => 'stylesheet',
             'type' => 'text/css',
         )));
-        console_message($vars, __METHOD__);
+        ee()->dbg->console_message($vars, __METHOD__);
 
         return $vars;
     }
@@ -512,7 +512,7 @@ class Composer
         // 	'rel' => 'stylesheet',
         // 	'type' => 'text/css',
         // )));
-        console_message($vars, __METHOD__);
+        ee()->dbg->console_message($vars, __METHOD__);
 
         return array(
             'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view2')->render($vars),
@@ -529,7 +529,7 @@ class Composer
         $message = ee()->session->flashdata('result');
         if ($message) {
             $message = explode(':', ee()->session->flashdata('result'));
-            console_message('Msg: '.implode(':', $message), __METHOD__);
+            ee()->dbg->console_message('Msg: '.implode(':', $message), __METHOD__);
             ee('CP/Alert')->makeInline('result')
                         ->asIssue()
                         ->withTitle(lang('template_'.$message[0]))
@@ -559,11 +559,11 @@ class Composer
             'created_at' => '',
             'labels' => array(),
         );
-        console_message('TEMP NAME: '.$template_name, __METHOD__);
+        ee()->dbg->console_message('TEMP NAME: '.$template_name, __METHOD__);
 
         if ($template_name !== '') {
             $template = $this->_get_service_templates('info', $template_name);
-            // console_message($template, __METHOD__);
+            // ee()->dbg->console_message($template, __METHOD__);
             if (isset($template['status'])) {
                 ee()->session->set_flashdata('result', $template['status'].':'.$template['message']);
                 ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template'));
@@ -689,7 +689,7 @@ class Composer
         $vars['save_btn_text'] = lang('save_template');
         $vars['save_btn_text_working'] = lang('saving_template');
 
-        console_message($vars, __METHOD__);
+        ee()->dbg->console_message($vars, __METHOD__);
 
         return $vars;
     }
@@ -709,12 +709,12 @@ class Composer
             // "labels",
         );
 
-        // console_message($_POST, __METHOD__);
+        // ee()->dbg->console_message($_POST, __METHOD__);
         foreach ($_POST as $key => $val) {
-            // console_message("$key : ".ee()->input->post($key),__METHOD__);
+            // ee()->dbg->console_message("$key : ".ee()->input->post($key),__METHOD__);
             if (in_array($key, $form_fields)) {
                 $$key = ee()->input->get_post($key);
-                // console_message("$key : ".ee()->input	->post($key),__METHOD__);
+                // ee()->dbg->console_message("$key : ".ee()->input	->post($key),__METHOD__);
             }
         }
 
@@ -744,7 +744,7 @@ class Composer
         $function = ($created_at_hidden !== '') ? 'update' : 'add';
 
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$function.'.json';
-        // console_message($api_endpoint . json_encode($cache_data), __METHOD__);
+        // ee()->dbg->console_message($api_endpoint . json_encode($cache_data), __METHOD__);
         $result = $this->curl_request($api_endpoint, $this->headers, $cache_data, true);
         if (isset($result['status'])) {
             ee()->view->set_message($result['status'], $result['message'], null, true);
@@ -818,8 +818,8 @@ class Composer
                 $groups = array_filter(ee()->input->post($key));
             } elseif (in_array($key, $form_fields)) {
                 $$key = ee()->input->post($key);
-            // console_message($$key, __METHOD__);
-                // console_message($key . ' (' . gettype($key) . ')', __METHOD__);
+            // ee()->dbg->console_message($$key, __METHOD__);
+                // ee()->dbg->console_message($key . ' (' . gettype($key) . ')', __METHOD__);
             } else {
                 $extras[$key] = $val;
             }
@@ -836,7 +836,7 @@ class Composer
             }
         }
 
-        // console_message($this->csv_lookup,__METHOD__);
+        // ee()->dbg->console_message($this->csv_lookup,__METHOD__);
         //  Verify privileges
         if (count($groups) > 0 && !ee()->cp->allowed_group('can_email_member_groups')) {
             show_error(lang('not_allowed_to_email_member_groups'));
@@ -908,7 +908,7 @@ class Composer
             'plaintext_alt' => $plaintext_alt,
             'attachments' => $this->attachments,
         );
-        console_message(array_merge($extras, $cache_data), __METHOD__);
+        ee()->dbg->console_message(array_merge($extras, $cache_data), __METHOD__);
         $email = ee('Model')->make('EmailCache', $cache_data);
         $email->save();
 
@@ -1081,7 +1081,7 @@ class Composer
             show_error(lang('cache_data_missing'));
         }
 
-        console_message($email->subject, __METHOD__);
+        ee()->dbg->console_message($email->subject, __METHOD__);
 
         return $this->compose($email);
     }
@@ -1156,11 +1156,11 @@ class Composer
         $formatted_message = $this->formatMessage($email, true);
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
-            console_message('lookup loaded: '.$csv_lookup_loaded, __FUNCTION__.'loaded');
+            ee()->dbg->console_message('lookup loaded: '.$csv_lookup_loaded, __FUNCTION__.'loaded');
             if ($csv_lookup_loaded) {
                 $tmp_plaintext = $email->plaintext_alt;
                 $record = $this->csv_lookup[$email_address];
-                console_message($record, __METHOD__);
+                ee()->dbg->console_message($record, __METHOD__);
                 // standard 'First Last <email address> format
                 if (isset($record['{{first_name}}']) && isset($record['{{last_name}}'])) {
                     $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record['{{email}}']}>"; //TODO: https://trello.com/c/1lffhlXm
@@ -1193,7 +1193,7 @@ class Composer
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = (count($extras) > 0) ? $extras : array();
-                console_message($cache_data, __METHOD__);
+                ee()->dbg->console_message($cache_data, __METHOD__);
                 if ($this->email_send($cache_data)) {
                     ++$singleEmail->total_sent;
                     $singleEmail->save();
@@ -1216,7 +1216,7 @@ class Composer
 
         $debug_msg = ee()->email->print_debugger(array());
         $err_msg = lang('compose_error').BR.BR.$debug_msg;
-        console_message($debug_msg, __METHOD__);
+        ee()->dbg->console_message($debug_msg, __METHOD__);
         ee()->logger->developer($err_msg);
         show_error($err_msg);
     }
@@ -1253,7 +1253,7 @@ class Composer
         foreach ($email->attachments as $attachment) {
             ee()->email->attach($attachment);
         }
-        console_message(ee()->email->print_debugger(), __METHOD__);
+        ee()->dbg->console_message(ee()->email->print_debugger(), __METHOD__);
 
         return ee()->email->send(false);
     }
@@ -1302,7 +1302,7 @@ class Composer
      */
     private function censorSubject(EmailCache $email)
     {
-        console_message($email, __METHOD__);
+        ee()->dbg->console_message($email, __METHOD__);
         $subject = $email->subject;
 
         if (bool_config_item('enable_censoring')) {
@@ -1341,7 +1341,7 @@ class Composer
         }
 
         if ($this->debug == true) {
-            console_message($this->email_in);
+            ee()->dbg->console_message($this->email_in);
         }
 
         // Set X-Mailer
@@ -1396,65 +1396,65 @@ class Composer
 
         // Set HTML/Text and attachments
         // $this->_body_and_attachments();
-
-        if ($this->debug == true) {
-            console_message($this->email_out);
-        }
-
+        ee()->dbg->console_message($this->email_out);
+        ee()->dbg->console_message($settings,__METHOD__);
         foreach ($settings['service_order'] as $service) {
-            // console_message($service, __METHOD__);
+            // ee()->dbg->console_message($service, __METHOD__);
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
-                console_message($service, __METHOD__);
-                switch ($service) {
-                    case 'mailgun':
-                        if (!empty($settings['mailgun_api_key']) && !empty($settings['mailgun_domain'])) {
-                            $sent = $this->_send_mailgun($settings['mailgun_api_key'], $settings['mailgun_domain']);
-                            $missing_credentials = false;
-                        }
-                        break;
-                    case 'mandrill':
-                        $key = $this->_get_mandrill_api($settings);
-                        if ($key !== '') {
-                            $subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
-                            $sent = $this->_send_mandrill($key, $subaccount);
-                            $missing_credentials = false;
-                        }
-                        break;
-                    case 'postageapp':
-                        if (!empty($settings['postageapp_api_key'])) {
-                            $sent = $this->_send_postageapp($settings['postageapp_api_key']);
-                            $missing_credentials = false;
-                        }
-                        break;
-                    case 'postmark':
-                        if (!empty($settings['postmark_api_key'])) {
-                            $sent = $this->_send_postmark($settings['postmark_api_key']);
-                            $missing_credentials = false;
-                        }
-                        break;
-                    case 'sendgrid':
-                        if (!empty($settings['sendgrid_api_key'])) {
-                            $sent = $this->_send_sendgrid($settings['sendgrid_api_key']);
-                            $missing_credentials = false;
-                        }
-                        break;
-                    case 'sparkpost':
-                        if (!empty($settings['sparkpost_api_key'])) {
-                            $sent = $this->_send_sparkpost($settings['sparkpost_api_key']);
-                            $missing_credentials = false;
-                        }
-                        break;
-                }
-                // console_message($sent, __METHOD__, TRUE);
-                if ($missing_credentials == true) {
+                ee()->dbg->console_message($service, __METHOD__);
+                ee()->load->library($service, $settings);
+                $vars = ee()->{$service}->send_email();
+                ee()->dbg->console_message($vars, __METHOD__, TRUE);
+                // switch ($service) {
+                //     case 'mailgun':
+                //         if (!empty($settings['mailgun_api_key']) && !empty($settings['mailgun_domain'])) {
+                //             $sent = $this->_send_mailgun($settings['mailgun_api_key'], $settings['mailgun_domain']);
+                //             $missing_credentials = false;
+                //         }
+                //         break;
+                //     case 'mandrill':
+                            // $key = $this->_get_mandrill_api($settings);
+                            // if ($key !== '') {
+                            //     $subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
+                            //     $sent = $this->_send_mandrill($key, $subaccount);
+                            //     $missing_credentials = false;
+                            // }
+                //         break;
+                //     case 'postageapp':
+                //         if (!empty($settings['postageapp_api_key'])) {
+                //             $sent = $this->_send_postageapp($settings['postageapp_api_key']);
+                //             $missing_credentials = false;
+                //         }
+                //         break;
+                //     case 'postmark':
+                //         if (!empty($settings['postmark_api_key'])) {
+                //             $sent = $this->_send_postmark($settings['postmark_api_key']);
+                //             $missing_credentials = false;
+                //         }
+                //         break;
+                //     case 'sendgrid':
+                //         if (!empty($settings['sendgrid_api_key'])) {
+                //             $sent = $this->_send_sendgrid($settings['sendgrid_api_key']);
+                //             $missing_credentials = false;
+                //         }
+                //         break;
+                //     case 'sparkpost':
+                //         if (!empty($settings['sparkpost_api_key'])) {
+                //             $sent = $this->_send_sparkpost($settings['sparkpost_api_key']);
+                //             $missing_credentials = false;
+                //         }
+                //         break;
+                // }
+                // ee()->dbg->console_message($sent, __METHOD__, TRUE);
+                if ($vars['missing_credentials'] == true) {
                     ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
-                } elseif ($sent == false) {
+                } elseif ($vars['sent'] == false) {
                     ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
                 }
             }
-            console_message($sent, __METHOD__);
-            if ($sent == true) {
+            ee()->dbg->console_message($sent, __METHOD__);
+            if ($vars['sent'] == true) {
                 ee()->extensions->end_script = true;
 
                 return true;
@@ -1464,138 +1464,138 @@ class Composer
         return false;
     }
 
-    /**
-        Sending methods for each of our services follow.
-     **/
-    public function _send_mandrill($api_key, $subaccount)
-    {
-        $content = array(
-            'key' => $api_key,
-            'async' => true,
-            'message' => $this->email_out,
-        );
-        console_message($content, __METHOD__);
-        if (isset($content['message']['extras'])) {
-            console_message($content['message']['extras'], __FUNCTION__);
+    // /**
+    //     Sending methods for each of our services follow.
+    //  **/
+    // public function _send_mandrill($api_key, $subaccount)
+    // {
+    //     $content = array(
+    //         'key' => $api_key,
+    //         'async' => true,
+    //         'message' => $this->email_out,
+    //     );
+    //     ee()->dbg->console_message($content, __METHOD__);
+    //     if (isset($content['message']['extras'])) {
+    //         ee()->dbg->console_message($content['message']['extras'], __FUNCTION__);
 
-            if (isset($content['message']['extras']['from_name'])) {
-                $content['message']['from_name'] = $content['message']['extras']['from_name'];
-            }
-            if (isset($content['message']['extras']['template_name'])) {
-                $content['template_name'] = $content['message']['extras']['template_name'];
-            }
-            if (isset($content['template_name']) && isset($content['message']['extras']['mc-edit'])) {
-                $edits = $content['message']['extras']['mc-edit'];
-                $t_content = array();
-                foreach ($edits as $k => $v) {
-                    if (in_array($k, array('main', 'content', 'body_content'))) {
-                        console_message($k, __METHOD__);
-                        $v = $content['message']['html'];
-                    }
-                    array_push($t_content, array('name' => $k, 'content' => $v));
-                }
-                $content['template_content'] = $t_content;
-            }
-        }
-        console_message($content, __METHOD__);
-        if (!empty($subaccount)) {
-            $content['message']['subaccount'] = $subaccount;
-        }
+    //         if (isset($content['message']['extras']['from_name'])) {
+    //             $content['message']['from_name'] = $content['message']['extras']['from_name'];
+    //         }
+    //         if (isset($content['message']['extras']['template_name'])) {
+    //             $content['template_name'] = $content['message']['extras']['template_name'];
+    //         }
+    //         if (isset($content['template_name']) && isset($content['message']['extras']['mc-edit'])) {
+    //             $edits = $content['message']['extras']['mc-edit'];
+    //             $t_content = array();
+    //             foreach ($edits as $k => $v) {
+    //                 if (in_array($k, array('main', 'content', 'body_content'))) {
+    //                     ee()->dbg->console_message($k, __METHOD__);
+    //                     $v = $content['message']['html'];
+    //                 }
+    //                 array_push($t_content, array('name' => $k, 'content' => $v));
+    //             }
+    //             $content['template_content'] = $t_content;
+    //         }
+    //     }
+    //     ee()->dbg->console_message($content, __METHOD__);
+    //     if (!empty($subaccount)) {
+    //         $content['message']['subaccount'] = $subaccount;
+    //     }
 
-        $content['message']['from_email'] = $content['message']['from']['email'];
-        if (!empty($content['message']['from']['name'])) {
-            $content['message']['from_name'] = $content['message']['from']['name'];
-        }
-        unset($content['message']['from']);
+    //     $content['message']['from_email'] = $content['message']['from']['email'];
+    //     if (!empty($content['message']['from']['name'])) {
+    //         $content['message']['from_name'] = $content['message']['from']['name'];
+    //     }
+    //     unset($content['message']['from']);
 
-        $mandrill_to = array('email' => $content['message']['to']);
-        foreach ($content['message']['to'] as $to) {
-            $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'to'));
-        }
+    //     $mandrill_to = array('email' => $content['message']['to']);
+    //     foreach ($content['message']['to'] as $to) {
+    //         $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'to'));
+    //     }
 
-        if (!empty($content['message']['cc'])) {
-            foreach ($content['message']['cc'] as $to) {
-                $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'cc'));
-            }
-            unset($content['message']['cc']);
-        }
+    //     if (!empty($content['message']['cc'])) {
+    //         foreach ($content['message']['cc'] as $to) {
+    //             $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'cc'));
+    //         }
+    //         unset($content['message']['cc']);
+    //     }
 
-        if (!empty($content['message']['reply-to'])) {
-            $content['message']['headers']['Reply-To'] = $this->_recipient_str($content['message']['reply-to'], true);
-        }
-        unset($content['message']['reply-to']);
+    //     if (!empty($content['message']['reply-to'])) {
+    //         $content['message']['headers']['Reply-To'] = $this->_recipient_str($content['message']['reply-to'], true);
+    //     }
+    //     unset($content['message']['reply-to']);
 
-        if (!empty($content['message']['bcc'])) {
-            foreach ($content['message']['bcc'] as $to) {
-                $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'bcc'));
-            }
-        }
-        unset($content['message']['bcc']);
+    //     if (!empty($content['message']['bcc'])) {
+    //         foreach ($content['message']['bcc'] as $to) {
+    //             $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'bcc'));
+    //         }
+    //     }
+    //     unset($content['message']['bcc']);
 
-        $content['message']['to'] = $mandrill_to;
+    //     $content['message']['to'] = $mandrill_to;
 
-        $content['message']['merge_language'] = 'handlebars';
+    //     $content['message']['merge_language'] = 'handlebars';
 
-        $content['message']['track_opens'] = true;
+    //     $content['message']['track_opens'] = true;
 
-        $content['message']['tags'][] = EXT_NAME.' '.EXT_VERSION;
+    //     $content['message']['tags'][] = EXT_NAME.' '.EXT_VERSION;
 
-        $merge_vars = array(
-            array(
-                'rcpt' => $content['message']['to'][0]['email'],
-                'vars' => $this->_mandrill_lookup_to_merge($content['message']['lookup']),
-            ),
-        );
-        unset($content['message']['lookup']);
+    //     $merge_vars = array(
+    //         array(
+    //             'rcpt' => $content['message']['to'][0]['email'],
+    //             'vars' => $this->_mandrill_lookup_to_merge($content['message']['lookup']),
+    //         ),
+    //     );
+    //     unset($content['message']['lookup']);
 
-        $content['message']['auto_text'] = true;
-        $content['message']['merge_vars'] = $merge_vars;
+    //     $content['message']['auto_text'] = true;
+    //     $content['message']['merge_vars'] = $merge_vars;
 
-        if (ee()->extensions->active_hook('pre_send')) {
-            $content = ee()->extensions->call('pre_send', 'mandrill', $content);
-        }
+    //     if (ee()->extensions->active_hook('pre_send')) {
+    //         $content = ee()->extensions->call('pre_send', 'mandrill', $content);
+    //     }
 
-        // Did someone set a template? Then we need a different API method.
-        $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
-        $content = json_encode($content);
+    //     // Did someone set a template? Then we need a different API method.
+    //     $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
+    //     $content = json_encode($content);
 
-        console_message($content, __METHOD__);
-        //TODO: save email data to table
-        // ee()->logger->developer($content);
-        return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
-    }
+    //     ee()->dbg->console_message($content, __METHOD__);
+    //     //TODO: save email data to table
+    //     // ee()->logger->developer($content);
+    //     return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
+    // }
 
-    public function _get_mandrill_api($settings = array())
-    {
-        try {
-            $settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
-            // $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
-            $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-            $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-            $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
-            $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-            // console_message("Act Key: $active_key", __METHOD__);
-            return $active_key;
-        } catch (\Throwable $th) {
-            //throw $th;
-            console_message($th, __METHOD__);
+    // public function _get_mandrill_api($settings = array())
+    // {
+    //     try {
+    //         $settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
+    //         // $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
+    //         $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
+    //         $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
+    //         $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
+    //         $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
+    //         // ee()->dbg->console_message("Act Key: $active_key", __METHOD__);
+    //         return $active_key;
+    //     } catch (\Throwable $th) {
+    //         //throw $th;
+    //         ee()->dbg->console_message($th, __METHOD__);
 
-            return $th;
-        }
-    }
+    //         return $th;
+    //     }
+    // }
 
-    public function _mandrill_lookup_to_merge($lookup)
-    {
-        $merge_vars = array();
-        foreach (array_keys($lookup) as $key) {
-            $merge_vars[] = array(
-                'name' => str_replace(array('{{', '}}'), '', $key),
-                'content' => $lookup[$key],
-            );
-        }
+    // public function _mandrill_lookup_to_merge($lookup)
+    // {
+    //     $merge_vars = array();
+    //     foreach (array_keys($lookup) as $key) {
+    //         $merge_vars[] = array(
+    //             'name' => str_replace(array('{{', '}}'), '', $key),
+    //             'content' => $lookup[$key],
+    //         );
+    //     }
 
-        return $merge_vars;
-    }
+    //     return $merge_vars;
+    // }
 
     public function _get_service_templates($service)
     {
@@ -1611,68 +1611,68 @@ class Composer
        }
     }
 
-    public function _get_mandrill_templates($obj)
-    {
-        $func = (isset($obj['func'])) ? $obj['func'] : 'list';
-        $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
-        $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-        $data = array(
-            'key' => $this->_get_mandrill_api(),
-        );
-        if (!is_null($template_name)) {
-            $data['name'] = $template_name;
-        }
-        $content = json_encode($data);
-        console_message($api_endpoint.$content, __METHOD__);
-        $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
-        console_message($templates, __METHOD__);
+    // public function _get_mandrill_templates($obj)
+    // {
+    //     $func = (isset($obj['func'])) ? $obj['func'] : 'list';
+    //     $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
+    //     $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
+    //     $data = array(
+    //         'key' => $this->_get_mandrill_api(),
+    //     );
+    //     if (!is_null($template_name)) {
+    //         $data['name'] = $template_name;
+    //     }
+    //     $content = json_encode($data);
+    //     ee()->dbg->console_message($api_endpoint.$content, __METHOD__);
+    //     $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
+    //     ee()->dbg->console_message($templates, __METHOD__);
 
-        return $templates;
-    }
+    //     return $templates;
+    // }
 
-    /**
-        Ultimately sends the email to each server.
-     **/
-    public function curl_request($server, $headers = array(), $content, $return_data = false, $htpw = null)
-    {
-        $content = (is_array($content) ? json_encode($content) : $content);
-        console_message($server.$content, __METHOD__);
-        $ch = curl_init($server);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        // Convert @ fields to CURLFile if available
-        if (is_array($content) && class_exists('CURLFile')) {
-            foreach ($content as $key => $value) {
-                if (strpos($value, '@') === 0) {
-                    $filename = ltrim($value, '@');
-                    $content[$key] = new CURLFile($filename, null, null);
-                }
-            }
-        }
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
-        if (!empty($headers)) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        }
-        if (!empty($htpw)) {
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-            curl_setopt($ch, CURLOPT_USERPWD, $htpw);
-        }
+    // /**
+    //     Ultimately sends the email to each server.
+    //  **/
+    // public function curl_request($server, $headers = array(), $content, $return_data = false, $htpw = null)
+    // {
+    //     $content = (is_array($content) ? json_encode($content) : $content);
+    //     ee()->dbg->console_message($server.$content, __METHOD__);
+    //     $ch = curl_init($server);
+    //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    //     curl_setopt($ch, CURLOPT_POST, 1);
+    //     // Convert @ fields to CURLFile if available
+    //     if (is_array($content) && class_exists('CURLFile')) {
+    //         foreach ($content as $key => $value) {
+    //             if (strpos($value, '@') === 0) {
+    //                 $filename = ltrim($value, '@');
+    //                 $content[$key] = new CURLFile($filename, null, null);
+    //             }
+    //         }
+    //     }
+    //     curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+    //     if (!empty($headers)) {
+    //         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    //     }
+    //     if (!empty($htpw)) {
+    //         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+    //         curl_setopt($ch, CURLOPT_USERPWD, $htpw);
+    //     }
 
-        //return response instead of outputting
-        if ($return_data) {
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        }
+    //     //return response instead of outputting
+    //     if ($return_data) {
+    //         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    //     }
 
-        $status = curl_exec($ch);
-        $curl_error = curl_error($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        console_message($http_code.' '.json_encode($status), __METHOD__);
-        $result = ($return_data) ? json_decode($status) : true;
-        // console_message($result, __METHOD__);
-        // ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
-        return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
-    }
+    //     $status = curl_exec($ch);
+    //     $curl_error = curl_error($ch);
+    //     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    //     curl_close($ch);
+    //     ee()->dbg->console_message($http_code.' '.json_encode($status), __METHOD__);
+    //     $result = ($return_data) ? json_decode($status) : true;
+    //     // ee()->dbg->console_message($result, __METHOD__);
+    //     // ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
+    //     return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
+    // }
 
     /**
         Remove the Q encoding from our subject line
@@ -1700,7 +1700,7 @@ class Composer
      **/
     public function _body_and_attachments()
     {
-        console_message($this->protocol, __METHOD__);
+        ee()->dbg->console_message($this->protocol, __METHOD__);
         if ($this->protocol == 'mail') {
             // The 'mail' protocol sets Content-Type in the headers
             if (strpos($this->email_in['header_str'], 'Content-Type: text/plain') !== false) {
@@ -1940,7 +1940,7 @@ class Composer
 
         $count = $emails->count();
 
-        console_message($count, __METHOD__);
+        ee()->dbg->console_message($count, __METHOD__);
         $sort_map = array(
             'date' => 'cache_date',
             'subject' => 'subject',
@@ -2004,7 +2004,7 @@ class Composer
             $vars['emails'][] = $email;
         }
 
-        console_message($vars, __METHOD__);
+        ee()->dbg->console_message($vars, __METHOD__);
         $table->setData($data);
 
         $base_url = ee('CP/URL', EXT_SETTINGS_PATH.'/email/sent');
@@ -2035,7 +2035,7 @@ class Composer
         $vars['save_btn_text_working'] = '';
         $vars['sections'] = array();
 
-        console_message($vars, __METHOD__);
+        ee()->dbg->console_message($vars, __METHOD__);
 
         return $vars;
     }
@@ -2045,7 +2045,9 @@ class Composer
      */
     public function view_templates($service_name = null)
     {
+
         $service_name = is_null($service_name) ? $this->init_service : $service_name;
+        ee()->dbg->console_message($service_name, __METHOD__);
         if (ee()->input->post('bulk_action') == 'remove') {
             foreach (ee()->input->get_post('selection') as $slug) {
                 $selection = str_replace('_', ' ', $slug);
@@ -2113,7 +2115,7 @@ class Composer
             }
         }
 
-        //console_message($vars, __METHOD__);
+        //ee()->dbg->console_message($vars, __METHOD__);
         $table->setData($data);
         $count = 1;
         $base_url = ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates');
@@ -2144,7 +2146,7 @@ class Composer
         $vars['save_btn_text_working'] = '';
         $vars['sections'] = array();
 
-        //console_message($vars, __METHOD__);
+        //ee()->dbg->console_message($vars, __METHOD__);
         return $vars;
     }
 
@@ -2170,7 +2172,7 @@ class Composer
      */
     public function _check_for_recipients($str)
     {
-        console_message($str, __METHOD__);
+        ee()->dbg->console_message($str, __METHOD__);
         if (!$str && ee()->input->post('total_gl_recipients') < 1) {
             ee()->form_validation->set_message('_check_for_recipients', lang('required'));
 
@@ -2219,7 +2221,7 @@ class Composer
      */
     private function deleteAttachments($email)
     {
-        console_message($email, __METHOD__);
+        ee()->dbg->console_message($email, __METHOD__);
         foreach ($email->attachments as $file) {
             if (file_exists($file)) {
                 unlink($file);

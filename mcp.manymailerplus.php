@@ -16,7 +16,10 @@ class Manymailerplus_mcp
     public function __construct()
     {
         $CI = ee();
-        $this->debug = false;
+        $this->debug = true;
+        $this->library_config = array(
+            'debug' => $this->debug
+        );
         ee()->extensions->end_script = true;
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
@@ -31,14 +34,14 @@ class Manymailerplus_mcp
         foreach ($external_js as $script) {
             ee()->cp->add_to_foot($script);
         }
-        ee()->load->helper('debug');
+        ee()->load->library('debughelper', $this->library_config, 'dbg');        
+        ee()->load->library('services_module', $this->library_config, 'mail_svc');
+        ee()->load->library('composer', array_merge($this->library_config, array('service' => ee()->mail_svc->get_initial_service())), 'mail_funcs');
         ee()->load->helper('html');
-        ee()->load->library('services_module', null, 'mail_svc');
-        ee()->load->library('composer', array('service' => ee()->mail_svc->get_initial_service()), 'mail_funcs');
         $this->services = ee()->config->item('services', 'services');
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
-        $this->_update_sidebar_options(array_keys($this->services));
+        $this->_update_sidebar_options(ee()->mail_svc->get_settings()['service_order']);
 
         if (!$this->sidebar_loaded) {
             //render page to show errors
@@ -54,6 +57,16 @@ class Manymailerplus_mcp
         } else {
             $this->makeSidebar();
         }
+        $this->vars = array(
+            'settings' => ee()->mail_svc->get_settings(),
+            'services' => $this->services,
+            'sidebar' => $this->sidebar_options,
+            'sections' => array(),
+            'save_btn_text' => '',
+            'save_btn_text_working' => '',
+            'categories' => array_keys($this->sidebar_options),
+            'active_service_names' => ee()->mail_svc->getActiveServiceNames()
+        );
     }
 
     public function makeSidebar()
@@ -81,23 +94,18 @@ class Manymailerplus_mcp
 
     public function index()
     {
-        $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
-        $vars['cp_page_title'] = lang(__FUNCTION__.'_title');
-        $vars['save_btn_text'] = '';
-        $vars['save_btn_text_working'] = '';
-        $vars['current_action'] = __FUNCTION__;
-        $vars['categories'] = array_keys($this->sidebar_options);
-        $vars['breadcrumb'] = ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile();
-        $vars['sections'] = array();
-        console_message($vars, __METHOD__);
-
+        $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
+        $this->vars['cp_page_title'] = lang(__FUNCTION__.'_title');
+        $this->vars['current_action'] = __FUNCTION__;
+        $this->vars['breadcrumb'] = ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile();      
+        ee()->dbg->console_message($this->vars, __METHOD__);
         return  array(
-                'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($vars),
-                'breadcrumb' => array(
-                    $vars['breadcrumb'] => EXT_NAME,
-                ),
-                'heading' => $vars['cp_page_title'],
-            );
+            'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($this->vars),
+            'breadcrumb' => array(
+                $this->vars['breadcrumb'] => EXT_NAME,
+            ),
+            'heading' => $this->vars['cp_page_title'],
+        );
     }
 
     public function email($func = '')
@@ -108,6 +116,9 @@ class Manymailerplus_mcp
         );
         $id = ee()->uri->segment(7, '');
         switch ($func) {
+            case 'view_templates':
+                $this->vars = ee()->mail_funcs->{$func}();
+                break;
             case 'resend':
             case 'batch':
                 return ee()->mail_funcs->{$func}($id);
@@ -117,7 +128,7 @@ class Manymailerplus_mcp
                 break;
             case 'edit_template':
                 if ($id != '') {
-                    $vars = ee()->mail_funcs->{$func}($id);
+                    $this->vars = ee()->mail_funcs->{$func}($id);
                     break;
                 }
                 // no break
@@ -125,26 +136,21 @@ class Manymailerplus_mcp
             case 'send':
             case 'sent':
             case 'save_template':
-            case 'view_templates':
+            
             case 'delete_template':
-                $vars = ee()->mail_funcs->{$func}();
+                $this->vars = ee()->mail_funcs->{$func}();
                 break;
             default:
                 array_pop($breadcrumbs);
-                $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email');
-                $vars['cp_page_title'] = lang('email_title');
-                $vars['save_btn_text'] = '';
-                $vars['save_btn_text_working'] = '';
-                $vars['current_action'] = 'email';
-                $vars['sections'] = array();
+                $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email');
+                $this->vars['cp_page_title'] = lang('email_title');
+                $this->vars['current_action'] = 'email';
         }
-        $vars['categories'] = array_keys($this->sidebar_options);
-        console_message($vars, __METHOD__);
-
+        ee()->dbg->console_message($this->vars, __METHOD__);
         return array(
-            'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($vars),
+            'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($this->vars),
             'breadcrumb' => $breadcrumbs,
-            'heading' => $vars['cp_page_title'],
+            'heading' => $this->vars['cp_page_title'],
             );
     }
 
@@ -154,29 +160,36 @@ class Manymailerplus_mcp
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/services')->compile() => lang('services'),
         );
-        switch ($func) {
+        $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/services');
+        $this->vars['cp_page_title'] = lang('services');
+        $this->vars['current_action'] = $func;
+        switch ($func) {           
             case 'list':
-                $vars = ee()->mail_svc->get_settings();
-                break;
+                $this->vars['settings'] = ee()->mail_svc->get_settings();
+               break; 
             case 'save':
                 return ee()->mail_svc->save_settings();
                 break;
-            default:
+            case '': 
+            case in_array($func, array_values($this->sidebar_options['services']['links'])):
                 // if the current = the service detail page
-                $vars = ee()->mail_svc->settings_form(array());
+                $this->vars = array_merge($this->vars, ee()->mail_svc->settings_form(array()));
                 break;
+            default: 
+                $this->vars['settings'] = ee()->mail_svc->{$func}();
+                break;
+                
         }
-        if (!isset($vars['current_service'])) {
+        if (!isset($this->vars['current_service'])) {
             array_pop($breadcrumbs);
         }
-        $vars['active_service_names'] = ee()->mail_svc->getActiveServiceNames();
-        $vars['sidebar'] = $this->sidebar_options;
-        console_message($vars, __METHOD__);
+        $this->vars['active_service_names'] = ee()->mail_svc->getActiveServiceNames();
+        ee()->dbg->console_message($this->vars, __METHOD__);
 
         return array(
-            'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($vars),
+            'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($this->vars),
             'breadcrumb' => $breadcrumbs,
-            'heading' => $vars['cp_page_title'],
+            'heading' => $this->vars['cp_page_title'],
         );
     }
 }
