@@ -1,7 +1,10 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
+if (!defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
 
-class Manymailerplus_mcp 
+class Manymailerplus_mcp
 {
 	private $version = EXT_VERSION;
 	private $vars = array();

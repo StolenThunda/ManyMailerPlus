@@ -1,15 +1,14 @@
 <?php
 /**
  * This source file is part of the open source project
- * ExpressionEngine (https://expressionengine.com)
+ * ExpressionEngine (https://expressionengine.com).
  *
- * @link      https://expressionengine.com/
+ * @see      https://expressionengine.com/
+ *
  * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
-use EllisLab\ExpressionEngine\Controller\Utilities;
 use EllisLab\ExpressionEngine\Library\CP\Table;
-use EllisLab\ExpressionEngine\Library\CP\GridInput;
 use EllisLab\ExpressionEngine\Model\Email\EmailCache;
 use EllisLab\Addons\FilePicker\FilePicker as FilePicker;
 /**

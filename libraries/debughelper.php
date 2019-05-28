@@ -108,7 +108,7 @@ class Debughelper
         return $searchResults;
     }
 
-    public function get_messages($messages = null)
+    public function get_messages()
     {
         return json_encode($this->messages);
     }
