@@ -38,11 +38,9 @@ class Services_module {
 	function __construct($settings = '')
 	{
 		
-		ee()->load->helper('debug');
 		ee()->load->helper('MessageArray');
 		ee()->load->helper('html');
-		ee()->load->library('composer');
-		$this->debug = TRUE;
+		$this->debug = (isset($settings['debug']) ? $settings['debug'] : FALSE);
         $this->config = ee()->config->item(EXT_SHORT_NAME.'_settings');
 		if(ee()->config->item('email_crlf') != false)
 		{
@@ -150,7 +148,7 @@ class Services_module {
 			$vars['current_action'] = 'services';
 			unset($vars['current_service']);
 		}	   
-		console_message($vars, __METHOD__);
+		ee()->dbg->c_log($vars, __METHOD__);
 		return $vars;
 	}
 
@@ -174,7 +172,7 @@ class Services_module {
 
 		$this->model->settings = $settings;
 		$this->model->save();
-		console_message("$current_service : ". json_encode($settings), __METHOD__);
+		ee()->dbg->c_log("$current_service : ". json_encode($settings), __METHOD__);
 		ee('CP/Alert')->makeInline('shared-form')
 	      ->asSuccess()
 		  ->withTitle(lang('settings_saved'))
@@ -237,21 +235,21 @@ class Services_module {
 			{
 				
 				$i = $this->getServiceFields($field_name);
-				console_message($i);
+				// ee()->dbg->c_log($i);
 				extract($i, EXTR_OVERWRITE);
 			
 				// $is_multi_choice = is_array($field_name);
 				// if ($is_multi_choice) {
 				// 	$choice_options = $field_name;					
 				// 	$field_name = array_keys($field_name)[0];					
-				// 	console_message($choice_options, __METHOD__);
+				// 	ee()->dbg->c_log($choice_options, __METHOD__);
 				// }
 
 				// $is_control = strpos($field_name, '__');
 				
 				// if ($is_control !== FALSE){
 				// 	$control_type = substr($field_name, ($is_control + 2 ));
-				// 	console_message("$field_name ( $is_control ) :  $control_type", __METHOD__);
+				// 	ee()->dbg->c_log("$field_name ( $is_control ) :  $control_type", __METHOD__);
 				// } 
 				
 				$field = array('type' => $control_type);
@@ -297,7 +295,7 @@ class Services_module {
 					);
 			}
 		}
-		console_message($sections, __METHOD__);
+		// ee()->dbg->c_log($sections, __METHOD__);
 		$vars['sections'] = array($sections);
 		return $vars;
 	}
@@ -309,14 +307,14 @@ class Services_module {
 		if ($is_multi_choice) {
 			$choice_options = $field_name;					
 			$field_name = array_keys($field_name)[0];					
-			console_message($choice_options, __METHOD__);
+			ee()->dbg->c_log($choice_options, __METHOD__);
 		}
 
 		$is_control = strpos($field_name, '__');
 			
 		if ($is_control !== FALSE){
 			$type = substr($field_name, ($is_control + 2 ));
-			console_message("$field_name ( $is_control ) :  $type", __METHOD__);
+			// ee()->dbg->c_log("$field_name ( $is_control ) :  $type", __METHOD__);
 		} 
 
 		return array(

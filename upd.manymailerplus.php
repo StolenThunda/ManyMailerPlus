@@ -51,17 +51,17 @@ class Manymailerplus_upd {
 
 		// ee()->db->delete('modules', array( 'module_name' => EXT_NAME));
 		// $result = ee()->db->simple_query('delete from exp_modules where module_name like "Manymailerplus%');
-		//console_message(ee()->db->last_query(), ee()->db->affected_rows()." Rows Deleted", TRUE);
+		//ee()->dbg->c_log(ee()->db->last_query(), ee()->db->affected_rows()." Rows Deleted", TRUE);
 
         ee()->load->dbforge();
 		foreach (array('csv_object', 'mailKey') as $column){
-			console_message("$column TEST", __METHOD__);
+			ee()->dbg->c_log("$column TEST", __METHOD__);
 			if( ee()->db->field_exists($column, 'exp_email_cache')){
 				$result = ee()->dbforge->drop_column('exp_email_cache', $column);
-				console_message($result, __METHOD__);
+				ee()->dbg->c_log($result, __METHOD__);
 			}else{
 
-				console_message("$column does not exist", __METHOD__);
+				ee()->dbg->c_log("$column does not exist", __METHOD__);
 			}
         }
 		return TRUE;
@@ -95,14 +95,14 @@ class Manymailerplus_upd {
 			);
 		foreach (array_keys($fields) as $column){
 			$hasColumns = ee()->db->field_exists($column, 'exp_email_cache');
-			// console_message(ee()->db->last_query(), ee()->db->affected_rows()." Rows Affected");
-			// console_message($column,"Has Column : ".(($hasColumns) ? 'TRUE': 'FALSE'));
+			// ee()->dbg->c_log(ee()->db->last_query(), ee()->db->affected_rows()." Rows Affected");
+			// ee()->dbg->c_log($column,"Has Column : ".(($hasColumns) ? 'TRUE': 'FALSE'));
 			if ($hasColumns) break;
 		} 
 		
 		if (!$hasColumns) {
 			$result = ee()->dbforge->add_column('email_cache', $fields);
-			// console_message($result->num_rows(), (string) $hasColumns);
+			// ee()->dbg->c_log($result->num_rows(), (string) $hasColumns);
 		}
 		return ee()->db->field_exists('csv_object', 'exp_email_cache');
 	}

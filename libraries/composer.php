@@ -359,7 +359,7 @@ class Composer {
 			'rel' => 'stylesheet',
 			'type' => 'text/css',
 		)));
-		console_message($vars, __METHOD__);
+		ee()->dbg->c_log($vars, __METHOD__);
 		return $vars;
 	}
 /**
@@ -523,7 +523,7 @@ class Composer {
 		// 	'rel' => 'stylesheet',
 		// 	'type' => 'text/css',
 		// )));
-		console_message($vars, __METHOD__);
+		ee()->dbg->c_log($vars, __METHOD__);
 		return array(
 			'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view2')->render($vars),
 			'breadcrumb' =>array(
@@ -538,7 +538,7 @@ class Composer {
 		$message =  ee()->session->flashdata('result');
 		if ($message){
 			$message = explode(':', ee()->session->flashdata('result'));
-			console_message("Msg: ".implode(':', $message), __METHOD__);
+			ee()->dbg->c_log("Msg: ".implode(':', $message), __METHOD__);
 			ee('CP/Alert')->makeInline("result")
 						->asIssue()
 						->withTitle(lang('template_'.$message[0]))
@@ -567,12 +567,12 @@ class Composer {
 			"created_at" => "",
 			"labels" => array(),
 		);
-		console_message("TEMP NAME: ".$template_name, __METHOD__);
+		ee()->dbg->c_log("TEMP NAME: ".$template_name, __METHOD__);
 
 		if ( $template_name !== "")
 		{
 			$template = $this->_get_service_templates('info', $template_name );
-			// console_message($template, __METHOD__);
+			// ee()->dbg->c_log($template, __METHOD__);
 			if (isset($template['status'])){
 				ee()->session->set_flashdata('result', $template['status'] . ':' . $template['message']);
 				ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template'));
@@ -699,7 +699,7 @@ class Composer {
 		$vars['save_btn_text'] = lang('save_template');
 		$vars['save_btn_text_working'] = lang('saving_template');
 		
-		console_message($vars, __METHOD__);
+		ee()->dbg->c_log($vars, __METHOD__);
 		return $vars;
 	}
 	
@@ -718,14 +718,14 @@ class Composer {
 		);
 		
 		
-		// console_message($_POST, __METHOD__);
+		// ee()->dbg->c_log($_POST, __METHOD__);
 		foreach ($_POST as $key => $val)
 		{
-			// console_message("$key : ".ee()->input->post($key),__METHOD__); 
+			// ee()->dbg->c_log("$key : ".ee()->input->post($key),__METHOD__); 
 			if (in_array($key, $form_fields))
 			{
 				$$key = ee()->input->get_post($key);
-				// console_message("$key : ".ee()->input	->post($key),__METHOD__); 
+				// ee()->dbg->c_log("$key : ".ee()->input	->post($key),__METHOD__); 
 			}
 		}
 		
@@ -756,7 +756,7 @@ class Composer {
 		
 		
 		$api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'. $function.'.json';
-		// console_message($api_endpoint . json_encode($cache_data), __METHOD__);
+		// ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__);
 		$result = $this->curl_request($api_endpoint, $this->headers, $cache_data, TRUE);
 		if (isset($result['status'])){
 			ee()->view->set_message($result['status'], $result['message'], NULL, TRUE);
@@ -798,7 +798,7 @@ class Composer {
 	 */
 	public function send()
 	{
-		console_message($_POST,__METHOD__);
+		ee()->dbg->c_log($_POST,__METHOD__);
 		ee()->load->library('email');
 
 		// Fetch $_POST data
@@ -835,7 +835,7 @@ class Composer {
 			elseif (in_array($key, $form_fields))
 			{
 				$$key = ee()->input->post($key);
-				console_message($key, __METHOD__);
+				ee()->dbg->c_log($key, __METHOD__);
 			}
 		}
 		
@@ -925,7 +925,7 @@ class Composer {
 			'plaintext_alt'		=> $plaintext_alt,
 			'attachments'		=> $this->attachments,
 		);
-		console_message($cache_data, __METHOD__);
+		ee()->dbg->c_log($cache_data, __METHOD__);
 		$email = ee('Model')->make('EmailCache', $cache_data);
 		$email->save();
 
@@ -1118,7 +1118,7 @@ class Composer {
 			show_error(lang('cache_data_missing'));
 		}
 
-		console_message($email->subject, __METHOD__);
+		ee()->dbg->c_log($email->subject, __METHOD__);
 		return $this->compose($email);
 	}
 
@@ -1202,7 +1202,7 @@ class Composer {
 			if ($csv_lookup_loaded){
 				$tmp_plaintext = $email->plaintext_alt; 
 				$record = $this->csv_lookup[$email_address];
-				console_message($record, __METHOD__);
+				ee()->dbg->c_log($record, __METHOD__);
 				// standard 'First Last <email address> format
 				if (isset($record['{{first_name}}']) && isset($record['{{last_name}}'] )){
 					$to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record['{{email}}']}>"; //TODO: https://trello.com/c/1lffhlXm
@@ -1235,7 +1235,7 @@ class Composer {
 				$cache_data['lookup'] = $record;
 				$cache_data['html'] = $formatted_message;
 				
-				console_message($cache_data, __METHOD__);
+				ee()->dbg->c_log($cache_data, __METHOD__);
 				if ($this->email_send($cache_data)){
 					$singleEmail->total_sent++;
 					$singleEmail->save();	
@@ -1257,7 +1257,7 @@ class Composer {
 
 		$debug_msg = ee()->email->print_debugger(array());
 		$err_msg = lang('compose_error').BR.BR.$debug_msg;
-		console_message($debug_msg, __METHOD__);
+		ee()->dbg->c_log($debug_msg, __METHOD__);
 		ee()->logger->developer($err_msg);
 		show_error($err_msg);
 	}
@@ -1296,7 +1296,7 @@ class Composer {
 		{
 			ee()->email->attach($attachment);
 		}
-		console_message(ee()->email->print_debugger(), __METHOD__);
+		ee()->dbg->c_log(ee()->email->print_debugger(), __METHOD__);
 
 		return ee()->email->send(FALSE);
 	}
@@ -1344,7 +1344,7 @@ class Composer {
 	 */
 	private function censorSubject(EmailCache $email)
 	{
-		console_message($email, __METHOD__);
+		ee()->dbg->c_log($email, __METHOD__);
 		$subject = $email->subject;
 
 		if (bool_config_item('enable_censoring'))
@@ -1381,7 +1381,7 @@ class Composer {
 
 		if($this->debug == true)
 		{
-			console_message($this->email_in);
+			ee()->dbg->c_log($this->email_in);
 		}
 		
 		// Set X-Mailer
@@ -1455,16 +1455,16 @@ class Composer {
 		
 		if($this->debug == true)
 		{
-			console_message($this->email_out);
+			ee()->dbg->c_log($this->email_out);
 		}		
 
 		foreach($settings['service_order'] as $service)
 		{
-			// console_message($service, __METHOD__);
+			// ee()->dbg->c_log($service, __METHOD__);
 			if(!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y')
 			{
 				$missing_credentials = true;
-				console_message($service, __METHOD__);
+				ee()->dbg->c_log($service, __METHOD__);
 				switch($service)
 				{
 					case 'mailgun':
@@ -1511,7 +1511,7 @@ class Composer {
 						}
 						break;
 				}
-				// console_message($sent, __METHOD__, TRUE);
+				// ee()->dbg->c_log($sent, __METHOD__, TRUE);
 				if($missing_credentials == true)
 				{
 					ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
@@ -1521,7 +1521,7 @@ class Composer {
 					ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
 				}
 			}
-			console_message($sent, __METHOD__);
+			ee()->dbg->c_log($sent, __METHOD__);
 			if($sent == true)
 			{
 				ee()->extensions->end_script = true;
@@ -1545,7 +1545,7 @@ class Composer {
 			'async' => TRUE,
 			'message' => $this->email_out
 		);
-		console_message($content, __METHOD__);
+		ee()->dbg->c_log($content, __METHOD__);
 		if(!empty($subaccount))
 		{
 			$content['message']['subaccount'] = $subaccount;
@@ -1617,7 +1617,7 @@ class Composer {
 		$method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
 		$content = json_encode($content);
 				
-		console_message($content,__METHOD__);	
+		ee()->dbg->c_log($content,__METHOD__);	
 		//TODO: save email data to table
 		// ee()->logger->developer($content);
 		return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
@@ -1629,7 +1629,7 @@ class Composer {
 		$test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : "";
 		$test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
 		$active_key = ($test_mode && $test_key !== "") ? $test_key : $key;
-		// console_message("Act Key: $active_key", __METHOD__);
+		// ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
 		return $active_key;
 	}
 	function _mandrill_lookup_to_merge($lookup){
@@ -1650,9 +1650,9 @@ class Composer {
 		);
 		if (! is_null($template_name)) $data['name'] = $template_name;
 		$content = json_encode($data);
-		console_message($api_endpoint . $content, __METHOD__);
+		// ee()->dbg->c_log($api_endpoint . $content, __METHOD__);
 		$templates = $this->curl_request($api_endpoint, $this->headers, $content, TRUE);
-		 console_message($templates, __METHOD__);
+		//  ee()->dbg->c_log($templates, __METHOD__);
 		return $templates;
 	}
 	/**
@@ -1661,7 +1661,7 @@ class Composer {
 	function curl_request($server, $headers = array(), $content, $return_data = FALSE, $htpw = null)
 	{	
 		$content = (is_array($content) ? json_encode($content) : $content);
-		console_message($server  . $content, __METHOD__);
+		// ee()->dbg->c_log($server  . $content, __METHOD__);
 		$ch = curl_init($server);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($ch, CURLOPT_POST, 1);
@@ -1695,9 +1695,9 @@ class Composer {
 		$curl_error = curl_error($ch);
 		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
-		console_message($http_code . ' ' . json_encode($status), __METHOD__);
+		// ee()->dbg->c_log($http_code . ' ' . json_encode($status), __METHOD__);
 		$result = ($return_data) ? json_decode($status) : TRUE;
-		// console_message($result, __METHOD__);
+		// ee()->dbg->c_log($result, __METHOD__);
 		// ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
 		return ($http_code != 200 && ! $return_data) ? false : json_decode(json_encode($result), TRUE);
 	}	
@@ -1732,7 +1732,7 @@ class Composer {
 	**/
 	function _body_and_attachments()
 	{
-		console_message($this->protocol, __METHOD__);
+		ee()->dbg->c_log($this->protocol, __METHOD__);
 		if($this->protocol == 'mail')
 		{
 			// The 'mail' protocol sets Content-Type in the headers
@@ -2024,7 +2024,7 @@ class Composer {
 
 		$count = $emails->count();
 
-		console_message($count, __METHOD__);
+		ee()->dbg->c_log($count, __METHOD__);
 		$sort_map = array(
 			'date' => 'cache_date',
 			'subject' => 'subject',
@@ -2090,7 +2090,7 @@ class Composer {
 			$vars['emails'][] = $email;
 		}
 
-		console_message($vars, __METHOD__);
+		ee()->dbg->c_log($vars, __METHOD__);
 		$table->setData($data);
 
 		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/sent');
@@ -2122,7 +2122,7 @@ class Composer {
 		$vars['save_btn_text_working'] = "";
 		$vars['sections'] = array();
 
-		console_message($vars, __METHOD__);
+		ee()->dbg->c_log($vars, __METHOD__);
 		return $vars;
 	}
 
@@ -2199,7 +2199,7 @@ class Composer {
 			$vars['templates'][] = $template;
 		}
 
-		//console_message($vars, __METHOD__);
+		//ee()->dbg->c_log($vars, __METHOD__);
 		$table->setData($data);
 		$count = 1;
 		$base_url = ee('CP/URL',EXT_SETTINGS_PATH.'/email/view_templates');
@@ -2219,7 +2219,7 @@ class Composer {
 			);
 		}
 
-		$vars['cp_page_title'] = lang('view_template_cache');
+		$vars['cp_heading'] = lang('view_template_cache');
 		ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache') . ': <b>### ' . lang('templates') . '</b>');
 
 		// ee()->cp->add_js_script(array( 'file' => array('cp/confirm_remove'),));
@@ -2231,7 +2231,7 @@ class Composer {
 		$vars['save_btn_text_working'] = "";
 		$vars['sections'] = array();
 
-		//console_message($vars, __METHOD__);
+		//ee()->dbg->c_log($vars, __METHOD__);
 		return $vars;
 	}
 
@@ -2253,7 +2253,7 @@ class Composer {
 	 */
 	public function _check_for_recipients($str)
 	{
-		console_message($str, __METHOD__);
+		ee()->dbg->c_log($str, __METHOD__);
 		if ( ! $str && ee()->input->post('total_gl_recipients') < 1)
 		{
 			ee()->form_validation->set_message('_check_for_recipients', lang('required'));
@@ -2303,7 +2303,7 @@ class Composer {
 	 */
 	private function deleteAttachments($email)
 	{
-		console_message($email, __METHOD__);
+		ee()->dbg->c_log($email, __METHOD__);
 		foreach ($email->attachments as $file)
 		{
 			if (file_exists($file))
