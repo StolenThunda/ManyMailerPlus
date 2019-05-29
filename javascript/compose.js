@@ -74,7 +74,7 @@ $(document).ready(function() {
             $(this).attr('data-service', list_item);
         });
         // debugger;
-       bubble_enable_services();
+        bubble_enable_services();
         $('.service-list').sortable({
             axis: 'y',
             opacity: 0.5,
@@ -85,13 +85,13 @@ $(document).ready(function() {
                     serviceOrder.push($(this).data('service'));
                 });
                 $.post(url, {
-                    service_order: serviceOrder.toString(),
-                    CSRF_TOKEN: EE.CSRF_TOKEN
-                })
-                .done(function(data){
-                    $('.service-list').data('order', data);
-                    bubble_enable_services(data);
-                });
+                        service_order: serviceOrder.toString(),
+                        CSRF_TOKEN: EE.CSRF_TOKEN
+                    })
+                    .done(function(data) {
+                        $('.service-list').data('order', data);
+                        bubble_enable_services(data);
+                    });
             }
         });
     } else {
@@ -184,47 +184,97 @@ $(document).ready(function() {
 
     $('#embed_templates').toggle();
     $('#template_name').parents('fieldset').toggle();
+
     $('input[name="selection[]"').change(function() {
-        var selections = $('input[name="selection[]"]:checked');
+        $('input[name="selection[]"]').not(this)
+            .attr('checked', false)
+            .parents('tr')
+            .removeClass('selected');
         var name,
             subject,
             message = '';
-        if (selections.length > 0) {
+        if (this.checked) {
             var sections = [];
-            var t = selections[0];
-            name = t.value;
-            subject = t.dataset.confirm;
-            message = document.getElementById(t.value + '-code').innerHTML;
+            var element, attributes, attribute;
+            name = this.value;
+            subject = this.dataset.confirm;
+            message = document.getElementById(name + '-code').innerHTML;
             var test_element = document.createElement('div');
             test_element.innerHTML = message;
-            var element, attributes, attribute;
             var list = test_element.getElementsByTagName('*');
-            for (var j = 0; j < list.length; j++){
+            for (var j = 0; j < list.length; j++) {
                 element = list[j];
                 attributes = element.attributes;
-                if (element.attributes){
+                if (element.attributes) {
                     for (var i = 0; i < attributes.length; i++) {
                         attribute = attributes[i];
                         if (attribute.name.startsWith('mc:')) {
-                            if (attribute.value !== "") sections.push({'edit_section': attribute.value, 'content': element.innerHTML})
-                            // console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
+                            if (attribute.value !== "") sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });
+                            console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                         }
                     }
                 }
             }
 
-            sections.forEach((el) =>{
+            sections.forEach((el) => {
                 createEC(el);
             });
+
+            sections.forEach((el) => {
+                if (el.edit_section);
+            });
+
+
             $('legend').trigger('click');
-        }else{
-            var details =  $('fieldset#mc-edits');
+        } else {
+            var details = $('fieldset#mc-edits');
             if (details.length > 0) details.remove();
         }
         $('#template_name').val(name);
         $('input[name=subject]').val(subject);
         // $("textarea[name=message]").val(message);
     });
+
+    function createEC(el_obj) {
+        var id = el_obj.edit_section;
+        var val = el_obj.content;
+        var parent = $('#template_name').parents('fieldset').eq(0);
+        var fs = $('fieldset#mc-edits');
+        if (fs.length === 0) {
+            fs = $('<fieldset id="mc-edits" />');
+            var legend = $('<legend class="btn">Editable Content</legend>');
+            fs.append(legend);
+            parent.after(fs);
+        }
+
+        fs.append(
+            $('<div>')
+            .addClass('field-instruct')
+            .append($(`<label>${id}</label>`)
+                .css('color', 'red')
+                .css('font-size', '20px')
+            )
+            .append($(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
+                'data-parsley-mincheck': "1",
+                'data-parsley-multiple' : "mc-check"
+            }))
+            .append($(`<label for="mc-check_${id}">(Body?)</label>`)
+                .css('text-align', 'right')
+                .css('display', 'inline-block')
+            ),
+            $('<div>')
+            .addClass('field-control')
+            .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+        );
+
+        $('input[name^="mc-check"').change(function() {
+            $('input[name^="mc-check"').not(this)
+                .attr('checked', false);
+            var prefix = 'mc-check_';
+            var name = this.name.substr(prefix.length);
+            console.log(name);
+        });
+    }
     $('input[name=use_templates]').change(function() {
         var toggle = this.value == 'y' ? 'slow' : false;
         $('#embed_templates').fadeToggle(toggle);
@@ -246,13 +296,14 @@ $(document).ready(function() {
 });
 var $sections = $('.form-section');
 
-function bubble_enable_services(order){
+function bubble_enable_services(order) {
     if (order === null) order = $('.service-list').data('order');
     // alert(order);
-    $('.service-list li').sort((a , b)=>{
+    $('.service-list li').sort((a, b) => {
         return (($(a).hasClass('enabled-service')) ? -1 : 1);
     }).appendTo('.service-list');
 }
+
 function navigateTo(index) {
     // Mark the current section with the class 'current'
     $sections.removeClass('current').eq(index).addClass('current');
@@ -331,25 +382,7 @@ function submit_form() {
     form.submit();
 }
 
-function createEC(el_obj) {
-    var id = el_obj.edit_section;
-    var val = el_obj.content;
-    var parent = $('#template_name').parents('fieldset').eq(0);
-    var fs = $('fieldset#mc-edits');
-    if (fs.length == 0) {
-        fs = $('<fieldset id="mc-edits" />');
-        var legend = $('<legend class="btn">Editable Content</legend>');
-        fs.append(legend);
-        parent.after(fs);
-    } 
 
-    fs.append(
-        $('<div>').addClass('field-instruct').append($(`<label>${id}</label>`)),
-        $('<div>')
-        .addClass('field-control')
-        .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
-    );
-}
 
 function messageType() {
     if ($("select[name='mailtype']").val() === 'html') {
@@ -794,6 +827,24 @@ function dumpHiddenVals() {
     });
     swal.fire({
         title: 'HIDDEN VALS',
+        type: 'info',
+        html: msg,
+        width: '80%'
+    });
+}
+
+function dumpFormVals() {
+    var msg = $('<table/>');
+    $('form :input').each(function() {
+        var val = this.value;
+        val = val.length > 100 ? val.substring(0, 100) + '...' : val;
+        val = (val === 'on' || val === 'off') ? this.checked : val;
+        console.log(`${this.name}: ${this.value}`);
+        msg.append(`<tr><td>${this.name}</td><td>${val}</td></tr>`);
+    });
+    var frmStr = JSON.stringify($('form').serialize());
+    swal.fire({
+        title: 'Form VALS',
         type: 'info',
         html: msg,
         width: '80%'

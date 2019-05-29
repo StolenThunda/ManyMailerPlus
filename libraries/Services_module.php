@@ -80,8 +80,6 @@ class Services_module
                 $services_sorted[$service] = $service_settings;
             }
         }
-        ee()->dbg->c_log($services_sorted, __METHOD__.':f_sort');
-
         return $services_sorted;
     }
 
@@ -227,10 +225,10 @@ class Services_module
         );
 
         if (array_key_exists($this->current_service, $this->service_settings)) {
-            ee()->dbg->c_log($this->service_settings, __METHOD__);
+            // ee()->dbg->c_log($this->service_settings, __METHOD__);
             foreach ($this->service_settings[$this->current_service] as $field_name) {
                 $i = $this->_getServiceFields($field_name);
-                ee()->dbg->c_log($i);
+                // ee()->dbg->c_log($i);
                 extract($i, EXTR_OVERWRITE);
                 $field = array('type' => $control_type);
                 switch ($control_type) {
@@ -275,8 +273,7 @@ class Services_module
                     );
             }
         }
-        ee()->dbg->c_log($sections, __METHOD__);
-
+        // ee()->dbg->c_log($sections, __METHOD__);
         return array($sections);
     }
 
@@ -295,7 +292,7 @@ class Services_module
 
         if ($is_control !== false) {
             $type = substr($field_name, ($is_control + 2));
-            ee()->dbg->c_log("$field_name ( $is_control ) :  $type", __METHOD__);
+            // ee()->dbg->c_log("$field_name ( $is_control ) :  $type", __METHOD__);
         }
 
         return array(

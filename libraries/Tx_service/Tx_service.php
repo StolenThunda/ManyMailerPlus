@@ -5,6 +5,11 @@ namespace ManyMailerPlus\libraries\Tx_service;
 abstract class Tx_service implements Tx_service_interface
 {
     private $debug = false;
+    private $headers = array(
+        'Accept: application/json',
+        'Content-Type: application/json',
+    );
+    
 
     public function __construct($settings = array())
     {

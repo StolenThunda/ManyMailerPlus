@@ -91,7 +91,6 @@ class Manymailerplus_mcp
 		$this->vars['cp_page_title'] = lang(__FUNCTION__. '_title');
 		$this->vars['current_action'] = __FUNCTION__;
 		$this->vars['breadcrumb'] = ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile();
-		echo ee()->load->is_loaded('debughelper');
 		// ee()->dbg->c_log($this->vars, __METHOD__,true);
 		return  array(
 				'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($this->vars),
@@ -160,8 +159,8 @@ class Manymailerplus_mcp
 				$this->vars =  ee()->mail_svc->settings_form(array());
 				break;
 		}
-		if (!isset($this->vars['current_service'])) array_pop($breadcrumbs);
-		$this->vars['active_service_names'] = ee()->mail_svc->getActiveServiceNames();
+		if (!isset($this->vars['current_service'])) array_pop($breadcrumbs);		
+		$this->vars['active_service_names'] = ee()->mail_svc->get_active_services();
 		ee()->dbg->c_log($this->vars, __METHOD__);
 		return array(
 			'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view')->render($this->vars),

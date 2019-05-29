@@ -238,14 +238,26 @@ parsley-errors-list>ul {
     margin-right: 10px;
     position: inherit;
 }
- .template_code {
-     border-style: double;
-     border-color: crimson;
-     border-width: thick;
-     padding: 8px;
- }
+
+.template_code {
+    border-style: double;
+    border-color: crimson;
+    border-width: thick;
+    padding: 8px;
+}
+
 .form-section {
-    padding-top: 5.5%
+    padding: 0.5%
+}
+
+.form-section>h3 {
+    text-align: center;
+    padding-bottom: 0.5%
+}
+
+.progress-bar {
+    width: 90%;
+    margin: 0 auto;
 }
 
 

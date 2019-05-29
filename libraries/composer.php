@@ -27,7 +27,7 @@ class Composer {
 	/**
 	 * Constructor
 	 */
-	function __construct()
+	function __construct($settings = array())
 	{
 		$CI = ee();
 
@@ -45,7 +45,7 @@ class Composer {
 		foreach($external_js as $script){
 			ee()->cp->add_to_foot($script);
 		}
-		$this->debug = FALSE;
+		$this->debug = isset($settings['debug']) ? $settings['debug'] : FALSE;
 	}
 
 	/**
@@ -128,11 +128,11 @@ class Composer {
 		}
 
 		$template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
-		
+		ee()->dbg->c_log($this->debug, __METHOD__);
 		$vars['sections'] = array(
 			'sender_info' => array(
 				array(
-					'title' => 'from',
+					'title' => 'from_email',
 					'desc' => 'from_email_desc',
 					'fields' => array(
 						'from' => array(
@@ -189,10 +189,7 @@ class Composer {
 								->withValueTarget('files')
 								->render()
 						),
-						'dump_vars' => array(
-							'type' => 'hidden',
-							'content' => form_button('btnDump','Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"')
-						),
+						
 						'csv_object' => array(
 							'type' => 'hidden',
 							'value' => ''
@@ -480,6 +477,8 @@ class Composer {
 				'recipient_review' => '<table class=\'fixed_header\' id=\'csv_content\'></table>'.BR.NBS
 			),
 			'compose_email_detail' =>array(
+                'dump_hidden' => ($this->debug) ? form_button('btnDump','Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"') : "",
+                'dump_form' => ($this->debug) ? form_button('btnDumpForm','Dump Form Values', 'class="btn" onClick="dumpFormVals()"') : "",
 				'use_templates' => form_yes_no_toggle('use_templates', FALSE).BR.BR. $template_view->render($this->view_templates()).BR.BR,
 				'_template_name' => form_input(array('id' => 'template_name', 'name' => 'template_name')),
 				'subject' => '*'.form_input('subject', $default['subject']),
@@ -834,7 +833,7 @@ class Composer {
 			elseif (in_array($key, $form_fields))
 			{
 				$$key = ee()->input->post($key);
-				ee()->dbg->c_log($key, __METHOD__);
+				// ee()->dbg->c_log($key, __METHOD__);
 			}
 		}
 		
@@ -1234,7 +1233,7 @@ class Composer {
 				$cache_data['lookup'] = $record;
 				$cache_data['html'] = $formatted_message;
 				
-				ee()->dbg->c_log($cache_data, __METHOD__);
+				ee()->dbg->c_log($cache_data, __METHOD__, true);
 				if ($this->email_send($cache_data)){
 					$singleEmail->total_sent++;
 					$singleEmail->save();	

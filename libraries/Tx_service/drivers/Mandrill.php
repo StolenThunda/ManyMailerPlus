@@ -2,17 +2,14 @@
 use ManyMailerPlus\libraries\Tx_service\Tx_service as TransactionService;
 class Mandrill extends TransactionService
 {
-    private $headers = array(
-        'Accept: application/json',
-        'Content-Type: application/json',
-    );
     
     public function __construct($settings = array())
     {
-        // parrent::__construct();
-        ee()->dbg->c_log($settings, __METHOD__);
+        parrent::__construct($settings);
+        
         $this->key = $this->_get_api($settings);
         $this->settings = $settings;
+        ee()->dbg->c_log($this, __METHOD__);
     }
 
     public function get_api_key()
