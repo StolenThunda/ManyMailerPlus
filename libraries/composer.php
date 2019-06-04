@@ -814,10 +814,10 @@ class Composer {
 			'attachment',
 			'recipient',
 			'cc',
-			'bcc',
-			'csv_object',
-			'mailKey',
-			'template_name',
+			'bcc'
+			// 'csv_object',
+			// 'mailKey',
+			// 'template_name',
 			// 'template_content[]'
 		);
 
@@ -834,15 +834,17 @@ class Composer {
 			{
 				$$key = ee()->input->post($key);
 				// ee()->dbg->c_log($key, __METHOD__);
-			}
+			}else{
+                $this->extras[$key] = ee()->input->post($key);
+            }
 		}
 		
-		if (isset($mailKey)) $this->csv_email_column = $mailKey;
+		if (isset($this->extras['mailKey'])) $this->csv_email_column = $this->extras['mailKey'];
 		// create lookup array for easy email lookup
-		if (isset($csv_object) AND $csv_object !== "" AND isset($mailKey)){
-			$rows =  json_decode($csv_object, TRUE);
+		if (isset($this->extras['csv_object']) AND $this->extras['csv_object'] !== "" AND isset($this->extras['mailKey'])){
+			$rows =  json_decode($this->extras['csv_object'], TRUE);
 			foreach ($rows as $row){
-				$this->csv_lookup[trim($row[$mailKey])] = $row;
+				$this->csv_lookup[trim($row[$this->extras['mailKey']])] = $row;
 			}
 		}
 
@@ -856,8 +858,8 @@ class Composer {
 		$_POST['total_gl_recipients'] = count($groups);
 
 		ee()->load->library('form_validation');
-		// ee()->form_validation->set_rules('subject', 'lang:subject', 'required|valid_xss_check');
-		// ee()->form_validation->set_rules('message', 'lang:message', 'required');
+		ee()->form_validation->set_rules('subject', 'lang:subject', 'required|valid_xss_check');
+		ee()->form_validation->set_rules('message', 'lang:message', 'required');
 		ee()->form_validation->set_rules('from', 'lang:from', 'required|valid_email');
 		ee()->form_validation->set_rules('cc', 'lang:cc', 'valid_emails');
 		ee()->form_validation->set_rules('bcc', 'lang:bcc', 'valid_emails');
@@ -1196,7 +1198,7 @@ class Composer {
 		for ($x = 0; $x < $number_to_send; $x++)
 		{
 			$email_address = array_shift($recipient_array);
-
+            ee()->dbg->c_log($email_address, __METHOD__);
 			if ($csv_lookup_loaded){
 				$tmp_plaintext = $email->plaintext_alt; 
 				$record = $this->csv_lookup[$email_address];
@@ -1232,8 +1234,8 @@ class Composer {
 				
 				$cache_data['lookup'] = $record;
 				$cache_data['html'] = $formatted_message;
-				
-				ee()->dbg->c_log($cache_data, __METHOD__, true);
+				$cache_data['extras'] = $this->extras;
+				ee()->dbg->c_log($cache_data, __METHOD__);
 				if ($this->email_send($cache_data)){
 					$singleEmail->total_sent++;
 					$singleEmail->save();	
@@ -1375,6 +1377,8 @@ class Composer {
 
 		$this->email_out['html'] = $this->email_in['html'];
 
+        $this->email_out['extras'] =  $this->email_in['extras'];
+
 		if (isset($this->email_in['template_content'])) $this->email_out['template_content'] = $this->email['template_content'];
 
 		if($this->debug == true)
@@ -1458,57 +1462,60 @@ class Composer {
 
 		foreach($settings['service_order'] as $service)
 		{
-			// ee()->dbg->c_log($service, __METHOD__);
 			if(!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y')
 			{
 				$missing_credentials = true;
-				ee()->dbg->c_log($service, __METHOD__);
-				switch($service)
-				{
-					case 'mailgun':
-						if(!empty($settings['mailgun_api_key']) && !empty($settings['mailgun_domain']))
-						{
-							$sent = $this->_send_mailgun($settings['mailgun_api_key'], $settings['mailgun_domain']);
-							$missing_credentials = false;
-						}
-						break;				
-					case 'mandrill':
-						$key = $this->_get_mandrill_api($settings);
-						if($key !== ""){
-							$subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
-							$sent = $this->_send_mandrill($key, $subaccount);
-							$missing_credentials = false;
-						}
-						break;
-					case 'postageapp':
-						if(!empty($settings['postageapp_api_key']))
-						{
-							$sent = $this->_send_postageapp($settings['postageapp_api_key']);
-							$missing_credentials = false;
-						}						
-						break;	
-					case 'postmark':
-						if(!empty($settings['postmark_api_key']))
-						{
-							$sent = $this->_send_postmark($settings['postmark_api_key']);
-							$missing_credentials = false;
-						}						
-						break;				
-					case 'sendgrid':
-						if(!empty($settings['sendgrid_api_key']))
-						{
-							$sent = $this->_send_sendgrid($settings['sendgrid_api_key']);
-							$missing_credentials = false;
-						}
-						break;
-					case 'sparkpost':
-						if(!empty($settings['sparkpost_api_key']))
-						{
-							$sent = $this->_send_sparkpost($settings['sparkpost_api_key']);
-							$missing_credentials = false;
-						}
-						break;
-				}
+                // ee()->dbg->c_log($service, __METHOD__);
+                if (!ee()->load->is_loaded($service)) ee()->load->library('Tx_service/drivers/'.$service, array_merge($settings, array('debug' => $this->debug)));
+                $result = ee()->{$service}->send_email($this->email_out);
+                $missing_credentials = $result['missing_credentials'];
+                $sent = $result['sent'];
+			// 	switch($service)
+			// 	{
+			// 		case 'mailgun':
+			// 			if(!empty($settings['mailgun_api_key']) && !empty($settings['mailgun_domain']))
+			// 			{
+			// 				$sent = $this->_send_mailgun($settings['mailgun_api_key'], $settings['mailgun_domain']);
+			// 				$missing_credentials = false;
+			// 			}
+			// 			break;				
+			// 		case 'mandrill':
+			// 			$key = $this->_get_mandrill_api($settings);
+			// 			if($key !== ""){
+			// 				$subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
+			// 				$sent = $this->_send_mandrill($key, $subaccount);
+			// 				$missing_credentials = false;
+			// 			}
+			// 			break;
+			// 		case 'postageapp':
+			// 			if(!empty($settings['postageapp_api_key']))
+			// 			{
+			// 				$sent = $this->_send_postageapp($settings['postageapp_api_key']);
+			// 				$missing_credentials = false;
+			// 			}						
+			// 			break;	
+			// 		case 'postmark':
+			// 			if(!empty($settings['postmark_api_key']))
+			// 			{
+			// 				$sent = $this->_send_postmark($settings['postmark_api_key']);
+			// 				$missing_credentials = false;
+			// 			}						
+			// 			break;				
+			// 		case 'sendgrid':
+			// 			if(!empty($settings['sendgrid_api_key']))
+			// 			{
+			// 				$sent = $this->_send_sendgrid($settings['sendgrid_api_key']);
+			// 				$missing_credentials = false;
+			// 			}
+			// 			break;
+			// 		case 'sparkpost':
+			// 			if(!empty($settings['sparkpost_api_key']))
+			// 			{
+			// 				$sent = $this->_send_sparkpost($settings['sparkpost_api_key']);
+			// 				$missing_credentials = false;
+			// 			}
+			// 			break;
+			// 	}
 				// ee()->dbg->c_log($sent, __METHOD__, TRUE);
 				if($missing_credentials == true)
 				{

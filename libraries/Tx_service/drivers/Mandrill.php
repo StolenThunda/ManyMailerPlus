@@ -5,10 +5,10 @@ class Mandrill extends TransactionService
     
     public function __construct($settings = array())
     {
-        parrent::__construct($settings);
-        
-        $this->key = $this->_get_api($settings);
+        parent::__construct($settings);
         $this->settings = $settings;
+        $this->key = $this->_get_api($settings);
+      
         ee()->dbg->c_log($this, __METHOD__);
     }
 
@@ -17,14 +17,18 @@ class Mandrill extends TransactionService
         return $this->key;
     }
 
-    public function send_email()
+    public function send_email($email = null)
     {
         $sent = false;
         $missing_credentials = true;
-        if ($this->key !== '') {
-            $missing_credentials = false;
-            $subaccount = (!empty($this->settings['mandrill_subaccount']) ? $this->settings['mandrill_subaccount'] : '');
-            $sent = $this->_send_email($subaccount);
+        if ($email) {
+            $this->email_out = $email;
+            unset($email);
+            if ($this->key !== '') {
+                $missing_credentials = false;
+                $subaccount = (!empty($this->settings['mandrill_subaccount']) ? $this->settings['mandrill_subaccount'] : '');
+                $sent = $this->_send_email($subaccount);
+            }
         }
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
@@ -60,26 +64,31 @@ class Mandrill extends TransactionService
             'async' => true,
             'message' => $this->email_out,
         );
-        ee()->dbg->c_log($content, __METHOD__);
-        if (isset($content['message']['extras'])) {
-            ee()->dbg->c_log($content['message']['extras'], __FUNCTION__);
-
+        // ee()->dbg->c_log($content, __METHOD__);
+        if (isset($content['message']['extras'])) { 
+            
             if (isset($content['message']['extras']['from_name'])) {
                 $content['message']['from_name'] = $content['message']['extras']['from_name'];
             }
             if (isset($content['message']['extras']['template_name'])) {
                 $content['template_name'] = $content['message']['extras']['template_name'];
             }
-            if (isset($content['template_name']) && isset($content['message']['extras']['mc-edit'])) {
+            $body_field = substr(array_keys(array_filter($content['message']['extras'], function($v, $k){   
+                return ('mc-check_' == substr($k, 0, strlen('mc-check_'))) ; 
+            }, ARRAY_FILTER_USE_BOTH))[0],strlen('mc-check_'));
+            if (isset($content['message']['extras']['mc-edit'])) {
+                $t_content = array(); 
                 $edits = $content['message']['extras']['mc-edit'];
-                $t_content = array();
                 foreach ($edits as $k => $v) {
-                    if (in_array($k, array('main', 'content', 'body_content'))) {
-                        ee()->dbg->c_log($k, __METHOD__);
-                        $v = $content['message']['html'];
+                    $default = in_array($k, array('main', 'content', 'bod_content'));
+                    $chosen = ($k === $body_field);
+                    if ($default or $chosen) {
+                        // ee()->dbg->c_log($content['message']['html'], __METHOD__);
+                        $v = strlen($content['message']['html'] > 2) ? $content['message']['html'] : $v;
                     }
                     array_push($t_content, array('name' => $k, 'content' => $v));
-                }
+                }               
+                
                 $content['template_content'] = $t_content;
             }
         }

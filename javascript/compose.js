@@ -186,94 +186,114 @@ $(document).ready(function() {
     $('#template_name').parents('fieldset').toggle();
 
     $('input[name="selection[]"').change(function() {
-        $('input[name="selection[]"]').not(this)
-            .attr('checked', false)
-            .parents('tr')
-            .removeClass('selected');
         var name,
             subject,
             message = '';
+        var details = $('fieldset#mc-edits');
+        if (details.length > 0) details.remove();
         if (this.checked) {
             var sections = [];
             var element, attributes, attribute;
             name = this.value;
             subject = this.dataset.confirm;
-            message = document.getElementById(name + '-code').innerHTML;
-            var test_element = document.createElement('div');
-            test_element.innerHTML = message;
-            var list = test_element.getElementsByTagName('*');
-            for (var j = 0; j < list.length; j++) {
-                element = list[j];
-                attributes = element.attributes;
-                if (element.attributes) {
-                    for (var i = 0; i < attributes.length; i++) {
-                        attribute = attributes[i];
-                        if (attribute.name.startsWith('mc:')) {
-                            if (attribute.value !== "") sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });
-                            console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
+            var choice = document.getElementById(name + '-code');
+            // debugger;
+            if (choice !== null) {
+                $('input[name="selection[]"]').not(this)
+                    .attr('checked', false)
+                    .parents('tr')
+                    .removeClass('selected');
+                message = choice.innerHTML;
+                var test_element = document.createElement('div');
+                test_element.innerHTML = message;
+                var list = test_element.getElementsByTagName('*');
+                for (var j = 0; j < list.length; j++) {
+                    element = list[j];
+                    attributes = element.attributes;
+                    if (element.attributes) {
+                        for (var i = 0; i < attributes.length; i++) {
+                            attribute = attributes[i];
+                            if (attribute.name.startsWith('mc:')) {
+                                if (attribute.value !== "") sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });
+                                console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
+                            }
                         }
                     }
-                }
+                }               
+                createEC(sections);              
             }
-
-            sections.forEach((el) => {
-                createEC(el);
-            });
-
-            sections.forEach((el) => {
-                if (el.edit_section);
-            });
-
-
             $('legend').trigger('click');
-        } else {
-            var details = $('fieldset#mc-edits');
-            if (details.length > 0) details.remove();
+        // } else {
+        //     var details = $('fieldset#mc-edits');
+        //     if (details.length > 0) details.remove();
         }
         $('#template_name').val(name);
         $('input[name=subject]').val(subject);
-        // $("textarea[name=message]").val(message);
     });
 
-    function createEC(el_obj) {
-        var id = el_obj.edit_section;
-        var val = el_obj.content;
-        var parent = $('#template_name').parents('fieldset').eq(0);
-        var fs = $('fieldset#mc-edits');
-        if (fs.length === 0) {
-            fs = $('<fieldset id="mc-edits" />');
-            var legend = $('<legend class="btn">Editable Content</legend>');
-            fs.append(legend);
-            parent.after(fs);
-        }
-
-        fs.append(
-            $('<div>')
-            .addClass('field-instruct')
-            .append($(`<label>${id}</label>`)
-                .css('color', 'red')
-                .css('font-size', '20px')
-            )
-            .append($(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
-                'data-parsley-mincheck': "1",
-                'data-parsley-multiple' : "mc-check"
-            }))
-            .append($(`<label for="mc-check_${id}">(Body?)</label>`)
-                .css('text-align', 'right')
-                .css('display', 'inline-block')
-            ),
-            $('<div>')
-            .addClass('field-control')
-            .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
-        );
-
-        $('input[name^="mc-check"').change(function() {
-            $('input[name^="mc-check"').not(this)
-                .attr('checked', false);
-            var prefix = 'mc-check_';
-            var name = this.name.substr(prefix.length);
-            console.log(name);
+    function createEC(sections) {
+        var email_body = ['main', 'content'];
+        var found = sections.find(function(el){
+            return ($.inArray(el.edit_section, email_body) !== -1);
         });
+        var suggested = (found) ? `(suggested: <b>'${found.edit_section}')</b>`: "";
+        sections.forEach((el_obj) =>{
+            var id = el_obj.edit_section;
+            var val = el_obj.content;
+            var parent = $('#template_name').parents('fieldset').eq(0);
+            var fs = $('fieldset#mc-edits');
+            if (fs.length === 0) {
+                fs = $('<fieldset id="mc-edits" />');
+                var legend = $('<legend class="btn">Editable Content</legend>');
+                fs.append(legend);
+                parent.after(fs);
+                fs.append(
+                    $('<div>')
+                    .addClass('field-instruct')
+                    .append($(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`))    
+                );
+            }
+
+            fs.append(
+                $('<div>')
+                .addClass('field-instruct')
+                .append($(`<label>${id}</label>`)
+                    .css('color', 'red')
+                    .css('font-size', '20px')
+                )
+                .append($(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
+                    'data-parsley-mincheck': "1",
+                    'data-parsley-multiple': "mc-check"
+                }))
+                .append($(`<label for="mc-check_${id}">(Body?)</label>`)
+                    .css('text-align', 'right')
+                    .css('display', 'inline-block')
+                ),
+                $('<div>')
+                .addClass('field-control')
+                .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+            );
+
+            $('input[name^="mc-check"').change(function() {
+                var chk = this.checked;
+                $('input[name^="mc-check"').not(this).each(function(el) {
+                    if (chk) {
+                        $(this)
+                            .attr('checked', false)
+                            .hide();
+                        $(`label[for=${this.name}]`).hide();
+                    } else {
+                        $(`label[for=${this.name}]`).show();
+                        $(this).show();
+                    }
+
+                });
+                var name = this.name.substr('mc-check_'.length);
+                console.log(name);
+            });
+
+        });
+        
     }
     $('input[name=use_templates]').change(function() {
         var toggle = this.value == 'y' ? 'slow' : false;
