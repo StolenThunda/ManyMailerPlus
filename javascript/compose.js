@@ -54,6 +54,14 @@ $(document).ready(function() {
             });
         };
     })(jQuery);
+    // $('form')
+    //     .attr('novalidate')
+    //     .remove();
+    // $('.demo-form')
+    //     .submit(function(){
+    //         debugger
+    //         alert('hi')
+    //     })
     $('#csv_recipient').parents('fieldset').toggle();
     $('input[readonly]').click(function() {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
@@ -331,7 +339,8 @@ function navigateTo(index) {
     $('.form-navigation .previous').toggle(index > 0);
     var atTheEnd = index >= $sections.length - 1;
     $('.form-navigation .next').toggle(!atTheEnd);
-    $('.form-navigation .submit').toggle(atTheEnd);
+    
+    $('.form-navigation input[type="submit"]').toggle(atTheEnd);
 }
 
 function curIndex() {
@@ -390,19 +399,6 @@ function resetRecipients(all) {
 
     $('#reset').hide();
 }
-
-function submit_form() {
-    var form = $('.demo-form');
-    console.log(form);
-    swal.fire({
-        title: '',
-        type: 'warning',
-        text: form.attr('action')
-    });
-    form.submit();
-}
-
-
 
 function messageType() {
     if ($("select[name='mailtype']").val() === 'html') {
