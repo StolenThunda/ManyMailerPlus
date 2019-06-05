@@ -371,10 +371,6 @@ class Composer
      */
     public function compose2(EmailCache $email = null)
     {
-        $tmp = explode('/', $_SERVER['HTTP_REFERER']);
-        $sender = end($tmp);
-        ee()->dbg->c_log($sender, __METHOD__);
-        if ($sender === __FUNCTION__) $vars['view'] = "compose_view2";
         $default = array(
             'from' => ee()->session->userdata('email'),
             'from_name' => ee()->session->userdata('screen_name'),
@@ -426,20 +422,7 @@ class Composer
             }
         }
 
-        $csvHTML = array(
-            form_textarea(
-                array(
-                    'name' => 'csv_recipient',
-                    'id' => 'csv_recipient',
-                    'rows' => '10',
-                    'class' => 'required',
-                )
-            ),
-            form_button('convert_csv', 'Convert CSV', 'class="btn"'),
-        );
-
         if ($default['mailtype'] != 'html') {
-            // ee()->javascript->output('$("div[data-control=\'plaintext_alt\']").hide();');
             ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
         }
 
@@ -450,7 +433,7 @@ class Composer
 
         $vars['sections'] = array(
             'sender_info' => array(
-                '' => form_hidden('csrf_token'),
+                // '' => form_hidden('csrf_token'),
                 'from_email' => '*'.form_input('from_email', $default['from'], 'required=true', $form_cls),
                 'from_name' => form_input('from_name', $default['from_name']),
             ),
@@ -461,20 +444,16 @@ class Composer
                 ), 'upload'),
                 '' => form_hidden('files[]', 0, 'id="files"'),
                 'file_recipient' => form_upload('file_recipient'),
-                '' => form_button(
-                        'btnDump',
-                        'Dump Hidden Values',
-                        'class="btn" onClick="dumpHiddenVals()" '),
-                '' => form_hidden('csv_object'),
-                '' => form_hidden('mailKey'),
-                '' => '<span id="csv_errors"></span><hr/>',
+                ' ' => form_hidden('csv_object'),
+                ' ' => form_hidden('mailKey'),
+                ' ' => '<span id="csv_errors"></span><hr/>',
                 'csv_recipient' => form_textarea(
                     array(
                         'name' => 'csv_recipient',
                         'id' => 'csv_recipient',
                         'rows' => '10',
                     )
-                ).BR.form_button('convert_csv', 'Convert CSV', 'class="btn"'), //.BR.BR.form_button(array('id'=>'reset'),'Reset CSV Data','class="btn1" ').BR.BR,
+                ).BR.form_button('convert_csv', 'Convert CSV', 'class="btn"'),
                 'primary_recipients' => '*'.form_input(array(
                     'name' => 'recipient',
                 ), $default['recipient']).BR.BR.form_button(array('id' => 'reset'), 'Reset CSV Data', 'class="btn1" '),
@@ -485,7 +464,7 @@ class Composer
                 'use_templates' => form_yes_no_toggle('use_templates', false).BR.BR.$template_view->render($this->view_templates()).BR.BR,
                 ' ' => form_input(array('id' => 'template_name', 'name' => 'template_name')),
                 'subject' => '*'.form_input('subject', $default['subject']),
-                'message' => ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
+                'message' => '*'.ee('View')->make(EXT_SHORT_NAME.':email/body-field')->render($default + $vars),
                 'plaintext_alt' => form_textarea('plaintext_alt', $default['plaintext_alt']),
                 'attachment' => form_upload('attachment'),
             ),
@@ -511,29 +490,12 @@ class Composer
         // 	);
         // }
         $vars['cp_page_title'] = lang('compose_heading');
-        // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
         $vars['save_btn_text'] = lang('compose_send_email');
         $vars['save_btn_text_working'] = lang('compose_sending_email');
-        // ee()->cp->add_js_script(array(
-        // 	'file' => array('cp/form_group'),
-        //   ));
-        // ee()->cp->add_to_foot(link_tag(array(
-        // 	'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
-        // 	'rel' => 'stylesheet',
-        // 	'type' => 'text/css',
-        // )));
         ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
-        // return array(
-        //     'body' => ee('View')->make(EXT_SHORT_NAME.':compose_view2')->render($vars),
-        //     'breadcrumb' => array(
-        //         ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
-        //         ee('CP/URL')->make(EXT_SETTINGS_PATH.'/email')->compile() => lang('email_title'),
-        //     ),
-        //     'heading' => $vars['cp_page_title'],
-        // );
     }
 
     public function edit_template($template_name = '')
@@ -798,7 +760,11 @@ class Composer
      */
     public function send()
     {
-       
+        $tmp = explode('/', $_SERVER['HTTP_REFERER']);
+        $sender = end($tmp);
+        // ee()->dbg->c_log($sender, __METHOD__, true);
+        ee()->load->library('email');
+
         // Fetch $_POST data
         // We'll turn the $_POST data into variables for simplicity
 
@@ -849,10 +815,6 @@ class Composer
 
         // Set to allow a check for at least one recipient
         $_POST['total_gl_recipients'] = count($groups);
-        $tmp = explode('/', $_SERVER['HTTP_REFERER']);
-        $sender = end($tmp);
-        ee()->dbg->c_log($sender, __METHOD__);
-        ee()->load->library('email');
 
         ee()->load->library('form_validation');
         ee()->form_validation->set_rules('subject', 'lang:subject', 'required|valid_xss_check');
@@ -864,7 +826,8 @@ class Composer
         ee()->form_validation->set_rules('attachment', 'lang:attachment', 'callback__attachment_handler');
 
         if (ee()->form_validation->run() === false) {
-            ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));           
+            ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));
+
             return $this->{$sender}();
         }
 
@@ -990,7 +953,7 @@ class Composer
             $this->deleteAttachments($email); // Remove attachments now
 
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
-            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
+            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/compose'));
         }
 
         if ($batch_size === 0) {
@@ -1010,7 +973,7 @@ class Composer
             ->addToBody(lang('batchmode_warning'))
             ->defer();
         consol_message($cache_data, __METHOD__, true);
-        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
+        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/compose'));
     }
 
     /**
@@ -2100,12 +2063,12 @@ class Composer
             );
         }
 
-        $vars['cp_heading'] = lang('view_template_cache');
+        $vars['cp_heading'] = sprintf(lang('view_template_cache'), ucfirst($service_name));
         ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache').': <b>### '.lang('templates').'</b>');
 
         // ee()->cp->add_js_script(array( 'file' => array('cp/confirm_remove'),));
         $vars['base_url'] = $base_url;
-        $vars['cp_page_title'] = lang('view_template_cache');
+        $vars['cp_page_title'] = sprintf(lang('view_template_cache'), ucfirst($service_name));
         ee()->javascript->set_global('lang.remove_confirm', lang('view_template_cache').': <b>### '.lang('templates').'</b>');
         $vars['current_service'] = __FUNCTION__;
         $vars['save_btn_text'] = '';

@@ -1,14 +1,15 @@
 <?php
+
 use ManyMailerPlus\libraries\Tx_service\Tx_service as TransactionService;
+
 class Mandrill extends TransactionService
 {
-    
     public function __construct($settings = array())
     {
         parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
-      
+
         ee()->dbg->c_log($this, __METHOD__);
     }
 
@@ -30,6 +31,7 @@ class Mandrill extends TransactionService
                 $sent = $this->_send_email($subaccount);
             }
         }
+
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
@@ -65,31 +67,30 @@ class Mandrill extends TransactionService
             'message' => $this->email_out,
         );
         ee()->dbg->c_log($content, __METHOD__, true);
-        if (isset($content['message']['extras'])) { 
-            
+        if (isset($content['message']['extras'])) {
             if (isset($content['message']['extras']['from_name'])) {
                 $content['message']['from_name'] = $content['message']['extras']['from_name'];
             }
             if (isset($content['message']['extras']['template_name'])) {
                 $content['template_name'] = $content['message']['extras']['template_name'];
             }
-            $body_field = substr(array_keys(array_filter($content['message']['extras'], function($v, $k){   
-                return ('mc-check_' == substr($k, 0, strlen('mc-check_'))) ; 
-            }, ARRAY_FILTER_USE_BOTH))[0],strlen('mc-check_'));
+            $body_field = substr(array_keys(array_filter($content['message']['extras'], function ($v, $k) {
+                return 'mc-check_' == substr($k, 0, strlen('mc-check_'));
+            }, ARRAY_FILTER_USE_BOTH))[0], strlen('mc-check_'));
             ee()->dbg->c_log($body_field, __METHOD__);
             if (isset($content['message']['extras']['mc-edit'])) {
-                $t_content = array(); 
+                $t_content = array();
                 $edits = $content['message']['extras']['mc-edit'];
                 foreach ($edits as $k => $v) {
                     $default = in_array($k, array('main', 'content', 'bod_content'));
                     $chosen = ($k === $body_field);
                     if ($default or $chosen) {
                         ee()->dbg->c_log($content['message']['html'], __METHOD__);
-                        $v = strlen($content['message']['html'] > 2) ? $content['message']['html'] : $v;
+                        $v = strlen($content['message']['html']) > 2 ? $content['message']['html'] : $v;
                     }
                     array_push($t_content, array('name' => $k, 'content' => $v));
-                }               
-                
+                }
+
                 $content['template_content'] = $t_content;
             }
         }

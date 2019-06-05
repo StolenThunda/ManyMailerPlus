@@ -9,8 +9,9 @@ class Manymailerplus_mcp
     private $version = EXT_VERSION;
     private $vars = array();
     private $config = array();
-    // private $debug = true;
-    private $debug = false;
+    private $debug = true;
+    // private $debug = false;
+
     /**
      * Constructor.
      */
@@ -121,13 +122,16 @@ class Manymailerplus_mcp
             case 'edit_template':
                 if ($id != '') {
                     $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}($id));
-                    break;
                 }
+                break;
+            case 'view_templates':
+                $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}(ee()->mail_svc->get_initial_service()));
+                break;
             case 'compose':
             case 'send':
             case 'sent':
             case 'save_template':
-            case 'view_templates':
+
             case 'delete_template':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
                 break;
@@ -146,7 +150,7 @@ class Manymailerplus_mcp
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/services')->compile() => lang('services'),
         );
-       
+
         switch ($func) {
             case 'list':
                 $this->vars = array_merge($this->vars, ee()->mail_svc->get_settings());
@@ -164,6 +168,7 @@ class Manymailerplus_mcp
         }
         $this->vars['active_service_names'] = ee()->mail_svc->get_active_services();
         ee()->dbg->c_log($this->vars, __METHOD__);
+
         return $this->view_page($breadcrumbs);
     }
 
@@ -179,7 +184,7 @@ class Manymailerplus_mcp
             'breadcrumb' => $breadcrumbs,
             'heading' => $this->vars['cp_page_title'],
         );
-       
+
         ee()->dbg->c_log($return, __METHOD__);
 
         return $return;

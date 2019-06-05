@@ -43,7 +43,7 @@ class Services_module
     {
         ee()->load->helper('MessageArray');
         ee()->load->helper('html');
-        $this->debug =(isset($settings['debug']) ? $settings['debug'] : false);
+        $this->debug = (isset($settings['debug']) ? $settings['debug'] : false);
         $this->config = ee()->config->item(EXT_SHORT_NAME.'_settings');
         if (ee()->config->item('email_crlf') != false) {
             $this->email_crlf = ee()->config->item('email_crlf');
@@ -67,19 +67,32 @@ class Services_module
         $settings = $this->get_settings();
         $services_sorted = array();
 
-        // Look at custom service order
-        foreach ($settings['service_order'] as $service) {
-            $services_sorted[$service] = $this->service_settings[$service];
-        }
+        foreach ($settings as $k => $v) {
+            $service = strstr($k, '_active', true);
 
-        // ee()->dbg->c_log($settings, __METHOD__.':settings');
-        // ee()->dbg->c_log($services_sorted, __METHOD__.':sort');
-        // Add any services were not included in the custom order
-        foreach ($this->service_settings as $service => $service_settings) {
-            if (empty($services_sorted[$service])) {
-                $services_sorted[$service] = $service_settings;
+            if ($service !== false && $v === 'y') {
+                // ee()->dbg->c_log($k, __METHOD__." $v");
+                $services_sorted[] = $service;
+                $settings['service_order'] = array_diff($settings['service_order'], array($service));
+                // ee()->dbg->c_log($settings['service_order'], __METHOD__." ${service}");
             }
         }
+
+        // Look at custom service order
+        foreach ($settings['service_order'] as $service) {
+            if (!array_search($service, $services_sorted)) {
+                $services_sorted[] = $service;
+            }
+        }
+
+        // Add any services were not included in the custom order
+        foreach ($this->service_settings as $service) {
+            if (in_array($service, $services_sorted)) {
+                $services_sorted[] = $service;
+            }
+        }
+        // ee()->dbg->c_log($services_sorted, __METHOD__.':sort');
+
         return $services_sorted;
     }
 
@@ -139,7 +152,7 @@ class Services_module
             $vars['current_action'] = 'services';
             unset($vars['current_service']);
         }
-        ee()->dbg->c_log($vars, __METHOD__);
+        // ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -308,7 +321,7 @@ class Services_module
 
     public function get_initial_service()
     {
-        $a = $this->get_settings()['service_order'][0];
+        $a = $this->get_service_order()[0];
         ee()->dbg->c_log($a, __METHOD__);
 
         return $a;

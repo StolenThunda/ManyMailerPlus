@@ -82,7 +82,7 @@ $(document).ready(function() {
             $(this).attr('data-service', list_item);
         });
         // debugger;
-        bubble_enable_services();
+        // bubble_enable_services();
         $('.service-list').sortable({
             axis: 'y',
             opacity: 0.5,
@@ -98,12 +98,13 @@ $(document).ready(function() {
                     })
                     .done(function(data) {
                         $('.service-list').data('order', data);
-                        bubble_enable_services(data);
+                        console.dir(data);
+                        // bubble_enable_services(data);
                     });
             }
         });
     } else {
-        service_list.hide();
+        service_list.hide('fast');
     }
 
     $.fn.extend({
@@ -450,6 +451,7 @@ function getEmails(data) {
         $('input[name=recipient]').val(csvObj.email_list);
         showPlaceholders(csvObj.headers);
         countEmails();
+        console.dir(csvObj);
         return true;
     }
     return false;
