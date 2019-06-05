@@ -371,6 +371,10 @@ class Composer
      */
     public function compose2(EmailCache $email = null)
     {
+        $tmp = explode('/', $_SERVER['HTTP_REFERER']);
+        $sender = end($tmp);
+        ee()->dbg->c_log($sender, __METHOD__);
+        if ($sender === __FUNCTION__) $vars['view'] = "compose_view2";
         $default = array(
             'from' => ee()->session->userdata('email'),
             'from_name' => ee()->session->userdata('screen_name'),
@@ -794,11 +798,7 @@ class Composer
      */
     public function send()
     {
-        $tmp = explode('/', $_SERVER['HTTP_REFERER']);
-        $sender = end($tmp);
-        ee()->dbg->c_log($sender, __METHOD__);
-        ee()->load->library('email');
-
+       
         // Fetch $_POST data
         // We'll turn the $_POST data into variables for simplicity
 
@@ -849,6 +849,10 @@ class Composer
 
         // Set to allow a check for at least one recipient
         $_POST['total_gl_recipients'] = count($groups);
+        $tmp = explode('/', $_SERVER['HTTP_REFERER']);
+        $sender = end($tmp);
+        ee()->dbg->c_log($sender, __METHOD__);
+        ee()->load->library('email');
 
         ee()->load->library('form_validation');
         ee()->form_validation->set_rules('subject', 'lang:subject', 'required|valid_xss_check');
@@ -860,8 +864,7 @@ class Composer
         ee()->form_validation->set_rules('attachment', 'lang:attachment', 'callback__attachment_handler');
 
         if (ee()->form_validation->run() === false) {
-            ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));
-
+            ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));           
             return $this->{$sender}();
         }
 
@@ -987,7 +990,7 @@ class Composer
             $this->deleteAttachments($email); // Remove attachments now
 
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
-            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/compose'));
+            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
         }
 
         if ($batch_size === 0) {
@@ -1007,7 +1010,7 @@ class Composer
             ->addToBody(lang('batchmode_warning'))
             ->defer();
         consol_message($cache_data, __METHOD__, true);
-        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/compose'));
+        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
     }
 
     /**

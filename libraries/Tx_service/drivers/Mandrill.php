@@ -64,7 +64,7 @@ class Mandrill extends TransactionService
             'async' => true,
             'message' => $this->email_out,
         );
-        // ee()->dbg->c_log($content, __METHOD__);
+        ee()->dbg->c_log($content, __METHOD__, true);
         if (isset($content['message']['extras'])) { 
             
             if (isset($content['message']['extras']['from_name'])) {
@@ -76,6 +76,7 @@ class Mandrill extends TransactionService
             $body_field = substr(array_keys(array_filter($content['message']['extras'], function($v, $k){   
                 return ('mc-check_' == substr($k, 0, strlen('mc-check_'))) ; 
             }, ARRAY_FILTER_USE_BOTH))[0],strlen('mc-check_'));
+            ee()->dbg->c_log($body_field, __METHOD__);
             if (isset($content['message']['extras']['mc-edit'])) {
                 $t_content = array(); 
                 $edits = $content['message']['extras']['mc-edit'];
@@ -83,7 +84,7 @@ class Mandrill extends TransactionService
                     $default = in_array($k, array('main', 'content', 'bod_content'));
                     $chosen = ($k === $body_field);
                     if ($default or $chosen) {
-                        // ee()->dbg->c_log($content['message']['html'], __METHOD__);
+                        ee()->dbg->c_log($content['message']['html'], __METHOD__);
                         $v = strlen($content['message']['html'] > 2) ? $content['message']['html'] : $v;
                     }
                     array_push($t_content, array('name' => $k, 'content' => $v));
