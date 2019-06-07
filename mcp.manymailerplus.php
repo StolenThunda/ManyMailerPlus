@@ -60,13 +60,14 @@ class Manymailerplus_mcp
         $this->vars['save_btn_text'] = '';
         $this->vars['save_btn_text_working'] = '';
         $this->vars['sections'] = array();
-        $this->vars['categories'] = array_keys($this->sidebar_options);
+        $this->vars['sidebar'] = array_keys($this->sidebar_options);
         $this->vars['services'] = $this->services;
         $this->vars['view'] = 'compose_view';
     }
 
     public function makeSidebar()
     {
+        if ($this->sidebar) unset($this->sidebar)
         $this->sidebar = ee('CP/Sidebar')->make();
         foreach (array_keys($this->sidebar_options) as $category) {
             $left_nav = $this->sidebar->addHeader(lang("{$category}_title"), ee('CP/URL', EXT_SETTINGS_PATH.'/'.$category));
@@ -82,10 +83,13 @@ class Manymailerplus_mcp
     public function _update_sidebar_options($additional_links = array())
     {
         if (!empty($additional_links)) {
-            if (array_key_exists('services', $this->sidebar_options)) {
-                $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], $additional_links));
-            }
+            $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], ee()->mail_svc->get_service_order()));
+
+            // if (array_key_exists('services', $this->sidebar_options)) {
+            //     $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], $additional_links));
+            // }
         }
+        ee()->dbg->c_log($this->sidebar_options, __METHOD__, true);
     }
 
     public function index()
@@ -153,20 +157,20 @@ class Manymailerplus_mcp
         );
         switch ($func) {
             case 'list':
-                $this->vars = ee()->mail_svc->get_settings();
+                $this->vars = array_merge($this->vars, ee()->mail_svc->get_settings());
                 break;
             case 'save':
                 return ee()->mail_svc->save_settings();
                 break;
             default:
                 // if the current = the service detail page
-                $this->vars = ee()->mail_svc->settings_form(array());
+                $this->vars = array_merge($this->vars, ee()->mail_svc->settings_form(array()));
                 break;
         }
         if (!isset($this->vars['current_service'])) {
             array_pop($breadcrumbs);
         }
-        $this->vars['active_service_names'] = ee()->mail_svc->get_active_services();
+        $this->vars['active_service_names'] = json_encode(ee()->mail_svc->get_active_services(), 1);
 
         return $this->view_page($breadcrumbs);
     }
