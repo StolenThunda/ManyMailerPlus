@@ -135,6 +135,7 @@ class Manymailerplus_mcp
             case 'delete_template':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
                 break;
+
             default:
                 $this->vars['current_action'] = 'email';
                 array_pop($breadcrumbs);
@@ -150,24 +151,22 @@ class Manymailerplus_mcp
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/services')->compile() => lang('services'),
         );
-
         switch ($func) {
             case 'list':
-                $this->vars = array_merge($this->vars, ee()->mail_svc->get_settings());
+                $this->vars = ee()->mail_svc->get_settings();
                 break;
             case 'save':
                 return ee()->mail_svc->save_settings();
                 break;
             default:
                 // if the current = the service detail page
-                $this->vars = array_merge($this->vars, ee()->mail_svc->settings_form(array()));
+                $this->vars = ee()->mail_svc->settings_form(array());
                 break;
         }
         if (!isset($this->vars['current_service'])) {
             array_pop($breadcrumbs);
         }
         $this->vars['active_service_names'] = ee()->mail_svc->get_active_services();
-        ee()->dbg->c_log($this->vars, __METHOD__);
 
         return $this->view_page($breadcrumbs);
     }
@@ -177,14 +176,13 @@ class Manymailerplus_mcp
         $breadcrumbs = (is_null($breadcrumbs) ? array(
             $this->vars['breadcrumb'] => EXT_NAME,
         ) : $breadcrumbs);
-        $this->vars['debug'] = $this->debug;
-        ee()->dbg->c_log($this->vars, __METHOD__);
+
         $return = array(
             'body' => ee('View')->make(EXT_SHORT_NAME.':'.$this->vars['view'])->render($this->vars),
             'breadcrumb' => $breadcrumbs,
             'heading' => $this->vars['cp_page_title'],
         );
-
+        ee()->dbg->c_log($this->vars, __METHOD__);
         ee()->dbg->c_log($return, __METHOD__);
 
         return $return;

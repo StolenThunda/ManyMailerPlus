@@ -762,7 +762,7 @@ class Composer
     {
         $tmp = explode('/', $_SERVER['HTTP_REFERER']);
         $sender = end($tmp);
-        // ee()->dbg->c_log($sender, __METHOD__, true);
+        ee()->dbg->c_log($sender, __METHOD__);
         ee()->load->library('email');
 
         // Fetch $_POST data

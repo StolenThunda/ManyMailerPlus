@@ -2,9 +2,6 @@
     ee()->cp->load_package_css('settings');
 ?>
 <div class="col-group">   
-<?php if($debug == TRUE) : ?>
-			<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
-		<?php endif; ?>
     <div class='form-standard'>
         
     <form class="demo-form" action="<?=$base_url; ?>" method="post">

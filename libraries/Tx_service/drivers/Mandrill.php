@@ -66,7 +66,7 @@ class Mandrill extends TransactionService
             'async' => true,
             'message' => $this->email_out,
         );
-        ee()->dbg->c_log($content, __METHOD__, true);
+        // ee()->dbg->c_log($content, __METHOD__);
         if (isset($content['message']['extras'])) {
             if (isset($content['message']['extras']['from_name'])) {
                 $content['message']['from_name'] = $content['message']['extras']['from_name'];
