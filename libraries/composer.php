@@ -519,9 +519,6 @@ class Composer
                         ->now();
         }
 
-        if ($template_name != '') {
-            $template_name = str_replace('_', ' ', $template_name);
-        }
         $default = array(
             'template_name' => '',
             'from_email' => ee()->session->userdata('email'),
@@ -536,8 +533,9 @@ class Composer
         ee()->dbg->c_log('TEMP NAME: '.$template_name, __METHOD__);
 
         if ($template_name !== '') {
-            $template = $this->_get_service_templates('info', $template_name);
-            // ee()->dbg->c_log($template, __METHOD__);
+            $template_name = str_replace('_', ' ', $template_name);
+            $template = $this->_get_service_templates($template_name, 'info');
+            ee()->dbg->c_log($template, __METHOD__);
             if (isset($template['status'])) {
                 ee()->session->set_flashdata('result', $template['status'].':'.$template['message']);
                 ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template'));
@@ -658,7 +656,6 @@ class Composer
         );
 
         $vars['cp_page_title'] = lang(__FUNCTION__);
-        // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/save_template');
         $vars['save_btn_text'] = lang('save_template');
         $vars['save_btn_text_working'] = lang('saving_template');
@@ -1309,11 +1306,6 @@ class Composer
         if (isset($this->email_in['template_content'])) {
             $this->email_out['template_content'] = $this->email['template_content'];
         }
-
-        if ($this->debug == true) {
-            ee()->dbg->c_log($this->email_in);
-        }
-
         // Set X-Mailer
         $this->email_out['headers']['X-Mailer'] = APP_NAME.' (via '.EXT_NAME.' '.EXT_VERSION.')';
 
@@ -1367,10 +1359,6 @@ class Composer
         // Set HTML/Text and attachments
         // $this->_body_and_attachments();
 
-        if ($this->debug == true) {
-            ee()->dbg->c_log($this->email_out);
-        }
-
         foreach ($settings['service_order'] as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
@@ -1381,53 +1369,7 @@ class Composer
                 $result = ee()->{$service}->send_email($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
-                // 	switch($service)
-                // 	{
-                // 		case 'mailgun':
-                // 			if(!empty($settings['mailgun_api_key']) && !empty($settings['mailgun_domain']))
-                // 			{
-                // 				$sent = $this->_send_mailgun($settings['mailgun_api_key'], $settings['mailgun_domain']);
-                // 				$missing_credentials = false;
-                // 			}
-                // 			break;
-                // 		case 'mandrill':
-                // 			$key = $this->_get_mandrill_api($settings);
-                // 			if($key !== ""){
-                // 				$subaccount = (!empty($settings['mandrill_subaccount']) ? $settings['mandrill_subaccount'] : '');
-                // 				$sent = $this->_send_mandrill($key, $subaccount);
-                // 				$missing_credentials = false;
-                // 			}
-                // 			break;
-                // 		case 'postageapp':
-                // 			if(!empty($settings['postageapp_api_key']))
-                // 			{
-                // 				$sent = $this->_send_postageapp($settings['postageapp_api_key']);
-                // 				$missing_credentials = false;
-                // 			}
-                // 			break;
-                // 		case 'postmark':
-                // 			if(!empty($settings['postmark_api_key']))
-                // 			{
-                // 				$sent = $this->_send_postmark($settings['postmark_api_key']);
-                // 				$missing_credentials = false;
-                // 			}
-                // 			break;
-                // 		case 'sendgrid':
-                // 			if(!empty($settings['sendgrid_api_key']))
-                // 			{
-                // 				$sent = $this->_send_sendgrid($settings['sendgrid_api_key']);
-                // 				$missing_credentials = false;
-                // 			}
-                // 			break;
-                // 		case 'sparkpost':
-                // 			if(!empty($settings['sparkpost_api_key']))
-                // 			{
-                // 				$sent = $this->_send_sparkpost($settings['sparkpost_api_key']);
-                // 				$missing_credentials = false;
-                // 			}
-                // 			break;
-                // 	}
-                // ee()->dbg->c_log($sent, __METHOD__, TRUE);
+                
                 if ($missing_credentials == true) {
                     ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
                 } elseif ($sent == false) {
@@ -1445,167 +1387,25 @@ class Composer
         return false;
     }
 
-    /**
-        Sending methods for each of our services follow.
-     **/
-    public function _send_mandrill($api_key, $subaccount)
+    public function _get_service_templates( $template_name = '', $func = 'list')
     {
-        $content = array(
-            'key' => $api_key,
-            'async' => true,
-            'message' => $this->email_out,
-        );
-        ee()->dbg->c_log($content, __METHOD__);
-        if (!empty($subaccount)) {
-            $content['message']['subaccount'] = $subaccount;
-        }
-
-        $content['message']['from_email'] = $content['message']['from']['email'];
-        if (!empty($content['message']['from']['name'])) {
-            $content['message']['from_name'] = $content['message']['from']['name'];
-        }
-        unset($content['message']['from']);
-
-        $mandrill_to = array('email' => $content['message']['to']);
-        foreach ($content['message']['to'] as $to) {
-            $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'to'));
-        }
-
-        if (!empty($content['message']['cc'])) {
-            foreach ($content['message']['cc'] as $to) {
-                $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'cc'));
+        $templates = array();
+        $req_settings = array('template_name' => $template_name, 'func' => $func);
+        $settings = ee()->mail_svc->get_settings();
+        $service = ee()->mail_svc->get_initial_service();
+        $service_settings =  array_merge($settings, array('debug' => $this->debug));
+        $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php',ucfirst($service));
+       
+        if (!ee()->load->is_loaded($service)) {
+            if (file_exists($file_path)){
+                ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
+            }else {
+                ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
             }
-            unset($content['message']['cc']);
-        }
-
-        if (!empty($content['message']['reply-to'])) {
-            $content['message']['headers']['Reply-To'] = $this->_recipient_str($content['message']['reply-to'], true);
-        }
-        unset($content['message']['reply-to']);
-
-        if (!empty($content['message']['bcc'])) {
-            foreach ($content['message']['bcc'] as $to) {
-                $mandrill_to[] = array_merge($this->_name_and_email($to), array('type' => 'bcc'));
-            }
-        }
-        unset($content['message']['bcc']);
-
-        $content['message']['to'] = $mandrill_to;
-
-        $content['message']['merge_language'] = 'handlebars';
-
-        $content['message']['track_opens'] = true;
-
-        $content['message']['tags'][] = EXT_NAME.' '.EXT_VERSION;
-
-        $merge_vars = array(
-            array(
-                'rcpt' => $content['message']['to'][0]['email'],
-                'vars' => $this->_mandrill_lookup_to_merge($content['message']['lookup']),
-            ),
-        );
-        unset($content['message']['lookup']);
-
-        $content['message']['auto_text'] = true;
-        $content['message']['merge_vars'] = $merge_vars;
-
-        if (ee()->extensions->active_hook('pre_send')) {
-            $content = ee()->extensions->call('pre_send', 'mandrill', $content);
-        }
-
-        // Did someone set a template? Then we need a different API method.
-        $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
-        $content = json_encode($content);
-
-        ee()->dbg->c_log($content, __METHOD__);
-        //TODO: save email data to table
-        // ee()->logger->developer($content);
-        return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
-    }
-
-    public function _get_mandrill_api($settings = array())
-    {
-        $settings = empty($settings) ? ee()->mail_svc->get_settings() : $settings;
-        // $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : "";
-        $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-        $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-        $test_mode = ($settings['mandrill_testmode__yes_no'] == 'y');
-        $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-        // ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
-        return $active_key;
-    }
-
-    public function _mandrill_lookup_to_merge($lookup)
-    {
-        $merge_vars = array();
-        foreach (array_keys($lookup) as $key) {
-            $merge_vars[] = array(
-                'name' => str_replace(array('{{', '}}'), '', $key),
-                'content' => $lookup[$key],
-            );
-        }
-
-        return $merge_vars;
-    }
-
-    public function _get_service_templates($func = 'list', $template_name = null)
-    {
-        $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-        $data = array(
-            'key' => $this->_get_mandrill_api(),
-        );
-        if (!is_null($template_name)) {
-            $data['name'] = $template_name;
-        }
-        $content = json_encode($data);
-        // ee()->dbg->c_log($api_endpoint . $content, __METHOD__);
-        $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
-        //  ee()->dbg->c_log($templates, __METHOD__);
-        return $templates;
-    }
-
-    /**
-        Ultimately sends the email to each server.
-     **/
-    public function curl_request($server, $headers = array(), $content, $return_data = false, $htpw = null)
-    {
-        $content = (is_array($content) ? json_encode($content) : $content);
-        // ee()->dbg->c_log($server  . $content, __METHOD__);
-        $ch = curl_init($server);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        // Convert @ fields to CURLFile if available
-        if (is_array($content) && class_exists('CURLFile')) {
-            foreach ($content as $key => $value) {
-                if (strpos($value, '@') === 0) {
-                    $filename = ltrim($value, '@');
-                    $content[$key] = new CURLFile($filename);
-                }
-            }
-        }
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
-        if (!empty($headers)) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        }
-        if (!empty($htpw)) {
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-            curl_setopt($ch, CURLOPT_USERPWD, $htpw);
-        }
-
-        //return response instead of outputting
-        if ($return_data) {
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        }
-
-        $status = curl_exec($ch);
-        $curl_error = curl_error($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        // ee()->dbg->c_log($http_code . ' ' . json_encode($status), __METHOD__);
-        $result = ($return_data) ? json_decode($status) : true;
-        // ee()->dbg->c_log($result, __METHOD__);
-        // ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
-        return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
+        }   
+        // ee()->dbg->c_log(get_func_args(), __METHOD__);
+        $templates = ee()->{$service}->get_templates($req_settings);      
+        return $templates;  
     }
 
     /**
@@ -1977,7 +1777,7 @@ class Composer
     /**
      * View templates.
      */
-    public function view_templates($service_name = 'mandrill')
+    public function view_templates($service_name = '')
     {
         if (ee()->input->post('bulk_action') == 'remove') {
             foreach (ee()->input->get_post('selection') as $slug) {
@@ -2010,38 +1810,40 @@ class Composer
 
         $offset = ($page - 1) * 50; // Offset is 0 indexed
 
-        $templates = $this->_get_service_templates();
+        $templates = $this->_get_service_templates($service_name);
         $data = array();
-        foreach ($templates as $template) {
-            $template = json_decode(json_encode($template), true);
-            $data[] = array(
-                $template['name'],
-                $template['created_at'],
-                array(
-                    'toolbar_items' => array(
-                        'view' => array(
-                            'title' => lang('view_template'),
-                            'href' => '',
-                            'id' => $template['slug'],
-                            'rel' => 'modal-template-'.$template['slug'],
-                            'class' => 'm-link',
-                        ),
-                        'edit' => array(
-                            'title' => lang('edit_template'),
-                            'href' => ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.$template['name']),
+        if (!empty($templates)){
+            foreach ($templates as $template) {
+                $template = json_decode(json_encode($template), true);
+                $data[] = array(
+                    $template['name'],
+                    $template['created_at'],
+                    array(
+                        'toolbar_items' => array(
+                            'view' => array(
+                                'title' => lang('view_template'),
+                                'href' => '',
+                                'id' => $template['slug'],
+                                'rel' => 'modal-template-'.$template['slug'],
+                                'class' => 'm-link',
+                            ),
+                            'edit' => array(
+                                'title' => lang('edit_template'),
+                                'href' => ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.$template['name']),
+                            ),
                         ),
                     ),
-                ),
-                array(
-                    'name' => 'selection[]',
-                    'value' => $template['slug'],
-                    'data' => array(
-                        'confirm' => lang('view_template_cache').': <b>'.$template['subject'].'</b>',
+                    array(
+                        'name' => 'selection[]',
+                        'value' => $template['slug'],
+                        'data' => array(
+                            'confirm' => lang('view_template_cache').': <b>'.$template['subject'].'</b>',
+                        ),
                     ),
-                ),
-            );
+                );
 
-            $vars['templates'][] = $template;
+                $vars['templates'][] = $template;
+            }
         }
 
         //ee()->dbg->c_log($vars, __METHOD__);
@@ -2077,17 +1879,6 @@ class Composer
 
         //ee()->dbg->c_log($vars, __METHOD__);
         return $vars;
-    }
-
-    public function delete_template($template_name)
-    {
-        $data = array(
-            'name' => $template_name,
-            'key' => $this->_get_mandrill_api(),
-        );
-        $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
-
-        return $this->curl_request($api_endpoint, $this->headers, $data, true);
     }
 
     /**

@@ -67,7 +67,7 @@ class Manymailerplus_mcp
 
     public function makeSidebar()
     {
-        if ($this->sidebar) unset($this->sidebar)
+        // if ($this->sidebar) unset($this->sidebar);
         $this->sidebar = ee('CP/Sidebar')->make();
         foreach (array_keys($this->sidebar_options) as $category) {
             $left_nav = $this->sidebar->addHeader(lang("{$category}_title"), ee('CP/URL', EXT_SETTINGS_PATH.'/'.$category));
@@ -84,12 +84,7 @@ class Manymailerplus_mcp
     {
         if (!empty($additional_links)) {
             $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], ee()->mail_svc->get_service_order()));
-
-            // if (array_key_exists('services', $this->sidebar_options)) {
-            //     $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], $additional_links));
-            // }
         }
-        ee()->dbg->c_log($this->sidebar_options, __METHOD__, true);
     }
 
     public function index()
@@ -111,35 +106,25 @@ class Manymailerplus_mcp
         $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email');
         $this->vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
-        switch ($func) {
+        switch ($func) { 
+            case 'view_templates':
+                $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}(ee()->mail_svc->get_initial_service()));
+                break;           
             case 'compose2':
                 $this->vars['view'] = 'compose_view2';
-                $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
-                break;
+            case 'compose': 
+            case 'send':
+            case 'sent':          
             case 'resend':
             case 'batch':
-                return array_merge($this->vars, ee()->mail_funcs->{$func}($id));
-                break;
-            // case 'compose2':
-            //     return ee()->mail_funcs->{$func}();
-            //     break;
             case 'edit_template':
                 if ($id != '') {
                     $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}($id));
-                }
-                break;
-            case 'view_templates':
-                $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}(ee()->mail_svc->get_initial_service()));
-                break;
-            case 'compose':
-            case 'send':
-            case 'sent':
+                    break;
+                }                
             case 'save_template':
-
             case 'delete_template':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
-                break;
-
             default:
                 $this->vars['current_action'] = 'email';
                 array_pop($breadcrumbs);
@@ -170,7 +155,7 @@ class Manymailerplus_mcp
         if (!isset($this->vars['current_service'])) {
             array_pop($breadcrumbs);
         }
-        $this->vars['active_service_names'] = json_encode(ee()->mail_svc->get_active_services(), 1);
+        $this->vars['active_service_names'] = json_encode(ee()->mail_svc->get_active_services(ee()->mail_svc->model->settings), 1);
 
         return $this->view_page($breadcrumbs);
     }
@@ -187,8 +172,6 @@ class Manymailerplus_mcp
             'heading' => $this->vars['cp_page_title'],
         );
         ee()->dbg->c_log($this->vars, __METHOD__);
-        ee()->dbg->c_log($return, __METHOD__);
-
         return $return;
     }
 }

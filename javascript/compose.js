@@ -232,9 +232,6 @@ $(document).ready(function() {
                 createEC(sections);              
             }
             $('legend').trigger('click');
-        // } else {
-        //     var details = $('fieldset#mc-edits');
-        //     if (details.length > 0) details.remove();
         }
         $('#template_name').val(name);
         $('input[name=subject]').val(subject);

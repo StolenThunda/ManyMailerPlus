@@ -9,7 +9,6 @@ class Mandrill extends TransactionService
         parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
-
         ee()->dbg->c_log($this, __METHOD__);
     }
 
@@ -31,7 +30,7 @@ class Mandrill extends TransactionService
                 $sent = $this->_send_email($subaccount);
             }
         }
-
+        // ee()->dbg->c_log(array('missing_credentials' => $missing_credentials, 'sent' => $sent), __METHOD__, true);
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
@@ -77,20 +76,21 @@ class Mandrill extends TransactionService
             $body_field = substr(array_keys(array_filter($content['message']['extras'], function ($v, $k) {
                 return 'mc-check_' == substr($k, 0, strlen('mc-check_'));
             }, ARRAY_FILTER_USE_BOTH))[0], strlen('mc-check_'));
-            ee()->dbg->c_log($body_field, __METHOD__);
+           
             if (isset($content['message']['extras']['mc-edit'])) {
                 $t_content = array();
                 $edits = $content['message']['extras']['mc-edit'];
-                foreach ($edits as $k => $v) {
+                foreach ($edits as $k => $v) { 
+                   
                     $default = in_array($k, array('main', 'content', 'bod_content'));
                     $chosen = ($k === $body_field);
-                    if ($default or $chosen) {
-                        ee()->dbg->c_log($content['message']['html'], __METHOD__);
-                        $v = strlen($content['message']['html']) > 2 ? $content['message']['html'] : $v;
+                    if ($chosen || $default) { 
+                        $message = $content['message']['html'];                  
+                        $v = ( $message !== "") ? str_replace(array('.', ' ', "\n", "\t", "\r"), '', $message) : $v;
+                        ee()->dbg->c_log($v, __METHOD__);
                     }
                     array_push($t_content, array('name' => $k, 'content' => $v));
                 }
-
                 $content['template_content'] = $t_content;
             }
         }
@@ -175,7 +175,7 @@ class Mandrill extends TransactionService
         return $merge_vars;
     }
 
-    public function get_templates($obj = array('func' => 'list', 'template_name' => ''))
+    public function get_templates($obj = array('template_name' => '', 'func' => 'list'))
     {
         $templates = array();
         $func = (isset($obj['func'])) ? $obj['func'] : 'list';
@@ -193,6 +193,17 @@ class Mandrill extends TransactionService
         ee()->dbg->c_log($templates, __METHOD__);
 
         return $templates;
+    }
+
+    public function delete_template($template_name)
+    {
+        $data = array(
+            'name' => $template_name,
+            'key' => $this->_get_mandrill_api(),
+        );
+        $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
+
+        return $this->curl_request($api_endpoint, $this->headers, $data, true);
     }
 
     /**
