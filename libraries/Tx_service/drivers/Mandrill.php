@@ -14,6 +14,8 @@ class Mandrill extends TransactionService
 
     public function get_api_key()
     {
+        ee()->dbg->c_log($this->key, __METHOD__);
+
         return $this->key;
     }
 
@@ -76,17 +78,16 @@ class Mandrill extends TransactionService
             $body_field = substr(array_keys(array_filter($content['message']['extras'], function ($v, $k) {
                 return 'mc-check_' == substr($k, 0, strlen('mc-check_'));
             }, ARRAY_FILTER_USE_BOTH))[0], strlen('mc-check_'));
-           
+
             if (isset($content['message']['extras']['mc-edit'])) {
                 $t_content = array();
                 $edits = $content['message']['extras']['mc-edit'];
-                foreach ($edits as $k => $v) { 
-                   
+                foreach ($edits as $k => $v) {
                     $default = in_array($k, array('main', 'content', 'bod_content'));
                     $chosen = ($k === $body_field);
-                    if ($chosen || $default) { 
-                        $message = $content['message']['html'];                  
-                        $v = ( $message !== "") ? str_replace(array('.', ' ', "\n", "\t", "\r"), '', $message) : $v;
+                    if ($chosen || $default) {
+                        $message = $content['message']['html'];
+                        $v = ($message !== '') ? $message : $v;
                         ee()->dbg->c_log($v, __METHOD__);
                     }
                     array_push($t_content, array('name' => $k, 'content' => $v));
@@ -193,6 +194,66 @@ class Mandrill extends TransactionService
         ee()->dbg->c_log($templates, __METHOD__);
 
         return $templates;
+    }
+
+    public function save_template()
+    {
+        $form_fields = array(
+            'created_at_hidden',
+            'orig_template_name',
+            'template_name',
+            'from_email',
+            'from_name',
+            'subject',
+            'code',
+            'text',
+            'publish',
+            // "labels",
+        );
+
+        // ee()->dbg->c_log($_POST, __METHOD__);
+        foreach ($_POST as $key => $val) {
+            // ee()->dbg->c_log("$key : ".ee()->input->post($key),__METHOD__);
+            if (in_array($key, $form_fields)) {
+                $$key = ee()->input->get_post($key);
+                // ee()->dbg->c_log("$key : ".ee()->input	->post($key),__METHOD__);
+            }
+        }
+
+        if (isset($template_name)) {
+            ee()->load->library('form_validation');
+            ee()->form_validation->set_rules('template_name', 'lang:template_name', 'required|valid_xss_check');
+            if (ee()->form_validation->run() === false) {
+                ee()->view->set_message('issue', lang('save_template_error'), lang('save_template_error_desc'));
+                echo '<pre>';
+                print_r($_POST);
+                echo '</pre>';
+
+                return $this->edit_template($template_name);
+            }
+        }
+        $cache_data = array(
+            'key' => $this->get_api_key(),
+            'name' => (isset($template_name) ? $template_name : $orig_template_name),
+            'from_email' => $from_email,
+            'from_name' => $from_name,
+            'subject' => $subject,
+            'code' => utf8_encode($code),
+            'text' => $text,
+            'publish' => ($publish == 'y'),
+            // "labels" => explode(',', $labels),
+        );
+        $function = ($created_at_hidden !== '') ? 'update' : 'add';
+
+        $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$function.'.json';
+        // ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__);
+        $result = $this->curl_request($api_endpoint, $this->headers, $cache_data, true);
+        if (isset($result['status'])) {
+            ee()->view->set_message($result['status'], $result['message'], null, true);
+            ee()->session->set_flashdata('result', $result['status'].':'.$result['message']);
+        }
+
+        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.(isset($template_name) ? $template_name : $orig_template_name)));
     }
 
     public function delete_template($template_name)

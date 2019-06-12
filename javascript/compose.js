@@ -68,7 +68,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -94,10 +94,12 @@ $(document).ready(function() {
                 });
                 $.post(url, {
                         service_order: serviceOrder.toString(),
-                        CSRF_TOKEN: EE.CSRF_TOKEN
+                        CSRF_TOKEN: EE.CSRF_TOKEN,
+                        XID: EE.XID
                     })
                     .done(function(data) {
                         $('.service-list').data('order', data);
+                        // location.reload();
                         console.dir(data);
                         // bubble_enable_services(data);
                     });

@@ -137,7 +137,7 @@ $lang = array(
     'sent_name' => 'View Sent Mail',
     'services_heading' => 'Services Overview',
     'services_name' => 'Services',
-    'services_text' => '<p>Activate and configure as many services as you like via the links in the sidebar, and change the service order by dragging each service name into a new position within the sidebar.</p>
+    'services_text' => '<p>Activate and configure as many services as you like via the links in the sidebar.</p>
 		<p>If the topmost activated service fails to send a particular email, the next active service will be used. If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',
     'services_title' => 'Services',
     'services' => 'Services',

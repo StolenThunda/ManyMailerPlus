@@ -67,6 +67,7 @@ class Services_module
     {
         $settings = $this->get_settings();
         $services_sorted = $this->service_order;
+        $this->update_service_order();
         $vars = array(
             'debug' => $this->debug,
             'current_service' => false,
@@ -103,7 +104,6 @@ class Services_module
             $vars['current_action'] = 'services';
             unset($vars['current_service']);
         }
-        // ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -127,9 +127,6 @@ class Services_module
             // $this->service_order = $this->get_service_order();
             if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) || ($settings['service_order'] !== $this->service_order)) {
                 $settings['service_order'] = $this->service_order;
-                // foreach ($this->service_settings as $service => $service_settings) {
-                //     $settings['service_order'][] = $service;
-                // }
             }
         }
 
@@ -204,11 +201,10 @@ class Services_module
         ee()->dbg->c_log($services, __METHOD__.': srvs');
         if ($is_ajax && $services) {
             $all_settings[$this->site_id]['service_order'] = explode(',', $services);
-            ee()->dbg->c_log($all_settings, __METHOD__.': all_set');
+            ee()->dbg->c_log($all_settings, __METHOD__.': all_set', true);
             $this->model->settings = $all_settings;
             $this->model->save();
-
-            return $all_settings[$this->site_id]['service_order'];
+            exit();
         }
     }
 

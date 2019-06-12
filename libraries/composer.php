@@ -667,62 +667,10 @@ class Composer
 
     public function save_template()
     {
-        $form_fields = array(
-            'created_at_hidden',
-            'orig_template_name',
-            'template_name',
-            'from_email',
-            'from_name',
-            'subject',
-            'code',
-            'text',
-            'publish',
-            // "labels",
-        );
-
-        // ee()->dbg->c_log($_POST, __METHOD__);
-        foreach ($_POST as $key => $val) {
-            // ee()->dbg->c_log("$key : ".ee()->input->post($key),__METHOD__);
-            if (in_array($key, $form_fields)) {
-                $$key = ee()->input->get_post($key);
-                // ee()->dbg->c_log("$key : ".ee()->input	->post($key),__METHOD__);
-            }
+        $service = $this->get_service();
+        if (!is_null($service)) {
+            ee()->{$service}->save_template();
         }
-
-        if (isset($template_name)) {
-            ee()->load->library('form_validation');
-            ee()->form_validation->set_rules('template_name', 'lang:template_name', 'required|valid_xss_check');
-            if (ee()->form_validation->run() === false) {
-                ee()->view->set_message('issue', lang('save_template_error'), lang('save_template_error_desc'));
-                echo '<pre>';
-                print_r($_POST);
-                echo '</pre>';
-
-                return $this->edit_template($template_name);
-            }
-        }
-        $cache_data = array(
-            'key' => $this->_get_mandrill_api(),
-            'name' => (isset($template_name) ? $template_name : $orig_template_name),
-            'from_email' => $from_email,
-            'from_name' => $from_name,
-            'subject' => $subject,
-            'code' => utf8_encode($code),
-            'text' => $text,
-            'publish' => ($publish == 'y'),
-            // "labels" => explode(',', $labels),
-        );
-        $function = ($created_at_hidden !== '') ? 'update' : 'add';
-
-        $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$function.'.json';
-        // ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__);
-        $result = $this->curl_request($api_endpoint, $this->headers, $cache_data, true);
-        if (isset($result['status'])) {
-            ee()->view->set_message($result['status'], $result['message'], null, true);
-            ee()->session->set_flashdata('result', $result['status'].':'.$result['message']);
-        }
-
-        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.(isset($template_name) ? $template_name : $orig_template_name)));
     }
 
     /**
@@ -1369,7 +1317,7 @@ class Composer
                 $result = ee()->{$service}->send_email($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
-                
+
                 if ($missing_credentials == true) {
                     ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
                 } elseif ($sent == false) {
@@ -1387,25 +1335,40 @@ class Composer
         return false;
     }
 
-    public function _get_service_templates( $template_name = '', $func = 'list')
+    public function get_service()
+    {
+        if (!isset($this->service)) {
+            $settings = ee()->mail_svc->get_settings();
+            $service = ee()->mail_svc->get_initial_service();
+            $service_settings = array_merge($settings, array('debug' => $this->debug));
+            $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php', ucfirst($service));
+
+            if (!ee()->load->is_loaded($service)) {
+                if (file_exists($file_path)) {
+                    ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
+                } else {
+                    ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
+
+                    return null;
+                }
+            }
+        } else {
+            $service = $this->service;
+        }
+
+        return $service;
+    }
+
+    public function _get_service_templates($template_name = '', $func = 'list')
     {
         $templates = array();
         $req_settings = array('template_name' => $template_name, 'func' => $func);
-        $settings = ee()->mail_svc->get_settings();
-        $service = ee()->mail_svc->get_initial_service();
-        $service_settings =  array_merge($settings, array('debug' => $this->debug));
-        $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php',ucfirst($service));
-       
-        if (!ee()->load->is_loaded($service)) {
-            if (file_exists($file_path)){
-                ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
-            }else {
-                ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
-            }
-        }   
-        // ee()->dbg->c_log(get_func_args(), __METHOD__);
-        $templates = ee()->{$service}->get_templates($req_settings);      
-        return $templates;  
+        $service = $this->get_service();
+        if (!is_null($service)) {
+            $templates = ee()->{$service}->get_templates($req_settings);
+        }
+
+        return $templates;
     }
 
     /**
@@ -1812,7 +1775,7 @@ class Composer
 
         $templates = $this->_get_service_templates($service_name);
         $data = array();
-        if (!empty($templates)){
+        if (!empty($templates)) {
             foreach ($templates as $template) {
                 $template = json_decode(json_encode($template), true);
                 $data[] = array(

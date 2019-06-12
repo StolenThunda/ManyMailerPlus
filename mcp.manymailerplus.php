@@ -106,25 +106,28 @@ class Manymailerplus_mcp
         $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email');
         $this->vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
-        switch ($func) { 
+        switch ($func) {
             case 'view_templates':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}(ee()->mail_svc->get_initial_service()));
-                break;           
+                break;
             case 'compose2':
                 $this->vars['view'] = 'compose_view2';
-            case 'compose': 
+                // no break
+            case 'compose':
             case 'send':
-            case 'sent':          
+            case 'sent':
             case 'resend':
             case 'batch':
             case 'edit_template':
                 if ($id != '') {
                     $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}($id));
                     break;
-                }                
+                }
+                // no break
             case 'save_template':
             case 'delete_template':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
+                // no break
             default:
                 $this->vars['current_action'] = 'email';
                 array_pop($breadcrumbs);
@@ -140,7 +143,14 @@ class Manymailerplus_mcp
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/services')->compile() => lang('services'),
         );
+        $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
+        $this->vars['cp_page_title'] = lang(__FUNCTION__.'_title');
+        $this->vars['current_action'] = __FUNCTION__;
         switch ($func) {
+            case 'update_service_order':
+                ee()->dbg->c_log($func, __METHOD__);
+
+                return ee()->mail_svc->{$func}();
             case 'list':
                 $this->vars = array_merge($this->vars, ee()->mail_svc->get_settings());
                 break;
@@ -172,6 +182,7 @@ class Manymailerplus_mcp
             'heading' => $this->vars['cp_page_title'],
         );
         ee()->dbg->c_log($this->vars, __METHOD__);
+
         return $return;
     }
 }
