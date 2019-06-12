@@ -24,8 +24,7 @@ class Postageapp extends TransactionService
         if ($email) {
             $this->email_out = $email;
             unset($email);
-            if(!empty($settings['postageapp_api_key']))
-            {
+            if (!empty($settings['postageapp_api_key'])) {
                 $sent = $this->_send_email($settings['postageapp_api_key']);
                 $missing_credentials = false;
             }
@@ -36,95 +35,76 @@ class Postageapp extends TransactionService
 
     private function _get_api($settings = array())
     {
-        try {
-            if (!ee()->load->is_loaded('mod_services')) {
-                ee()->load->library('services_module', null, 'mod_svc');
-            }
-            $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
-            return (!empty($settings['postageapp_api_key']) ? null : $settings['postageapp_api_key']);
-					
-        } catch (\Throwable $th) {
-            //throw $th;
-            ee()->dbg->c_log($th, __METHOD__);
+        $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
+        ee()->dbg->c_log($settings, __METHOD__);
 
-            return $th;
-        }
+        return !empty($settings['postageapp_api_key']) ? null : $settings['postageapp_api_key'];
     }
 
     /**
         Sending methods for each of our services follow.
      **/
     public function _send_email($api_key)
-	{
-		$content = array(
-			'api_key' => $api_key,
-			'uid' => sha1(serialize($this->email_out['to']).$this->email_out['subject'].ee()->localize->now),
-			'arguments' => array(
-				'headers' => array(
-					'from' => $this->_recipient_str($this->email_out['from'], true),
-					'subject' => $this->email_out['subject'],
-				)
-			)
-		);
-		
-		foreach($this->email_out['headers'] as $header => $value)
-	    {
-		    $content['arguments']['headers'][$header] = $value;    
-	    }
-		
-		/*
-			All recipients, including Cc and Bcc, must be in the recipients array, and will be Bcc by default.
-			Any addresses which are *also* included in the Cc header will be visible as Cc
-		*/
-		$recipients = $this->email_out['to'];
-		if(!empty($this->email_out['cc']))
-	    {
-	    	$recipients = array_merge($recipients,  $this->email_out['cc']);
-	    	$content['arguments']['headers']['cc'] = $this->_recipient_str($this->email_out['cc']);
-	    }
-	    if(!empty($this->email_out['bcc']))
-	    {
-	    	$recipients = array_merge($recipients,  $this->email_out['bcc']);
-	    }
-	    $content['arguments']['recipients'] = $recipients;
-		
-	    if(!empty($this->email_out['reply-to']))
-	    {
-	    	$content['arguments']['headers']['reply-to'] = $this->_recipient_str($this->email_out['reply-to'], true);
-	    }
-	    if(!empty($this->email_out['html']))
-	    {
-	    	$content['arguments']['content']['text/html'] = $this->email_out['html'];
-	    }
-	    if(!empty($this->email_out['text']))
-	    {
-	    	$content['arguments']['content']['text/plain'] = $this->email_out['text'];
-	    }
-	    if(!empty($this->email_out['attachments']))
-	    {
-	    	foreach($this->email_out['attachments'] as $attachment)
-	    	{
-	    		$content['arguments']['attachments'][$attachment['name']] = array(
-	    			'content_type' => $attachment['type'],
-	    			'content' => $attachment['content']
-	    		);
-	    	}
-	    }
-	    
-	    $headers = array(
-	    	'Accept: application/json',
-			'Content-Type: application/json'
-		);
-		
-		if(ee()->extensions->active_hook('escort_pre_send'))
-		{
-			$content = ee()->extensions->call('escort_pre_send', 'postageapp', $content);
-		}
-		$content = json_encode($content);
-		
-		return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
-	}
-	
+    {
+        $content = array(
+            'api_key' => $api_key,
+            'uid' => sha1(serialize($this->email_out['to']).$this->email_out['subject'].ee()->localize->now),
+            'arguments' => array(
+                'headers' => array(
+                    'from' => $this->_recipient_str($this->email_out['from'], true),
+                    'subject' => $this->email_out['subject'],
+                ),
+            ),
+        );
+
+        foreach ($this->email_out['headers'] as $header => $value) {
+            $content['arguments']['headers'][$header] = $value;
+        }
+
+        /*
+            All recipients, including Cc and Bcc, must be in the recipients array, and will be Bcc by default.
+            Any addresses which are *also* included in the Cc header will be visible as Cc
+        */
+        $recipients = $this->email_out['to'];
+        if (!empty($this->email_out['cc'])) {
+            $recipients = array_merge($recipients, $this->email_out['cc']);
+            $content['arguments']['headers']['cc'] = $this->_recipient_str($this->email_out['cc']);
+        }
+        if (!empty($this->email_out['bcc'])) {
+            $recipients = array_merge($recipients, $this->email_out['bcc']);
+        }
+        $content['arguments']['recipients'] = $recipients;
+
+        if (!empty($this->email_out['reply-to'])) {
+            $content['arguments']['headers']['reply-to'] = $this->_recipient_str($this->email_out['reply-to'], true);
+        }
+        if (!empty($this->email_out['html'])) {
+            $content['arguments']['content']['text/html'] = $this->email_out['html'];
+        }
+        if (!empty($this->email_out['text'])) {
+            $content['arguments']['content']['text/plain'] = $this->email_out['text'];
+        }
+        if (!empty($this->email_out['attachments'])) {
+            foreach ($this->email_out['attachments'] as $attachment) {
+                $content['arguments']['attachments'][$attachment['name']] = array(
+                    'content_type' => $attachment['type'],
+                    'content' => $attachment['content'],
+                );
+            }
+        }
+
+        $headers = array(
+            'Accept: application/json',
+            'Content-Type: application/json',
+        );
+
+        if (ee()->extensions->active_hook('escort_pre_send')) {
+            $content = ee()->extensions->call('escort_pre_send', 'postageapp', $content);
+        }
+        $content = json_encode($content);
+
+        return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
+    }
 
     public function lookup_to_merger($lookup)
     {

@@ -147,10 +147,6 @@ class Manymailerplus_mcp
         $this->vars['cp_page_title'] = lang(__FUNCTION__.'_title');
         $this->vars['current_action'] = __FUNCTION__;
         switch ($func) {
-            case 'update_service_order':
-                ee()->dbg->c_log($func, __METHOD__);
-
-                return ee()->mail_svc->{$func}();
             case 'list':
                 $this->vars = array_merge($this->vars, ee()->mail_svc->get_settings());
                 break;

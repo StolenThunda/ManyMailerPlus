@@ -59,7 +59,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/save')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -80,6 +80,7 @@ $(document).ready(function() {
             update: function() {
                 var serviceOrder = [];
                 var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+                console.dir(url);
                 $('.service-list li').each(function() {
                     serviceOrder.push($(this).data('service'));
                 });
@@ -89,10 +90,9 @@ $(document).ready(function() {
                         XID: EE.XID
                     })
                     .done(function(data) {
-                        $('.service-list').data('order', data);
-                        // location.reload();
-                        console.dir(data);
-                        // bubble_enable_services(data);
+                        // $('.service-list').data('order', data);
+                        document.write(data);
+                        document.close();
                     });
             }
         });
@@ -856,7 +856,7 @@ function dumpFormVals() {
         width: '80%'
     });
 }
-
+if (typeof TLN === 'undefined'){
 const TLN = {
     eventList: {},
     update_line_numbers: function(ta, el) {
@@ -968,4 +968,4 @@ const TLN = {
         }
         delete TLN.eventList[id];
     }
-};
+}};

@@ -67,7 +67,7 @@ class Services_module
     {
         $settings = $this->get_settings();
         $services_sorted = $this->service_order;
-        $this->update_service_order();
+        // $this->update_service_order();
         $vars = array(
             'debug' => $this->debug,
             'current_service' => false,
@@ -112,9 +112,8 @@ class Services_module
     {
         $all_settings = $this->model->settings;
 
-        // ee()->dbg->c_log($all_settings, __METHOD__);
-        $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
-        // ee()->dbg->c_log($settings, __METHOD__.':settings');
+        ee()->dbg->c_log($all_settings, __METHOD__);
+        $settings = ($all_sites == true || !empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
         // Check for config settings - they will override database settings
         if ($all_sites == false) {
             // Override each setting from config
@@ -123,8 +122,8 @@ class Services_module
                     $settings[$k] = $v;
                 }
             }
+
             // Set a service order if none is set
-            // $this->service_order = $this->get_service_order();
             if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) || ($settings['service_order'] !== $this->service_order)) {
                 $settings['service_order'] = $this->service_order;
             }
@@ -138,8 +137,9 @@ class Services_module
         $settings = $this->get_settings(true);
         $current_service = '';
         ee()->dbg->c_log($settings, __METHOD__);
+        $is_ajax = ee('Request')->isAjax();
         foreach ($this->service_settings as $service => $service_settings) {
-            ee()->dbg->c_log($service, __METHOD__);
+            // ee()->dbg->c_log($service, __METHOD__);
             if ($v = ee('Request')->post($service.'_active')) {
                 $current_service = $service;
                 $settings[$this->site_id][$service.'_active'] = $v;
@@ -149,24 +149,29 @@ class Services_module
                 }
             }
         }
+        if ($is_ajax && $services = ee('Request')->post('service_order')) {
+            $settings[$this->site_id]['service_order'] = explode(',', $services);
+        }
         ee()->dbg->c_log($settings, __METHOD__);
         $this->model->settings = $settings;
         $this->model->save();
         // ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__, true);
-        ee('CP/Alert')->makeInline('shared-form')
-          ->asSuccess()
-          ->withTitle(lang('settings_saved'))
-          ->addToBody(sprintf(lang('settings_saved_desc'), EXT_NAME))
-          ->defer();
-
-        ee()->functions->redirect(
-            ee('CP/URL')->make('addons/settings/'.EXT_SHORT_NAME.'/services/'.$current_service)
-        );
+        if (!$is_ajax) {
+            ee('CP/Alert')->makeInline()
+            ->asSuccess()
+            ->withTitle(lang('settings_saved'))
+            ->addToBody(sprintf(lang('settings_saved_desc'), EXT_NAME))
+            ->defer();
+            $redirect = ee('CP/URL')->make('addons/settings/'.EXT_SHORT_NAME.'/services/'.$current_service);
+        } else {
+            $redirect = $_SERVER['HTTP_REFERER'];
+        }
+        ee()->functions->redirect($redirect);
     }
 
     public function get_service_order()
     {
-        $settings = $this->model->settings[$this->site_id];
+        $settings = $this->model->settings;
         $services_sorted = $this->get_active_services();
 
         foreach ($settings as $k => $v) {
@@ -193,33 +198,16 @@ class Services_module
         return $services_sorted;
     }
 
-    public function update_service_order()
-    {
-        $is_ajax = ee('Request')->isAjax();
-        $services = ee('Request')->post('service_order');
-        ee()->dbg->c_log($is_ajax, __METHOD__.': is ajax');
-        ee()->dbg->c_log($services, __METHOD__.': srvs');
-        if ($is_ajax && $services) {
-            $all_settings[$this->site_id]['service_order'] = explode(',', $services);
-            ee()->dbg->c_log($all_settings, __METHOD__.': all_set', true);
-            $this->model->settings = $all_settings;
-            $this->model->save();
-            exit();
-        }
-    }
-
     public function get_initial_service()
     {
-        $a = $this->get_service_order()[0];
-        // ee()->dbg->c_log($a, __METHOD__);
-
-        return $a;
+        return $this->get_service_order()[0];
     }
 
     public function get_active_services()
     {
         $active = array();
-        $active_services = array_filter($this->model->settings[$this->site_id], function ($v, $k) {
+        $current_settings = (isset($this->model->settings[$this->site_id])) ? $this->model->settings[$this->site_id] : $this->model->settings;
+        $active_services = array_filter($current_settings, function ($v, $k) {
             return $v == 'y';
         }, ARRAY_FILTER_USE_BOTH);
 

@@ -1340,7 +1340,7 @@ class Composer
         if (!isset($this->service)) {
             $settings = ee()->mail_svc->get_settings();
             $service = ee()->mail_svc->get_initial_service();
-            $service_settings = array_merge($settings, array('debug' => $this->debug));
+            $service_settings = array('debug' => $this->debug, 'settings' => $settings);
             $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php', ucfirst($service));
 
             if (!ee()->load->is_loaded($service)) {
