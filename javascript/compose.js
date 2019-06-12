@@ -54,15 +54,6 @@ $(document).ready(function() {
             });
         };
     })(jQuery);
-    // $('form')
-    //     .attr('novalidate')
-    //     .remove();
-    // $('.demo-form')
-    //     .submit(function(){
-    //         debugger
-    //         alert('hi')
-    //     })
-    $('#csv_recipient').parents('fieldset').toggle();
     $('input[readonly]').click(function() {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
@@ -165,9 +156,7 @@ $(document).ready(function() {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
                     reader.onload = function(e) {
-                        var selector = 'csv_recipient';
-                        $('#' + selector).val_with_linenum(reader.result);
-                        $('select[name=recipient_entry]').val(selector).trigger('change');
+                        $('#csv_recipient').val_with_linenum(reader.result);
                     };
                     reader.readAsText(file);
                 } else {
