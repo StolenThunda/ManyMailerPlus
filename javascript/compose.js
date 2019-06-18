@@ -59,7 +59,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/save')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -71,16 +71,13 @@ $(document).ready(function() {
                 $(this).addClass('disabled-service');
             }
             $(this).attr('data-service', list_item);
-        });
-        // debugger;
-        // bubble_enable_services();
+        }); 
         $('.service-list').sortable({
             axis: 'y',
             opacity: 0.5,
             update: function() {
                 var serviceOrder = [];
                 var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-                console.dir(url);
                 $('.service-list li').each(function() {
                     serviceOrder.push($(this).data('service'));
                 });
@@ -91,8 +88,13 @@ $(document).ready(function() {
                     })
                     .done(function(data) {
                         // $('.service-list').data('order', data);
-                        document.write(data);
-                        document.close();
+                        console.log(data);
+                        // $(data).each(function(i){
+                        //      document.getElementsByTagName("head")[0].appendChild(i)
+                        // })
+                       
+                        // document.write(data);
+                        // document.close();
                     });
             }
         });
@@ -136,6 +138,63 @@ $(document).ready(function() {
         $('.app-overlay').removeClass('app-overlay---open');
         return;
     });
+    $('#btnData').on('click', function(e){ 
+        var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url')+'/services/';
+        Swal.fire({
+            title: 'Select Fuction',
+            input: 'select',
+            inputOptions: {
+                'update_service_order': 'Update SO',
+                'get_settings': 'Get Settings',
+                'get_service_order': 'Get SO',
+                'get_active_services': 'Active',
+                'get_initial_service' : 'Priority Service'
+            },
+            inputPlaceholder: "Select Function",
+            showCancelButton: true,
+            allowOutsideClick: () => !Swal.isLoading(),
+            preConfirm: (value) => {
+                    return $.post(url + value)
+                        .done(response => {
+                           
+                            return  response
+                    
+                        })
+           
+            }
+            
+            }).then((result) => {
+                    
+                 swal.fire({
+                    type: 'warning',
+                    html: JSON.stringify(result),
+                    showCloseButton: true,
+                });
+            });
+        //   if (func) {
+            
+        //   }
+    //     var serviceOrder = [];
+       
+    //     console.log(url);
+    //     $('.service-list li').each(function() {
+    //         serviceOrder.push($(this).data('service'));
+    //     });
+    //     $.post( url, {
+    //         service_order: serviceOrder.toString(),
+    //         CSRF_TOKEN: EE.CSRF_TOKEN,
+    //         XID: EE.XID
+    //     })
+    //     .done(function(data) {
+    //         console.log('done');
+    //         swal
+    //         .fire({
+    //             type: 'warning',
+    //             html: data.toString(),
+    //             showCloseButton: true,
+    //         });
+    // });
+});
     $('#csv_recipient')
         .bind('interact', (e) => {
             if (e.currentTarget.value === '') {
@@ -312,15 +371,6 @@ $(document).ready(function() {
     });
 });
 var $sections = $('.form-section');
-
-function bubble_enable_services(order) {
-    if (order === null) order = $('.service-list').data('order');
-    // alert(order);
-    $('.service-list li').sort((a, b) => {
-        return (($(a).hasClass('enabled-service')) ? -1 : 1);
-    }).appendTo('.service-list');
-}
-
 function navigateTo(index) {
     // Mark the current section with the class 'current'
     $sections.removeClass('current').eq(index).addClass('current');

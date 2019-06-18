@@ -8,6 +8,7 @@
 	<?php endif; ?>
 	<?php
         if (isset($current_settings) && $debug) {
+            echo '<input type="button" id="btnData" class="btn" value="Show Data" />';
             echo '<div><pre>';
             echo print_r($current_settings, 1);
             echo '</div>';
