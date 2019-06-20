@@ -38,7 +38,7 @@ class Postageapp extends TransactionService
         $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
         ee()->dbg->c_log($settings, __METHOD__);
 
-        return !empty($settings['postageapp_api_key']) ? null : $settings['postageapp_api_key'];
+        return (!empty($settings['postageapp_api_key']) || !isset($settings['postageapp_api_key'])) ? null : $settings['postageapp_api_key'];
     }
 
     /**
