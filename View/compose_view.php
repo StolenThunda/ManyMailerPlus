@@ -3,8 +3,10 @@
 ?>
 
 <div>
+	
 	<?php if (isset($active_service_names)) : ?>		
 		<input id='active_services' type='hidden' value='<?php echo $active_service_names; ?>' />
+		
 	<?php endif; ?>
 	<?php
         if (isset($current_settings) && $debug) {

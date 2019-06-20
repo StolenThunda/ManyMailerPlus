@@ -1,3 +1,115 @@
+const TLN = {
+    eventList: {},
+    update_line_numbers: function(ta, el) {
+        let lines = ta.value.split('\n').length;
+        let child_count = el.children.length;
+        let difference = lines - child_count;
+
+        if (difference > 0) {
+            let frag = document.createDocumentFragment();
+            while (difference > 0) {
+                let line_number = document.createElement('span');
+                line_number.className = 'tln-line';
+                frag.appendChild(line_number);
+                difference--;
+            }
+            el.appendChild(frag);
+        }
+        while (difference < 0) {
+            el.removeChild(el.firstChild);
+            difference++;
+        }
+    },
+    append_line_numbers: function(id) {
+        let ta = document.getElementById(id);
+        if (ta === null) {
+            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
+        }
+        if (ta.className.indexOf('tln-active') !== -1) {
+            return;
+            // return console.log("[tln.js] textarea of id '" + id + "' is already numbered");
+        }
+        ta.classList.add('tln-active');
+        ta.style = {};
+
+        let el = document.createElement('div');
+        ta.parentNode.insertBefore(el, ta);
+        el.className = 'tln-wrapper';
+        TLN.update_line_numbers(ta, el);
+        TLN.eventList[id] = [];
+
+        const __change_evts = [
+            'propertychange',
+            'input',
+            'keydown',
+            'keyup'
+        ];
+        const __change_hdlr = (function(ta, el) {
+            return function(e) {
+                if (
+                    (+ta.scrollLeft == 10 &&
+                        (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
+                    e.keyCode == 36 ||
+                    e.which == 36 ||
+                    e.code == 'Home' ||
+                    e.key == 'Home' ||
+                    e.keyCode == 13 ||
+                    e.which == 13 ||
+                    e.code == 'Enter' ||
+                    e.key == 'Enter' ||
+                    e.code == 'NumpadEnter'
+                )
+                    ta.scrollLeft = 0;
+                TLN.update_line_numbers(ta, el);
+            };
+        })(ta, el);
+        for (let i = __change_evts.length - 1; i >= 0; i--) {
+            ta.addEventListener(__change_evts[i], __change_hdlr);
+            TLN.eventList[id].push({
+                evt: __change_evts[i],
+                hdlr: __change_hdlr
+            });
+        }
+
+        const __scroll_evts = [
+            'change',
+            'mousewheel',
+            'scroll'
+        ];
+        const __scroll_hdlr = (function(ta, el) {
+            return function() {
+                el.scrollTop = ta.scrollTop;
+            };
+        })(ta, el);
+        for (let i = __scroll_evts.length - 1; i >= 0; i--) {
+            ta.addEventListener(__scroll_evts[i], __scroll_hdlr);
+            TLN.eventList[id].push({
+                evt: __scroll_evts[i],
+                hdlr: __scroll_hdlr
+            });
+        }
+    },
+    remove_line_numbers: function(id) {
+        let ta = document.getElementById(id);
+        if (ta === null) {
+            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
+        }
+        if (ta.className.indexOf('tln-active') == -1) {
+            return;
+            // return console.log("[tln.js] textarea of id '" + id + "' isn't numbered");
+        }
+        ta.classList.remove('tln-active');
+
+        ta.previousSibling.remove();
+
+        if (!TLN.eventList[id]) return;
+        for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
+            const evt = TLN.eventList[id][i];
+            ta.removeEventListener(evt.evt, evt.hdlr);
+        }
+        delete TLN.eventList[id];
+    }
+}
 $(document).ready(function() {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
@@ -59,7 +171,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -86,22 +198,37 @@ $(document).ready(function() {
                         CSRF_TOKEN: EE.CSRF_TOKEN,
                         XID: EE.XID
                     })
-                    .done(function(data) {
-                        // $('.service-list').data('order', data);
-                        console.log(data);
-                        // $(data).each(function(i){
-                        //      document.getElementsByTagName("head")[0].appendChild(i)
-                        // })
-                       
-                        // document.write(data);
-                        // document.close();
+                    .success(function(data) {
+                        data = procReq(data);
+                        $('.service-list').data('order', data);
+                        console.dir(data);
+                    })
+                    .fail(function(err){
+                        data = procReq(this.data, true);
+                        console.log(data)
                     });
             }
         });
     } else {
         service_list.hide('fast');
     }
-
+    function isJson(item) {
+        item = typeof item !== "string"
+            ? JSON.stringify(item)
+            : item;
+    
+        try {
+            item = JSON.parse(item);
+        } catch (e) {
+            return false;
+        }
+    
+        if (typeof item === "object" && item !== null) {
+            return true;
+        }
+        console.log(item);
+        return false;
+    }
     $.fn.extend({
         val_with_linenum: function(v) {
             return this.each(() => {
@@ -139,7 +266,7 @@ $(document).ready(function() {
         return;
     });
     $('#btnData').on('click', function(e){ 
-        var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url')+'/services/';
+        var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
         Swal.fire({
             title: 'Select Fuction',
             input: 'select',
@@ -154,47 +281,45 @@ $(document).ready(function() {
             showCancelButton: true,
             allowOutsideClick: () => !Swal.isLoading(),
             preConfirm: (value) => {
-                    return $.post(url + value)
-                        .done(response => {
-                           
-                            return  response
-                    
-                        })
-           
-            }
-            
-            }).then((result) => {
-                    
-                 swal.fire({
-                    type: 'warning',
-                    html: JSON.stringify(result),
-                    showCloseButton: true,
-                });
-            });
-        //   if (func) {
-            
-        //   }
-    //     var serviceOrder = [];
-       
-    //     console.log(url);
-    //     $('.service-list li').each(function() {
-    //         serviceOrder.push($(this).data('service'));
-    //     });
-    //     $.post( url, {
-    //         service_order: serviceOrder.toString(),
-    //         CSRF_TOKEN: EE.CSRF_TOKEN,
-    //         XID: EE.XID
-    //     })
-    //     .done(function(data) {
-    //         console.log('done');
-    //         swal
-    //         .fire({
-    //             type: 'warning',
-    //             html: data.toString(),
-    //             showCloseButton: true,
-    //         });
-    // });
+                return $.post(url + value)
+                        .always(function(jqXHR) {
+                            debugger
+                            var data;
+                            if (jqXHR.hasOwnProperty('responseText')) { 
+                                data = jqXHR.responseText;
+                            }else{
+                                data = jqXHR;
+                            }
+                            if (isJson(data)){
+                                data = jqXHR; 
+                            }else{
+                               data = procReq(data);
+                            }
+                            return JSON.stringify(data, null, 4);
+                        });
+                }
+            })
+            ;
 });
+    function procReq(data, query = false){
+        if (query){
+            return qs2json(data)
+        }
+        console.log(data)
+        logs = data.substring(0, data.lastIndexOf('</script>') +9)
+        console.log(logs);
+        var d1 = document.getElementsByTagName('head')[0];
+        d1.insertAdjacentHTML('beforeend', logs);
+        data = data.substring(logs.length)
+        console.log(data)
+        debugger
+        return (isJson(orig) ? JSON.parse(orig) : orig);
+    }
+    function qs2json(data){
+        var pairs = data.split('&')
+        var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
+        return JSON.parse(JSON.stringify('{'+retVals+'}'));
+    }
     $('#csv_recipient')
         .bind('interact', (e) => {
             if (e.currentTarget.value === '') {
@@ -906,116 +1031,3 @@ function dumpFormVals() {
         width: '80%'
     });
 }
-if (typeof TLN === 'undefined'){
-const TLN = {
-    eventList: {},
-    update_line_numbers: function(ta, el) {
-        let lines = ta.value.split('\n').length;
-        let child_count = el.children.length;
-        let difference = lines - child_count;
-
-        if (difference > 0) {
-            let frag = document.createDocumentFragment();
-            while (difference > 0) {
-                let line_number = document.createElement('span');
-                line_number.className = 'tln-line';
-                frag.appendChild(line_number);
-                difference--;
-            }
-            el.appendChild(frag);
-        }
-        while (difference < 0) {
-            el.removeChild(el.firstChild);
-            difference++;
-        }
-    },
-    append_line_numbers: function(id) {
-        let ta = document.getElementById(id);
-        if (ta === null) {
-            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
-        }
-        if (ta.className.indexOf('tln-active') !== -1) {
-            return;
-            // return console.log("[tln.js] textarea of id '" + id + "' is already numbered");
-        }
-        ta.classList.add('tln-active');
-        ta.style = {};
-
-        let el = document.createElement('div');
-        ta.parentNode.insertBefore(el, ta);
-        el.className = 'tln-wrapper';
-        TLN.update_line_numbers(ta, el);
-        TLN.eventList[id] = [];
-
-        const __change_evts = [
-            'propertychange',
-            'input',
-            'keydown',
-            'keyup'
-        ];
-        const __change_hdlr = (function(ta, el) {
-            return function(e) {
-                if (
-                    (+ta.scrollLeft == 10 &&
-                        (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
-                    e.keyCode == 36 ||
-                    e.which == 36 ||
-                    e.code == 'Home' ||
-                    e.key == 'Home' ||
-                    e.keyCode == 13 ||
-                    e.which == 13 ||
-                    e.code == 'Enter' ||
-                    e.key == 'Enter' ||
-                    e.code == 'NumpadEnter'
-                )
-                    ta.scrollLeft = 0;
-                TLN.update_line_numbers(ta, el);
-            };
-        })(ta, el);
-        for (let i = __change_evts.length - 1; i >= 0; i--) {
-            ta.addEventListener(__change_evts[i], __change_hdlr);
-            TLN.eventList[id].push({
-                evt: __change_evts[i],
-                hdlr: __change_hdlr
-            });
-        }
-
-        const __scroll_evts = [
-            'change',
-            'mousewheel',
-            'scroll'
-        ];
-        const __scroll_hdlr = (function(ta, el) {
-            return function() {
-                el.scrollTop = ta.scrollTop;
-            };
-        })(ta, el);
-        for (let i = __scroll_evts.length - 1; i >= 0; i--) {
-            ta.addEventListener(__scroll_evts[i], __scroll_hdlr);
-            TLN.eventList[id].push({
-                evt: __scroll_evts[i],
-                hdlr: __scroll_hdlr
-            });
-        }
-    },
-    remove_line_numbers: function(id) {
-        let ta = document.getElementById(id);
-        if (ta === null) {
-            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
-        }
-        if (ta.className.indexOf('tln-active') == -1) {
-            return;
-            // return console.log("[tln.js] textarea of id '" + id + "' isn't numbered");
-        }
-        ta.classList.remove('tln-active');
-
-        ta.previousSibling.remove();
-
-        if (!TLN.eventList[id]) return;
-        for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
-            const evt = TLN.eventList[id][i];
-            ta.removeEventListener(evt.evt, evt.hdlr);
-        }
-        delete TLN.eventList[id];
-    }
-}};

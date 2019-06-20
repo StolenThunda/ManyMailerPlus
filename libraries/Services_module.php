@@ -178,7 +178,7 @@ class Services_module
         }
         ee()->dbg->c_log($settings, __METHOD__);
 
-        return $settings['service_order'];
+        return $settings[$this->site_id]['service_order'];
     }
 
     public function get_service_order()
@@ -194,10 +194,10 @@ class Services_module
             foreach ($other_services as $service) {
                 $active_services[] = $service;
             }
-            if ($active_services !== $settings['service_order']) {
-                $this->model->settings = $settings;
-                $this->model->save();
-            }
+            // if ($active_services !== $settings['service_order']) {
+            //     $this->model->settings = $settings;
+            //     $this->model->save();
+            // }
 
             return $active_services;
         }
