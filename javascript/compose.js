@@ -1,3 +1,115 @@
+const TLN = {
+    eventList: {},
+    update_line_numbers: function(ta, el) {
+        let lines = ta.value.split('\n').length;
+        let child_count = el.children.length;
+        let difference = lines - child_count;
+
+        if (difference > 0) {
+            let frag = document.createDocumentFragment();
+            while (difference > 0) {
+                let line_number = document.createElement('span');
+                line_number.className = 'tln-line';
+                frag.appendChild(line_number);
+                difference--;
+            }
+            el.appendChild(frag);
+        }
+        while (difference < 0) {
+            el.removeChild(el.firstChild);
+            difference++;
+        }
+    },
+    append_line_numbers: function(id) {
+        let ta = document.getElementById(id);
+        if (ta === null) {
+            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
+        }
+        if (ta.className.indexOf('tln-active') !== -1) {
+            return;
+            // return console.log("[tln.js] textarea of id '" + id + "' is already numbered");
+        }
+        ta.classList.add('tln-active');
+        ta.style = {};
+
+        let el = document.createElement('div');
+        ta.parentNode.insertBefore(el, ta);
+        el.className = 'tln-wrapper';
+        TLN.update_line_numbers(ta, el);
+        TLN.eventList[id] = [];
+
+        const __change_evts = [
+            'propertychange',
+            'input',
+            'keydown',
+            'keyup'
+        ];
+        const __change_hdlr = (function(ta, el) {
+            return function(e) {
+                if (
+                    (+ta.scrollLeft == 10 &&
+                        (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
+                    e.keyCode == 36 ||
+                    e.which == 36 ||
+                    e.code == 'Home' ||
+                    e.key == 'Home' ||
+                    e.keyCode == 13 ||
+                    e.which == 13 ||
+                    e.code == 'Enter' ||
+                    e.key == 'Enter' ||
+                    e.code == 'NumpadEnter'
+                )
+                    ta.scrollLeft = 0;
+                TLN.update_line_numbers(ta, el);
+            };
+        })(ta, el);
+        for (let i = __change_evts.length - 1; i >= 0; i--) {
+            ta.addEventListener(__change_evts[i], __change_hdlr);
+            TLN.eventList[id].push({
+                evt: __change_evts[i],
+                hdlr: __change_hdlr
+            });
+        }
+
+        const __scroll_evts = [
+            'change',
+            'mousewheel',
+            'scroll'
+        ];
+        const __scroll_hdlr = (function(ta, el) {
+            return function() {
+                el.scrollTop = ta.scrollTop;
+            };
+        })(ta, el);
+        for (let i = __scroll_evts.length - 1; i >= 0; i--) {
+            ta.addEventListener(__scroll_evts[i], __scroll_hdlr);
+            TLN.eventList[id].push({
+                evt: __scroll_evts[i],
+                hdlr: __scroll_hdlr
+            });
+        }
+    },
+    remove_line_numbers: function(id) {
+        let ta = document.getElementById(id);
+        if (ta === null) {
+            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
+        }
+        if (ta.className.indexOf('tln-active') == -1) {
+            return;
+            // return console.log("[tln.js] textarea of id '" + id + "' isn't numbered");
+        }
+        ta.classList.remove('tln-active');
+
+        ta.previousSibling.remove();
+
+        if (!TLN.eventList[id]) return;
+        for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
+            const evt = TLN.eventList[id][i];
+            ta.removeEventListener(evt.evt, evt.hdlr);
+        }
+        delete TLN.eventList[id];
+    }
+}
 $(document).ready(function() {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
@@ -25,7 +137,7 @@ $(document).ready(function() {
             return this.queue(function(next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
-                    if (i == -1) i = $(this).text().indexOf(index);
+                    if (i === -1) i = $(this).text().indexOf(index);
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
@@ -54,13 +166,12 @@ $(document).ready(function() {
             });
         };
     })(jQuery);
-
     $('input[readonly]').click(function() {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/list')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -72,28 +183,51 @@ $(document).ready(function() {
                 $(this).addClass('disabled-service');
             }
             $(this).attr('data-service', list_item);
-        });
-
+        }); 
         $('.service-list').sortable({
             axis: 'y',
             opacity: 0.5,
             update: function() {
                 var serviceOrder = [];
+                var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
                 $('.service-list li').each(function() {
                     serviceOrder.push($(this).data('service'));
                 });
-                $.post($('.service-list').data('actionUrl'), {
-                    service_order: serviceOrder.toString(),
-                    CSRF_TOKEN: EE.CSRF_TOKEN
-                });
+                $.post(url, {
+                        service_order: serviceOrder.toString(),
+                        CSRF_TOKEN: EE.CSRF_TOKEN,
+                        XID: EE.XID
+                    })
+                    .success(function(data) {
+                        data = procReq(data);
+                        $('.service-list').data('order', data);
+                        console.dir(data);
+                    })
+                    .fail(function(err){
+                        data = procReq(this.data, true);
+                        console.log(data)
+                    });
             }
         });
     } else {
-        service_list.hide();
+        service_list.hide('fast');
     }
-
-    function newFunction() {
-        return 'escortService';
+    function isJson(item) {
+        item = typeof item !== "string"
+            ? JSON.stringify(item)
+            : item;
+    
+        try {
+            item = JSON.parse(item);
+        } catch (e) {
+            return false;
+        }
+    
+        if (typeof item === "object" && item !== null) {
+            return true;
+        }
+        console.log(item);
+        return false;
     }
     $.fn.extend({
         val_with_linenum: function(v) {
@@ -102,11 +236,14 @@ $(document).ready(function() {
             });
         }
     });
+    $('body').on('click', '#mc-edits legend', function() {
+        $(this).nextAll('div').fadeToggle('slow');
+    });
     // hijacks default 'view email' button for SweetAlert2 action!
     $('a.m-link').bind('click', (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
-        rel = e.target.rel;
+        var rel = e.target.rel;
         sweetAlertbyID(`.${rel}`);
     });
     $('body').on('click', '*[data-conditional-modal]', function(e) {
@@ -128,10 +265,64 @@ $(document).ready(function() {
         $('.app-overlay').removeClass('app-overlay---open');
         return;
     });
+    $('#btnData').on('click', function(e){ 
+        var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+        Swal.fire({
+            title: 'Select Fuction',
+            input: 'select',
+            inputOptions: {
+                'update_service_order': 'Update SO',
+                'get_settings': 'Get Settings',
+                'get_service_order': 'Get SO',
+                'get_active_services': 'Active',
+                'get_initial_service' : 'Priority Service'
+            },
+            inputPlaceholder: "Select Function",
+            showCancelButton: true,
+            allowOutsideClick: () => !Swal.isLoading(),
+            preConfirm: (value) => {
+                return $.post(url + value)
+                        .always(function(jqXHR) {
+                            debugger
+                            var data;
+                            if (jqXHR.hasOwnProperty('responseText')) { 
+                                data = jqXHR.responseText;
+                            }else{
+                                data = jqXHR;
+                            }
+                            if (isJson(data)){
+                                data = jqXHR; 
+                            }else{
+                               data = procReq(data);
+                            }
+                            return JSON.stringify(data, null, 4);
+                        });
+                }
+            })
+            ;
+});
+    function procReq(data, query = false){
+        if (query){
+            return qs2json(data)
+        }
+        console.log(data)
+        logs = data.substring(0, data.lastIndexOf('</script>') +9)
+        console.log(logs);
+        var d1 = document.getElementsByTagName('head')[0];
+        d1.insertAdjacentHTML('beforeend', logs);
+        data = data.substring(logs.length)
+        console.log(data)
+        debugger
+        return (isJson(orig) ? JSON.parse(orig) : orig);
+    }
+    function qs2json(data){
+        var pairs = data.split('&')
+        var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
+        return JSON.parse(JSON.stringify('{'+retVals+'}'));
+    }
     $('#csv_recipient')
         .bind('interact', (e) => {
-            var val = e.currentTarget.value;
-            if (val === '') {
+            if (e.currentTarget.value === '') {
                 TLN.remove_line_numbers('csv_recipient');
             } else {
                 TLN.append_line_numbers('csv_recipient');
@@ -167,6 +358,129 @@ $(document).ready(function() {
     $('input[name=recipient]').prop('readonly', true);
     $('input[name=recipient]').change(countEmails);
     $("select[name='mailtype']").change(messageType);
+
+    $('fieldset[data-control=recipient_review').toggle();
+
+    $('select[name=recipient_entry]').change(function() {
+        $('input[name=file_recipient]').parents('fieldset').toggle('slow');
+        $('#csv_recipient').parents('fieldset').toggle('slow');
+    });
+
+    $('#embed_templates').toggle();
+    $('#template_name').parents('fieldset').toggle();
+
+    $('input[name="selection[]"').change(function() {
+        var name,
+            subject,
+            message = '';
+        var details = $('fieldset#mc-edits');
+        if (details.length > 0) details.remove();
+        if (this.checked) {
+            var sections = [];
+            var element, attributes, attribute;
+            name = this.value;
+            subject = this.dataset.confirm;
+            var choice = document.getElementById(name + '-code');
+            // debugger;
+            if (choice !== null) {
+                $('input[name="selection[]"]').not(this)
+                    .attr('checked', false)
+                    .parents('tr')
+                    .removeClass('selected');
+                message = choice.innerHTML;
+                var test_element = document.createElement('div');
+                test_element.innerHTML = message;
+                var list = test_element.getElementsByTagName('*');
+                for (var j = 0; j < list.length; j++) {
+                    element = list[j];
+                    attributes = element.attributes;
+                    if (element.attributes) {
+                        for (var i = 0; i < attributes.length; i++) {
+                            attribute = attributes[i];
+                            if (attribute.name.startsWith('mc:')) {
+                                if (attribute.value !== "") sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });
+                                console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
+                            }
+                        }
+                    }
+                }               
+                createEC(sections);              
+            }
+            $('legend').trigger('click');
+        }
+        $('#template_name').val(name);
+        $('input[name=subject]').val(subject);
+    });
+
+    function createEC(sections) {
+        var email_body = ['main', 'content'];
+        var found = sections.find(function(el){
+            return ($.inArray(el.edit_section, email_body) !== -1);
+        });
+        var suggested = (found) ? `(suggested: <b>'${found.edit_section}')</b>`: "";
+        sections.forEach((el_obj) =>{
+            var id = el_obj.edit_section;
+            var val = el_obj.content;
+            var parent = $('#template_name').parents('fieldset').eq(0);
+            var fs = $('fieldset#mc-edits');
+            if (fs.length === 0) {
+                fs = $('<fieldset id="mc-edits" />');
+                var legend = $('<legend class="btn">Editable Content</legend>');
+                fs.append(legend);
+                parent.after(fs);
+                fs.append(
+                    $('<div>')
+                    .addClass('field-instruct')
+                    .append($(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`))    
+                );
+            }
+
+            fs.append(
+                $('<div>')
+                .addClass('field-instruct')
+                .append($(`<label>${id}</label>`)
+                    .css('color', 'red')
+                    .css('font-size', '20px')
+                )
+                .append($(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
+                    'data-parsley-mincheck': "1",
+                    'data-parsley-multiple': "mc-check"
+                }))
+                .append($(`<label for="mc-check_${id}">(Body?)</label>`)
+                    .css('text-align', 'right')
+                    .css('display', 'inline-block')
+                ),
+                $('<div>')
+                .addClass('field-control')
+                .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+            );
+
+            $('input[name^="mc-check"').change(function() {
+                var chk = this.checked;
+                $('input[name^="mc-check"').not(this).each(function(el) {
+                    if (chk) {
+                        $(this)
+                            .attr('checked', false)
+                            .hide();
+                        $(`label[for=${this.name}]`).hide();
+                    } else {
+                        $(`label[for=${this.name}]`).show();
+                        $(this).show();
+                    }
+
+                });
+                var name = this.name.substr('mc-check_'.length);
+                console.log(name);
+            });
+
+        });
+        
+    }
+    $('input[name=use_templates]').change(function() {
+        var toggle = this.value == 'y' ? 'slow' : false;
+        $('#embed_templates').fadeToggle(toggle);
+        $('#template_name').parents('fieldset').fadeToggle(toggle);
+    });
     $('[name$=linenum], #reset').bind('click', (e) => {
         resetRecipients(true);
     });
@@ -174,6 +488,7 @@ $(document).ready(function() {
         resetRecipients();
         var val = $('#csv_recipient').val();
         parseData(val.trim());
+        $('select[name=recipient_entry]').val('file_recipient').trigger('change');
     });
 
     $('body').on('click', '*[data-conditional-modal]', function(e) {
@@ -181,25 +496,15 @@ $(document).ready(function() {
     });
 });
 var $sections = $('.form-section');
-/* TODO: 
-    move pagecheck to next/prev 
-    get section by slug name
-    create template view (hide next/prev) 
-        - cancel button -> email detail
-        - selected template -> email detail w/ temp
-
-*/
-console.log($sections.data('slug'));
-
 function navigateTo(index) {
-    index = pageCheck(index);
     // Mark the current section with the class 'current'
     $sections.removeClass('current').eq(index).addClass('current');
     // Show only the navigation buttons that make sense for the current section:
     $('.form-navigation .previous').toggle(index > 0);
     var atTheEnd = index >= $sections.length - 1;
     $('.form-navigation .next').toggle(!atTheEnd);
-    $('.form-navigation [type=submit]').toggle(atTheEnd);
+    
+    $('.form-navigation input[type="submit"]').toggle(atTheEnd);
 }
 
 function curIndex() {
@@ -250,6 +555,7 @@ function resetRecipients(all) {
 
     $('#placeholder').parent().remove();
     // reset table
+
     var parent = $('#csv_content_wrapper').parent();
     parent.empty();
     var table = $("<table id='csv_content' class='fixed_header'></table>");
@@ -260,9 +566,9 @@ function resetRecipients(all) {
 
 function messageType() {
     if ($("select[name='mailtype']").val() === 'html') {
-        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).slideDown();
+        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).toggle('slow');
     } else {
-        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).slideUp();
+        $("textarea[name='plaintext_alt']").parents('fieldset').eq(0).toggle('slow');
     }
 }
 
@@ -308,6 +614,7 @@ function getEmails(data) {
         $('input[name=recipient]').val(csvObj.email_list);
         showPlaceholders(csvObj.headers);
         countEmails();
+        console.dir(csvObj);
         return true;
     }
     return false;
@@ -621,6 +928,7 @@ function parseData(str) {
 
 function initTable(data) {
     $('#csv_recipient').val_with_linenum('');
+    // $('fieldset[data-control=recipient_review').toggle('slow');
     return $('#csv_content').addClass('fixed_header display').DataTable({
         defaultContent: '',
         dom: '<"top"i>rt<"bottom"flp><"clear">',
@@ -706,115 +1014,20 @@ function dumpHiddenVals() {
     });
 }
 
-const TLN = {
-    eventList: {},
-    update_line_numbers: function(ta, el) {
-        let lines = ta.value.split('\n').length;
-        let child_count = el.children.length;
-        let difference = lines - child_count;
-
-        if (difference > 0) {
-            let frag = document.createDocumentFragment();
-            while (difference > 0) {
-                let line_number = document.createElement('span');
-                line_number.className = 'tln-line';
-                frag.appendChild(line_number);
-                difference--;
-            }
-            el.appendChild(frag);
-        }
-        while (difference < 0) {
-            el.removeChild(el.firstChild);
-            difference++;
-        }
-    },
-    append_line_numbers: function(id) {
-        let ta = document.getElementById(id);
-        if (ta === null) {
-            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
-        }
-        if (ta.className.indexOf('tln-active') !== -1) {
-            return;
-            // return console.log("[tln.js] textarea of id '" + id + "' is already numbered");
-        }
-        ta.classList.add('tln-active');
-        ta.style = {};
-
-        let el = document.createElement('div');
-        ta.parentNode.insertBefore(el, ta);
-        el.className = 'tln-wrapper';
-        TLN.update_line_numbers(ta, el);
-        TLN.eventList[id] = [];
-
-        const __change_evts = [
-            'propertychange',
-            'input',
-            'keydown',
-            'keyup'
-        ];
-        const __change_hdlr = (function(ta, el) {
-            return function(e) {
-                if (
-                    (+ta.scrollLeft == 10 &&
-                        (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
-                    e.keyCode == 36 ||
-                    e.which == 36 ||
-                    e.code == 'Home' ||
-                    e.key == 'Home' ||
-                    e.keyCode == 13 ||
-                    e.which == 13 ||
-                    e.code == 'Enter' ||
-                    e.key == 'Enter' ||
-                    e.code == 'NumpadEnter'
-                )
-                    ta.scrollLeft = 0;
-                TLN.update_line_numbers(ta, el);
-            };
-        })(ta, el);
-        for (let i = __change_evts.length - 1; i >= 0; i--) {
-            ta.addEventListener(__change_evts[i], __change_hdlr);
-            TLN.eventList[id].push({
-                evt: __change_evts[i],
-                hdlr: __change_hdlr
-            });
-        }
-
-        const __scroll_evts = [
-            'change',
-            'mousewheel',
-            'scroll'
-        ];
-        const __scroll_hdlr = (function(ta, el) {
-            return function() {
-                el.scrollTop = ta.scrollTop;
-            };
-        })(ta, el);
-        for (let i = __scroll_evts.length - 1; i >= 0; i--) {
-            ta.addEventListener(__scroll_evts[i], __scroll_hdlr);
-            TLN.eventList[id].push({
-                evt: __scroll_evts[i],
-                hdlr: __scroll_hdlr
-            });
-        }
-    },
-    remove_line_numbers: function(id) {
-        let ta = document.getElementById(id);
-        if (ta === null) {
-            return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
-        }
-        if (ta.className.indexOf('tln-active') == -1) {
-            return;
-            // return console.log("[tln.js] textarea of id '" + id + "' isn't numbered");
-        }
-        ta.classList.remove('tln-active');
-
-        ta.previousSibling.remove();
-
-        if (!TLN.eventList[id]) return;
-        for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
-            const evt = TLN.eventList[id][i];
-            ta.removeEventListener(evt.evt, evt.hdlr);
-        }
-        delete TLN.eventList[id];
-    }
-};
+function dumpFormVals() {
+    var msg = $('<table/>');
+    $('form :input').each(function() {
+        var val = this.value;
+        val = val.length > 100 ? val.substring(0, 100) + '...' : val;
+        val = (val === 'on' || val === 'off') ? this.checked : val;
+        console.log(`${this.name}: ${this.value}`);
+        msg.append(`<tr><td>${this.name}</td><td>${val}</td></tr>`);
+    });
+    var frmStr = JSON.stringify($('form').serialize());
+    swal.fire({
+        title: 'Form VALS',
+        type: 'info',
+        html: msg,
+        width: '80%'
+    });
+}

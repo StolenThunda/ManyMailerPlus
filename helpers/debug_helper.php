@@ -2,9 +2,9 @@
     /**
      *      To use in EE native code drop the following in the code: 
 	 *		require_once(PATH_THIRD.'/manymailerplus/helpers/debug_helper.php');
-	 *		console_message("stuff_you_wanna_investigate", "title_for_stuff"(optional), HALT_EXECUTION(bool): defaults->FALSE );
+	 *		ee()->dbg->c_log("stuff_you_wanna_investigate", "title_for_stuff"(optional), HALT_EXECUTION(bool): defaults->FALSE );
      */
-    if (! function_exists('console_message')){
+    if (! function_exists('ee()->dbg->c_log')){
         error_reporting(E_ALL);
         ini_set("display_errors", null);
         
@@ -136,7 +136,7 @@
             return ($str === "") ? "" : "<script>{$str}</script>";
         }
 
-        function console_message($value, $title=null, $exit = false)
+        function c_log($value, $title=null, $exit = false)
         {
             $str = "";
             $valueObj = array(
@@ -195,7 +195,7 @@
            // backtrace info
             $unknown_error_offset = (int)preg_match('/^\[\d?\]/', $value);   // check for []'d errnum; if found, increases offset by 1 to remove the genericErrorHandler from the stack
             if ($unknown_error_offset){
-                $line_num = explode('::',$value)[1];
+                $line_num = explode('::',$value)[1] ?? null;
                 $value = rtrim($value, '::'.$line_num);
             }
             $bt = debug_backtrace();
@@ -258,7 +258,7 @@
                 ),
                 array(
                     'str' => "%c".json_encode($value),
-                    'type' => 'content',
+                    'type' => 'footer',
                     'method' => 'log',
                     'style' => STYLES[$detailLogLevel]
                 ),
@@ -358,7 +358,7 @@ function genericErrorHandler($errno, $errstr, $errfile, $errline) {
         $msg .= "[$errno] Uncategorized error type:$errstr";
         break;
     }
-    console_message($msg."::$errline",$errstr, true);
+    ee()->dbg->c_log($msg."::$errline",$errstr, true);
     /* Don't execute PHP internal error handler */
     exit();
 }

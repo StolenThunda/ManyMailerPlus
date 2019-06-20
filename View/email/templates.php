@@ -6,25 +6,25 @@
 			<input placeholder="<?=lang('type_phrase')?>" type="text" name="search" value="<?=htmlentities($table['search'], ENT_QUOTES, 'UTF-8')?>">
 			<input class="btn submit" type="submit" value="<?=lang('search_templates_button')?>">
 		</fieldset>
-		<h1><?php echo isset($cp_heading) ? $cp_heading : $cp_page_title?></h1>
+		
+		<h1><?=$cp_page_title?></h1>
+	
+		
 		<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
 		<?php $this->embed('ee:_shared/table', $table); ?>
 
 		<?=$pagination?>
 
 		<?php if ( ! empty($table['columns']) && ! empty($table['data'])): ?>
-			<fieldset class="tbl-bulk-act hidden">
-				
-				<select name="bulk_action">
-					<option value="">-- <?=lang('with_selected')?> --</option>
-					<?php if ($this->enabled('remove')): ?>
-						<option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove"><?=lang('remove')?></option>
-					<? else: ?>
-						<option value="use" data-confirm-trigger="selected" rel="modal-confirm-use"><?=lang('use')?></option>
-					<?php endif; ?>
-				</select>
-				<button class="btn submit" data-conditional-modal="confirm-trigger" ><?=lang('submit')?></button>
-			</fieldset>
+			<?php if ($this->enabled('remove')): ?>
+				<fieldset class="tbl-bulk-act hidden">				
+					<select name="bulk_action">
+						<option value="">-- <?=lang('with_selected')?> --</option>					
+						<option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove"><?=lang('remove')?></option>				
+					</select>
+					<button class="btn submit" data-conditional-modal="confirm-trigger" ><?=lang('submit')?></button>
+				</fieldset>
+			<?php endif; ?>
 		<?php endif; ?>
 	<?=form_close()?>
 	</div>
@@ -47,8 +47,7 @@
 										<b><?=$template['subject']?>:</b><br />
 										<?=lang('updated')?> :<?=$template['updated_at']?> <br><br>
 										<?=lang('from')?> <?=$template['from_email']?> <?=$template['from_email']?><br><br>
-										<div>
-										
+										<div id="<?=$template['slug']?>-code" class='template_code'>
 										<?=$template['code']?> 
 										</div>
 										<br><br>
@@ -66,6 +65,7 @@
 		</div>
 		<?php ee('CP/Modal')->endModal(); ?>
 <?php endforeach; ?>
+
 <?php endif; ?>
 <?php
 $modal_vars = array(
