@@ -9,12 +9,12 @@ class Mandrill extends TransactionService
         parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
-        ee()->dbg->c_log($this, __METHOD__);
+        // ee()->dbg->c_log($this, __METHOD__);
     }
 
     public function get_api_key()
     {
-        ee()->dbg->c_log($this->key, __METHOD__);
+        // ee()->dbg->c_log($this->key, __METHOD__);
 
         return $this->key;
     }

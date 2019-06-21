@@ -47,19 +47,18 @@ const TLN = {
         const __change_hdlr = (function(ta, el) {
             return function(e) {
                 if (
-                    (+ta.scrollLeft == 10 &&
-                        (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
-                    e.keyCode == 36 ||
-                    e.which == 36 ||
-                    e.code == 'Home' ||
-                    e.key == 'Home' ||
-                    e.keyCode == 13 ||
-                    e.which == 13 ||
-                    e.code == 'Enter' ||
-                    e.key == 'Enter' ||
-                    e.code == 'NumpadEnter'
-                )
-                    ta.scrollLeft = 0;
+                    (+ta.scrollLeft === 10 &&
+                        (e.keyCode === 37 || e.which === 37 || e.code === 'ArrowLeft' || e.key === 'ArrowLeft')) ||
+                    e.keyCode === 36 ||
+                    e.which === 36 ||
+                    e.code === 'Home' ||
+                    e.key === 'Home' ||
+                    e.keyCode === 13 ||
+                    e.which === 13 ||
+                    e.code === 'Enter' ||
+                    e.key === 'Enter' ||
+                    e.code === 'NumpadEnter'
+                ) { ta.scrollLeft = 0;}
                 TLN.update_line_numbers(ta, el);
             };
         })(ta, el);
@@ -94,7 +93,7 @@ const TLN = {
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
         }
-        if (ta.className.indexOf('tln-active') == -1) {
+        if (ta.className.indexOf('tln-active') === -1) {
             return;
             // return console.log("[tln.js] textarea of id '" + id + "' isn't numbered");
         }
@@ -102,14 +101,14 @@ const TLN = {
 
         ta.previousSibling.remove();
 
-        if (!TLN.eventList[id]) return;
+    if (!TLN.eventList[id]) {return;}
         for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
             const evt = TLN.eventList[id][i];
             ta.removeEventListener(evt.evt, evt.hdlr);
         }
         delete TLN.eventList[id];
     }
-}
+};
 $(document).ready(function() {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
@@ -137,7 +136,7 @@ $(document).ready(function() {
             return this.queue(function(next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
-                    if (i === -1) i = $(this).text().indexOf(index);
+                    if (i === -1) {i = $(this).text().indexOf(index);}
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
@@ -184,39 +183,36 @@ $(document).ready(function() {
             }
             $(this).attr('data-service', list_item);
         }); 
-        $('.service-list').sortable({
-            axis: 'y',
-            opacity: 0.5,
-            update: function() {
-                var serviceOrder = [];
-                var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-                $('.service-list li').each(function() {
-                    serviceOrder.push($(this).data('service'));
-                });
-                $.post(url, {
-                        service_order: serviceOrder.toString(),
-                        CSRF_TOKEN: EE.CSRF_TOKEN,
-                        XID: EE.XID
-                    })
-                    .success(function(data) {
-                        data = procReq(data);
-                        $('.service-list').data('order', data);
-                        console.dir(data);
-                    })
-                    .fail(function(err){
-                        data = procReq(this.data, true);
-                        console.log(data)
-                    });
-            }
-        });
+        // $('.service-list').sortable({
+        //     axis: 'y',
+        //     opacity: 0.5,
+        //     update: function() {
+        //         var serviceOrder = [];
+        //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+        //         $('.service-list li').each(function() {
+        //             serviceOrder.push($(this).data('service'));
+        //         });
+        //         $.post(url, {
+        //                 service_order: serviceOrder.toString(),
+        //                 CSRF_TOKEN: EE.CSRF_TOKEN,
+        //                 XID: EE.XID
+        //             })
+        //             .success(function(data) {
+        //                 data = procReq(data);
+        //                 $('.service-list').data('order', data);
+        //                 console.dir(data);
+        //             })
+        //             .fail(function(err){
+        //                 data = procReq(this.data, true);
+        //                 console.log(data)
+        //             });
+        //     }
+        // });
     } else {
         service_list.hide('fast');
     }
     function isJson(item) {
-        item = typeof item !== "string"
-            ? JSON.stringify(item)
-            : item;
-    
+        item = typeof item !== "string" ? JSON.stringify(item): item;    
         try {
             item = JSON.parse(item);
         } catch (e) {
@@ -283,7 +279,7 @@ $(document).ready(function() {
             preConfirm: (value) => {
                 return $.post(url + value)
                         .always(function(jqXHR) {
-                            debugger
+                            debugger;
                             var data;
                             if (jqXHR.hasOwnProperty('responseText')) { 
                                 data = jqXHR.responseText;
@@ -303,20 +299,20 @@ $(document).ready(function() {
 });
     function procReq(data, query = false){
         if (query){
-            return qs2json(data)
+            return qs2json(data);
         }
-        console.log(data)
-        logs = data.substring(0, data.lastIndexOf('</script>') +9)
+        console.log(data);
+        logs = data.substring(0, data.lastIndexOf('</script>') +9);
         console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
-        data = data.substring(logs.length)
-        console.log(data)
-        debugger
+        data = data.substring(logs.length);
+        console.log(data);
+        debugger;
         return (isJson(orig) ? JSON.parse(orig) : orig);
     }
     function qs2json(data){
-        var pairs = data.split('&')
+        var pairs = data.split('&');
         var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
         return JSON.parse(JSON.stringify('{'+retVals+'}'));
     }
@@ -374,7 +370,7 @@ $(document).ready(function() {
             subject,
             message = '';
         var details = $('fieldset#mc-edits');
-        if (details.length > 0) details.remove();
+        if (details.length > 0) {details.remove();}
         if (this.checked) {
             var sections = [];
             var element, attributes, attribute;
@@ -398,7 +394,7 @@ $(document).ready(function() {
                         for (var i = 0; i < attributes.length; i++) {
                             attribute = attributes[i];
                             if (attribute.name.startsWith('mc:')) {
-                                if (attribute.value !== "") sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });
+                                if (attribute.value !== "") {sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });}
                                 console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                             }
                         }
@@ -477,7 +473,7 @@ $(document).ready(function() {
         
     }
     $('input[name=use_templates]').change(function() {
-        var toggle = this.value == 'y' ? 'slow' : false;
+        var toggle = this.value === 'y' ? 'slow' : false;
         $('#embed_templates').fadeToggle(toggle);
         $('#template_name').parents('fieldset').fadeToggle(toggle);
     });
@@ -582,7 +578,7 @@ function countEmails() {
     // preserve  original label just append count string
     if (origText.includes('Count')) {
         var idx = origText.indexOf(' (Count: ');
-        if (idx > -1) origText = origText.substr(0, idx);
+        if (idx > -1) {origText = origText.substr(0, idx);}
     }
     var countText = count > 0 ? ` (Count: ${count})` : '';
     label.text(origText + countText);
@@ -632,7 +628,7 @@ function validate_csv(data) {
 
     // validate required columns
     var required_columns = validateRequiredKeys(data.headers);
-    if (required_columns.errors.length > 0) errDetail = errDetail.concat(required_columns.errors);
+    if (required_columns.errors.length > 0) {errDetail = errDetail.concat(required_columns.errors);}
     header_valid = required_columns.validHeader;
     email_column = required_columns.email_column;
 
@@ -648,7 +644,7 @@ function validate_csv(data) {
                 emails.push(current_email.trim());
             } else {
                 var tmp = 'Column (' + email_column.original + '): does not contain email data';
-                if (!errDetail.includes(tmp)) errDetail.unshift(tmp);
+                if (!errDetail.includes(tmp)) {errDetail.unshift(tmp);}
             }
         }
         for (var itm in row) {
@@ -658,10 +654,10 @@ function validate_csv(data) {
         tokenized_obj.push(newRow);
     });
 
-    if (!header_valid) errs.unshift('Invalid Header');
-    if (!email_column || !file_contains_emails) errDetail.unshift('No Valid Email Column Header Found');
-    if (file_contains_emails && !email_column) errDetail.unshift('Email column is mislabeled');
-    if (!required_columns) errDetail.unshift('Required Columns: email, first_name, last_name');
+    if (!header_valid) {errs.unshift('Invalid Header');}
+    if (!email_column || !file_contains_emails) {errDetail.unshift('No Valid Email Column Header Found');}
+    if (file_contains_emails && !email_column) {errDetail.unshift('Email column is mislabeled');}
+    if (!required_columns) {errDetail.unshift('Required Columns: email, first_name, last_name');}
     if (errs.length === 0) {
         return {
             mailkey: required_columns.email_column.val,
@@ -733,7 +729,7 @@ function validateRequiredKeys(data) {
     };
     var invalidColumns = Object.keys(reqKeys).filter((k) => {
         var isNotSet = reqKeys[k] === '' || reqKeys[k] === false;
-        if (isNotSet) reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);
+        if (isNotSet) {reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);}
     });
     reqKeys.validHeader = reqKeys.errors.length === 0 && header_has_no_email_data;
     return reqKeys;
@@ -902,7 +898,7 @@ function parseData(str) {
 
             data.data.forEach((itm) => {
                 var itmVals = Object.values(itm);
-                if (itmVals.length != data.dtCols.length) {
+                if (itmVals.length !== data.dtCols.length) {
                     var diff = data.dtCols.length - itmVals.length;
                     do {
                         itmVals.push('');
