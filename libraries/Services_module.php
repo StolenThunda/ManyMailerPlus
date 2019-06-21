@@ -114,7 +114,7 @@ class Services_module
     {
         $all_settings = $this->model->settings;
 
-        ee()->dbg->c_log($all_settings, __METHOD__);
+        // ee()->dbg->c_log($all_settings, __METHOD__);
         $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
         // Check for config settings - they will override database settings
         if ($all_sites == false) {
@@ -178,7 +178,7 @@ class Services_module
         }
         ee()->dbg->c_log($settings, __METHOD__);
 
-        return $settings[$this->site_id]['service_order'];
+        return $settings['service_order'];
     }
 
     public function get_service_order()
@@ -277,7 +277,7 @@ class Services_module
 
     private function _get_service_detail()
     {
-        $settings = $this->get_settings();
+        $settings = (isset($this->model->settings[$this->site_id])) ? $this->model->settings[$this->site_id] : $this->model->settings; //$this->get_settings();
         $sections = array(
             array(
                 'title' => lang('description'),

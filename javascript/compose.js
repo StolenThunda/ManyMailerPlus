@@ -171,7 +171,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -283,7 +283,7 @@ $(document).ready(function() {
             preConfirm: (value) => {
                 return $.post(url + value)
                         .always(function(jqXHR) {
-                            debugger
+                            // debugger
                             var data;
                             if (jqXHR.hasOwnProperty('responseText')) { 
                                 data = jqXHR.responseText;
@@ -295,7 +295,13 @@ $(document).ready(function() {
                             }else{
                                data = procReq(data);
                             }
-                            return JSON.stringify(data, null, 4);
+                            console.dir(data)
+                            data = JSON.stringify(data, null, 4);
+                            
+                            Swal.fire({
+                                type: 'question',
+                                html: data,
+                            })
                         });
                 }
             })
@@ -305,15 +311,15 @@ $(document).ready(function() {
         if (query){
             return qs2json(data)
         }
-        console.log(data)
+        // console.log(data)
         logs = data.substring(0, data.lastIndexOf('</script>') +9)
-        console.log(logs);
+        // console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
         data = data.substring(logs.length)
-        console.log(data)
-        debugger
-        return (isJson(orig) ? JSON.parse(orig) : orig);
+        // console.log(data)
+        // debugger
+        return (isJson(data) ? JSON.parse(data) : data);
     }
     function qs2json(data){
         var pairs = data.split('&')
