@@ -347,7 +347,6 @@ class Composer
             );
         }
         $vars['cp_page_title'] = lang('compose_heading');
-        // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
         $vars['save_btn_text'] = lang('compose_send_email');
         $vars['save_btn_text_working'] = lang('compose_sending_email');
@@ -956,14 +955,14 @@ class Composer
             $this->deleteAttachments($email); // Remove attachments now
 
             ee()->view->set_message('success', lang('total_emails_sent').' '.$email->total_sent, $debug_msg, true);
-            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/'.EXT_SHORT_NAME.'/email:compose'));
+            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email:compose'));
         } else {
             $stats = str_replace('%x', ($start + 1), lang('currently_sending_batch'));
             $stats = str_replace('%y', ($email->total_sent), $stats);
 
             $message = $stats.BR.BR.lang('emails_remaining').NBS.NBS.(count($email->recipient_array) - $email->total_sent);
 
-            ee()->view->set_refresh(ee('CP/URL', EXT_SETTINGS_PATH.'/'.EXT_SHORT_NAME.'/email:batch/'.$email->cache_id)->compile(), 6, true);
+            ee()->view->set_refresh(ee('CP/URL', EXT_SETTINGS_PATH.'/email:batch/'.$email->cache_id)->compile(), 6, true);
 
             ee('CP/Alert')->makeStandard('batchmode')
                 ->asWarning()
@@ -1357,6 +1356,14 @@ class Composer
         }
 
         return $service;
+    }
+
+    public function delete_template($template_name){
+        $service = $this->get_service();
+        if (!is_null($service)) {
+            return ee()->{$service}->delete_template(array('template_name'=>$template_name));
+        }
+        return false;
     }
 
     public function _get_service_templates($template_name = '', $func = 'list')

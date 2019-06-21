@@ -32,7 +32,7 @@ class Mandrill extends TransactionService
                 $sent = $this->_send_email($subaccount);
             }
         }
-        // ee()->dbg->c_log(array('missing_credentials' => $missing_credentials, 'sent' => $sent), __METHOD__, true);
+        ee()->dbg->c_log(array('missing_credentials' => $missing_credentials, 'sent' => $sent), __METHOD__);
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
@@ -260,7 +260,7 @@ class Mandrill extends TransactionService
     {
         $data = array(
             'name' => $template_name,
-            'key' => $this->_get_mandrill_api(),
+            'key' => $this->get_api_key(),
         );
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
 
