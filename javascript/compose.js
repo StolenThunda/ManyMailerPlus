@@ -184,31 +184,31 @@ $(document).ready(function() {
             }
             $(this).attr('data-service', list_item);
         }); 
-        $('.service-list').sortable({
-            axis: 'y',
-            opacity: 0.5,
-            update: function() {
-                var serviceOrder = [];
-                var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-                $('.service-list li').each(function() {
-                    serviceOrder.push($(this).data('service'));
-                });
-                $.post(url, {
-                        service_order: serviceOrder.toString(),
-                        CSRF_TOKEN: EE.CSRF_TOKEN,
-                        XID: EE.XID
-                    })
-                    .success(function(data) {
-                        data = procReq(data);
-                        $('.service-list').data('order', data);
-                        console.dir(data);
-                    })
-                    .fail(function(err){
-                        data = procReq(this.data, true);
-                        console.log(data)
-                    });
-            }
-        });
+        // $('.service-list').sortable({
+        //     axis: 'y',
+        //     opacity: 0.5,
+        //     update: function() {
+        //         var serviceOrder = [];
+        //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+        //         $('.service-list li').each(function() {
+        //             serviceOrder.push($(this).data('service'));
+        //         });
+        //         $.post(url, {
+        //                 service_order: serviceOrder.toString(),
+        //                 CSRF_TOKEN: EE.CSRF_TOKEN,
+        //                 XID: EE.XID
+        //             })
+        //             .success(function(data) {
+        //                 data = procReq(data);
+        //                 $('.service-list').data('order', data);
+        //                 console.dir(data);
+        //             })
+        //             .fail(function(err){
+        //                 data = procReq(this.data, true);
+        //                 console.log(data)
+        //             });
+        //     }
+        // });
     } else {
         service_list.hide('fast');
     }
@@ -313,7 +313,7 @@ $(document).ready(function() {
         }
         // console.log(data)
         logs = data.substring(0, data.lastIndexOf('</script>') +9)
-        // console.log(logs);
+        console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
         data = data.substring(logs.length)

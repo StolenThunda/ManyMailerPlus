@@ -150,7 +150,7 @@ class Manymailerplus_mcp
         switch ($func) {
             case 'save':
                 return ee()->mail_svc->save_settings();
-            case 'update_service_order':
+            // case 'update_service_order':
             case 'get_settings':
             case 'get_service_order':
             case 'get_active_services':
