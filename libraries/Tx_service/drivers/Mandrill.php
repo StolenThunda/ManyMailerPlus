@@ -47,7 +47,8 @@ class Mandrill extends TransactionService
             $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
             $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
             $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-            // ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
+            ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
+
             return $active_key;
         } catch (\Throwable $th) {
             //throw $th;
@@ -182,16 +183,19 @@ class Mandrill extends TransactionService
         $func = (isset($obj['func'])) ? $obj['func'] : 'list';
         $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-        $data = array(
-            'key' => $this->_get_api(),
-        );
-        if (!is_null($template_name)) {
-            $data['name'] = $template_name;
+        $key = $this->_get_api();
+        if ($key !== '') {
+            $data = array(
+                'key' => $key,
+            );
+            if (!is_null($template_name)) {
+                $data['name'] = $template_name;
+            }
+            $content = json_encode($data);
+            ee()->dbg->c_log($api_endpoint.$content, __METHOD__);
+            $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
+            ee()->dbg->c_log($templates, __METHOD__);
         }
-        $content = json_encode($data);
-        ee()->dbg->c_log($api_endpoint.$content, __METHOD__);
-        $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
-        ee()->dbg->c_log($templates, __METHOD__);
 
         return $templates;
     }

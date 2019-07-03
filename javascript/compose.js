@@ -1,3 +1,4 @@
+'use strict';
 const TLN = {
     eventList: {},
     update_line_numbers: function(ta, el) {
@@ -171,7 +172,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -184,31 +185,31 @@ $(document).ready(function() {
             }
             $(this).attr('data-service', list_item);
         }); 
-        $('.service-list').sortable({
-            axis: 'y',
-            opacity: 0.5,
-            update: function() {
-                var serviceOrder = [];
-                var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-                $('.service-list li').each(function() {
-                    serviceOrder.push($(this).data('service'));
-                });
-                $.post(url, {
-                        service_order: serviceOrder.toString(),
-                        CSRF_TOKEN: EE.CSRF_TOKEN,
-                        XID: EE.XID
-                    })
-                    .success(function(data) {
-                        data = procReq(data);
-                        $('.service-list').data('order', data);
-                        console.dir(data);
-                    })
-                    .fail(function(err){
-                        data = procReq(this.data, true);
-                        console.log(data)
-                    });
-            }
-        });
+        // $('.service-list').sortable({
+        //     axis: 'y',
+        //     opacity: 0.5,
+        //     update: function() {
+        //         var serviceOrder = [];
+        //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+        //         $('.service-list li').each(function() {
+        //             serviceOrder.push($(this).data('service'));
+        //         });
+        //         $.post(url, {
+        //                 service_order: serviceOrder.toString(),
+        //                 CSRF_TOKEN: EE.CSRF_TOKEN,
+        //                 XID: EE.XID
+        //             })
+        //             .success(function(data) {
+        //                 data = procReq(data);
+        //                 $('.service-list').data('order', data);
+        //                 console.dir(data);
+        //             })
+        //             .fail(function(err){
+        //                 data = procReq(this.data, true);
+        //                 console.log(data)
+        //             });
+        //     }
+        // });
     } else {
         service_list.hide('fast');
     }
@@ -283,7 +284,7 @@ $(document).ready(function() {
             preConfirm: (value) => {
                 return $.post(url + value)
                         .always(function(jqXHR) {
-                            debugger
+                            // debugger
                             var data;
                             if (jqXHR.hasOwnProperty('responseText')) { 
                                 data = jqXHR.responseText;
@@ -295,7 +296,13 @@ $(document).ready(function() {
                             }else{
                                data = procReq(data);
                             }
-                            return JSON.stringify(data, null, 4);
+                            console.dir(data)
+                            data = JSON.stringify(data, null, 4);
+                            
+                            Swal.fire({
+                                type: 'question',
+                                html: data,
+                            })
                         });
                 }
             })
@@ -305,15 +312,15 @@ $(document).ready(function() {
         if (query){
             return qs2json(data)
         }
-        console.log(data)
-        logs = data.substring(0, data.lastIndexOf('</script>') +9)
-        console.log(logs);
+        // console.log(data)
+        var logs = data.substring(0, data.lastIndexOf('</script>') +9)
+        // console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
         data = data.substring(logs.length)
-        console.log(data)
-        debugger
-        return (isJson(orig) ? JSON.parse(orig) : orig);
+        // console.log(data)
+        // debugger
+        return (isJson(data) ? JSON.parse(data) : data);
     }
     function qs2json(data){
         var pairs = data.split('&')
