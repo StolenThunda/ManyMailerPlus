@@ -1,3 +1,4 @@
+'use strict';
 const TLN = {
     eventList: {},
     update_line_numbers: function(ta, el) {
@@ -312,7 +313,7 @@ $(document).ready(function() {
             return qs2json(data)
         }
         // console.log(data)
-        logs = data.substring(0, data.lastIndexOf('</script>') +9)
+        var logs = data.substring(0, data.lastIndexOf('</script>') +9)
         // console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);

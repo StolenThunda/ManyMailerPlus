@@ -109,7 +109,7 @@ class Manymailerplus_mcp
         $id = ee()->uri->segment(7, '');
         switch ($func) {
             case 'view_templates':
-                $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}(ee()->mail_svc->get_initial_service()));
+                $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
                 break;
             case 'compose2':
                 $this->vars['view'] = 'compose_view2';

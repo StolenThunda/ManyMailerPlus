@@ -1355,17 +1355,16 @@ class Composer
             if (!ee()->load->is_loaded($service)) {
                 if (file_exists($file_path)) {
                     ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
+                    $this->service = $service;
                 } else {
                     ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
 
                     return null;
                 }
             }
-        } else {
-            $service = $this->service;
         }
 
-        return $service;
+        return $this->service;
     }
 
     public function delete_template($template_name)
@@ -1378,11 +1377,13 @@ class Composer
         return false;
     }
 
-    public function _get_service_templates($template_name = '', $func = 'list')
+    public function _get_service_templates(...$args)
     {
         $templates = array();
-        $req_settings = array('template_name' => $template_name, 'func' => $func);
-        $service = $this->get_service();
+        $req_settings = $args[0];
+
+        ee()->dbg->c_log($req_settings, __METHOD__);
+        $service = (array_key_exists('service', $req_settings)) ? $req_settings['service'] : $this->get_service();
         if (!is_null($service)) {
             $templates = ee()->{$service}->get_templates($req_settings);
         }
@@ -1759,7 +1760,7 @@ class Composer
     /**
      * View templates.
      */
-    public function view_templates($service_name = '')
+    public function view_templates()
     {
         if (ee()->input->post('bulk_action') == 'remove') {
             foreach (ee()->input->get_post('selection') as $slug) {
@@ -1791,8 +1792,8 @@ class Composer
         $page = ($page > 0) ? $page : 1;
 
         $offset = ($page - 1) * 50; // Offset is 0 indexed
-
-        $templates = $this->_get_service_templates($service_name);
+        $service_name = $this->get_service();
+        $templates = $this->_get_service_templates(array('service' => $service_name));
         $data = array();
         if (!empty($templates)) {
             foreach ($templates as $template) {

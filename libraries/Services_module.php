@@ -171,7 +171,7 @@ class Services_module
         ee()->dbg->c_log($settings, __METHOD__);
         if ($services = ee('Request')->post('service_order')) {
             $settings[$this->site_id]['service_order'] = explode(',', $services);
-            $this->model->settings = $settings;
+            $this->model->settings = array_merge($this->model->settings, $settings);
 
             $this->model->save();
             // exit();
@@ -188,7 +188,7 @@ class Services_module
 
         $active_services = $this->get_active_services();
         if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
-            return array_keys($this->services);
+            return array(); //array_keys($this->services);
         } else {
             $other_services = array_diff(array_keys($this->services), $active_services);
             foreach ($other_services as $service) {
