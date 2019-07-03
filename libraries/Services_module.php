@@ -68,7 +68,13 @@ class Services_module
         $settings = $this->get_settings();
         $services_sorted = $this->service_order;
         if (ee('Request')->isAjax()) {
-            $this->update_service_order();
+            // $this->update_service_order($all_settings);
+            if ($services = ee('Request')->post('service_order')) {
+                $all_settings[$this->site_id]['service_order'] = explode(',', $services);
+                $this->model->settings = $all_settings;
+                $this->model->save();
+                exit;
+            }
         }
         $vars = array(
             'debug' => $this->debug,
@@ -83,13 +89,12 @@ class Services_module
             $vars['current_action'] = null;
         }
 
-        if (empty($this->config)) {
+        if (!empty($this->config)) {
             $vars['form_vars']['extra_alerts'] = array('config_warning');
             ee('CP/Alert')->makeInline('config_warning')
                 ->asWarning()
                 ->withTitle(lang('config_warning_heading'))
                 ->addToBody(lang('config_warning_text'))
-                ->cannotClose()
                 ->now();
         }
 
@@ -142,10 +147,11 @@ class Services_module
         ee()->dbg->c_log($settings, __METHOD__);
         foreach ($this->services as $service => $service_settings) {
             // ee()->dbg->c_log($service, __METHOD__);
-            if ($v = ee('Request')->post($service.'_active')) {
+            $v = ee('Request')->post($service.'_active');
+            if (! is_null($v)) {
                 $current_service = $service;
-                $settings[$this->site_id][$service.'_active'] = $v;
-                ee()->dbg->c_log($current_service, __METHOD__);
+                $settings[$this->site_id][$service.'_active'] = $v; 
+
                 foreach ($service_settings as $setting) {
                     $settings[$this->site_id][$setting] = ee('Request')->post($setting);
                 }
@@ -165,9 +171,10 @@ class Services_module
         ee()->functions->redirect(ee('CP/URL')->make('addons/settings/'.EXT_SHORT_NAME.'/services/'.$current_service));
     }
 
-    public function update_service_order()
+    public function update_service_order($settings = null)
     {
-        $settings = $this->get_settings();
+        
+        $settings = (!is_null($settings)) ? $settings : $this->get_settings();
         ee()->dbg->c_log($settings, __METHOD__);
         if ($services = ee('Request')->post('service_order')) {
             $settings[$this->site_id]['service_order'] = explode(',', $services);

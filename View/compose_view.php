@@ -18,7 +18,7 @@
     ?>
 </div>
 <div class="col-group ">
-<!-- <div class="app-notice-wrap"><=//ee('CP/Alert')->getAllInlines()?></div> -->
+<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
 	<?php if (isset($table)) : ?>
 		<?php $this->embed(EXT_SHORT_NAME.((isset($emails)) ? ':email/sent' : ':email/templates'), $table); ?>
 	<?php elseif (empty($sections)):  ?>
