@@ -117,6 +117,7 @@ $(document).ready(function() {
         // Behind the scenes method deals with browser
         // idiosyncrasies and such
         $.caretTo = function(el, index) {
+            
             if (el.createTextRange) {
                 var range = el.createTextRange();
                 range.move('character', index);
@@ -134,18 +135,19 @@ $(document).ready(function() {
         // Set caret to a particular index
         $.fn.caretTo = function(index, offset) {
             return this.queue(function(next) {
+                var el = $('textarea[name=message]')[0];
                 if (isNaN(index)) {
-                    var i = $(this).val().indexOf(index);
-                    if (i === -1) {i = $(this).text().indexOf(index);}
+                    var i = $(el).val().indexOf(index);
+                    if (i === -1) {i = $(el).text().indexOf(index);}
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
                         i += offset;
                     }
 
-                    $.caretTo(this, i);
+                    $.caretTo(el, i);
                 } else {
-                    $.caretTo(this, index);
+                    $.caretTo(el, index);
                 }
 
                 next();
@@ -160,7 +162,8 @@ $(document).ready(function() {
         // Set caret to the end of an element
         $.fn.caretToEnd = function() {
             return this.queue(function(next) {
-                $.caretTo(this, $(this).val().length);
+                var el = $('textarea[name=message]')[0];
+                $.caretTo(el, $(el).val().length);
                 next();
             });
         };
@@ -170,7 +173,7 @@ $(document).ready(function() {
     });
     var service_list = $('h2:contains("Services")').next('ul');
     service_list
-        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
+        .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services')
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
@@ -183,31 +186,44 @@ $(document).ready(function() {
             }
             $(this).attr('data-service', list_item);
         }); 
-        // $('.service-list').sortable({
-        //     axis: 'y',
-        //     opacity: 0.5,
-        //     update: function() {
-        //         var serviceOrder = [];
-        //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-        //         $('.service-list li').each(function() {
-        //             serviceOrder.push($(this).data('service'));
-        //         });
-        //         $.post(url, {
-        //                 service_order: serviceOrder.toString(),
-        //                 CSRF_TOKEN: EE.CSRF_TOKEN,
-        //                 XID: EE.XID
-        //             })
-        //             .success(function(data) {
-        //                 data = procReq(data);
-        //                 $('.service-list').data('order', data);
-        //                 console.dir(data);
-        //             })
-        //             .fail(function(err){
-        //                 data = procReq(this.data, true);
-        //                 console.log(data)
-        //             });
-        //     }
-        // });
+        $('.service-list').sortable({
+            axis: 'y',
+            opacity: 0.5,
+            update: function() {
+                var serviceOrder = [];
+                var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+                $('.service-list li').each(function() {
+                    serviceOrder.push($(this).data('service'));
+                });
+                $.post(url, {
+                        service_order: serviceOrder.toString(),
+                        CSRF_TOKEN: EE.CSRF_TOKEN,
+                        XID: EE.XID
+                    })
+                    .success(function(data) {
+                        data = procReq(data);
+                        $('.service-list').data('order', data);
+                        if (data.indexOf('console') === 0){
+                            logs = data.split(');');
+                            logs.forEach(element => {
+                                element = element.trim() + ');';
+                                debugger
+                                if (element.indexOf('console') === 0){
+                                    eval(element);
+                                } 
+                            });                           
+                        }else{
+                            console.dir(data);
+                        }
+                        
+                        
+                    })
+                    .fail(function(err){
+                        data = procReq(this.data, true);
+                        console.log(data);
+                    });
+            }
+        });
     } else {
         service_list.hide('fast');
     }
@@ -279,7 +295,6 @@ $(document).ready(function() {
             preConfirm: (value) => {
                 return $.post(url + value)
                         .always(function(jqXHR) {
-                            debugger;
                             var data;
                             if (jqXHR.hasOwnProperty('responseText')) { 
                                 data = jqXHR.responseText;
@@ -301,15 +316,14 @@ $(document).ready(function() {
         if (query){
             return qs2json(data);
         }
-        console.log(data);
+        // console.log(data);
         logs = data.substring(0, data.lastIndexOf('</script>') +9);
-        console.log(logs);
+        // console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
         data = data.substring(logs.length);
-        console.log(data);
-        debugger;
-        return (isJson(orig) ? JSON.parse(orig) : orig);
+        // console.log(data);
+        return (data === "") ? logs.replace(/<\/?[^>]+(>|$)/g, "") : (isJson(data) ? JSON.parse(data) : data);
     }
     function qs2json(data){
         var pairs = data.split('&');
@@ -377,7 +391,6 @@ $(document).ready(function() {
             name = this.value;
             subject = this.dataset.confirm;
             var choice = document.getElementById(name + '-code');
-            // debugger;
             if (choice !== null) {
                 $('input[name="selection[]"]').not(this)
                     .attr('checked', false)
