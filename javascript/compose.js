@@ -123,6 +123,7 @@ $(document).ready(function() {
                 range.move('character', index);
                 range.select();
             } else if (el.selectionStart !== null) {
+                debugger
                 el.focus();
                 el.setSelectionRange(index, index);
             }
@@ -135,19 +136,19 @@ $(document).ready(function() {
         // Set caret to a particular index
         $.fn.caretTo = function(index, offset) {
             return this.queue(function(next) {
-                var el = $('textarea[name=message]')[0];
+                debugger
                 if (isNaN(index)) {
-                    var i = $(el).val().indexOf(index);
-                    if (i === -1) {i = $(el).text().indexOf(index);}
+                    var i = $(this).val().indexOf(index);
+                    if (i === -1) {i = $(this).text().indexOf(index);}
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
                         i += offset;
                     }
 
-                    $.caretTo(el, i);
+                    $.caretTo(this, i);
                 } else {
-                    $.caretTo(el, index);
+                    $.caretTo(this, index);
                 }
 
                 next();
@@ -162,8 +163,7 @@ $(document).ready(function() {
         // Set caret to the end of an element
         $.fn.caretToEnd = function() {
             return this.queue(function(next) {
-                var el = $('textarea[name=message]')[0];
-                $.caretTo(el, $(el).val().length);
+                $.caretTo(this, $(this).val().length);
                 next();
             });
         };
@@ -803,7 +803,7 @@ function showPlaceholders(headers) {
                     var textBefore = v.substring(0, cursorPosStart);
                     var textAfter = v.substring(cursorPosEnd, v.length);
                     message.val(textBefore + insertedText + textAfter);
-                    $(this).caretTo(insertedText, true);
+                    $('textarea[name=message]').caretTo(insertedText, true);
                     // cursorPosEnd = cursorPosEnd + insertedText.length;
                     // message.focus();
                     // message.setSelectionRange(cursorPosEnd, cursorPosEnd);
