@@ -9,8 +9,8 @@ class Manymailerplus_mcp
     private $version = EXT_VERSION;
     private $vars = array();
     private $config = array();
-    private $debug = true;
-    // private $debug = false;
+    // private $debug = true;
+    private $debug = false;
 
     /**
      * Constructor.

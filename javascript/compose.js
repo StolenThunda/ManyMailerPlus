@@ -48,19 +48,18 @@ const TLN = {
         const __change_hdlr = (function(ta, el) {
             return function(e) {
                 if (
-                    (+ta.scrollLeft == 10 &&
-                        (e.keyCode == 37 || e.which == 37 || e.code == 'ArrowLeft' || e.key == 'ArrowLeft')) ||
-                    e.keyCode == 36 ||
-                    e.which == 36 ||
-                    e.code == 'Home' ||
-                    e.key == 'Home' ||
-                    e.keyCode == 13 ||
-                    e.which == 13 ||
-                    e.code == 'Enter' ||
-                    e.key == 'Enter' ||
-                    e.code == 'NumpadEnter'
-                )
-                    ta.scrollLeft = 0;
+                    (+ta.scrollLeft === 10 &&
+                        (e.keyCode === 37 || e.which === 37 || e.code === 'ArrowLeft' || e.key === 'ArrowLeft')) ||
+                    e.keyCode === 36 ||
+                    e.which === 36 ||
+                    e.code === 'Home' ||
+                    e.key === 'Home' ||
+                    e.keyCode === 13 ||
+                    e.which === 13 ||
+                    e.code === 'Enter' ||
+                    e.key === 'Enter' ||
+                    e.code === 'NumpadEnter'
+                ) { ta.scrollLeft = 0;}
                 TLN.update_line_numbers(ta, el);
             };
         })(ta, el);
@@ -95,7 +94,7 @@ const TLN = {
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
         }
-        if (ta.className.indexOf('tln-active') == -1) {
+        if (ta.className.indexOf('tln-active') === -1) {
             return;
             // return console.log("[tln.js] textarea of id '" + id + "' isn't numbered");
         }
@@ -103,14 +102,14 @@ const TLN = {
 
         ta.previousSibling.remove();
 
-        if (!TLN.eventList[id]) return;
+    if (!TLN.eventList[id]) {return;}
         for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
             const evt = TLN.eventList[id][i];
             ta.removeEventListener(evt.evt, evt.hdlr);
         }
         delete TLN.eventList[id];
     }
-}
+};
 $(document).ready(function() {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
@@ -119,11 +118,13 @@ $(document).ready(function() {
         // Behind the scenes method deals with browser
         // idiosyncrasies and such
         $.caretTo = function(el, index) {
+            
             if (el.createTextRange) {
                 var range = el.createTextRange();
                 range.move('character', index);
                 range.select();
             } else if (el.selectionStart !== null) {
+                debugger
                 el.focus();
                 el.setSelectionRange(index, index);
             }
@@ -136,9 +137,10 @@ $(document).ready(function() {
         // Set caret to a particular index
         $.fn.caretTo = function(index, offset) {
             return this.queue(function(next) {
+                debugger
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
-                    if (i === -1) i = $(this).text().indexOf(index);
+                    if (i === -1) {i = $(this).text().indexOf(index);}
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
@@ -202,11 +204,24 @@ $(document).ready(function() {
         //             .success(function(data) {
         //                 data = procReq(data);
         //                 $('.service-list').data('order', data);
-        //                 console.dir(data);
+        //                 if (data.indexOf('console') === 0){
+        //                     logs = data.split(');');
+        //                     logs.forEach(element => {
+        //                         element = element.trim() + ');';
+        //                         debugger
+        //                         if (element.indexOf('console') === 0){
+        //                             eval(element);
+        //                         } 
+        //                     });                           
+        //                 }else{
+        //                     console.dir(data);
+        //                 }
+                        
+                        
         //             })
         //             .fail(function(err){
         //                 data = procReq(this.data, true);
-        //                 console.log(data)
+        //                 console.log(data);
         //             });
         //     }
         // });
@@ -214,10 +229,7 @@ $(document).ready(function() {
         service_list.hide('fast');
     }
     function isJson(item) {
-        item = typeof item !== "string"
-            ? JSON.stringify(item)
-            : item;
-    
+        item = typeof item !== "string" ? JSON.stringify(item): item;    
         try {
             item = JSON.parse(item);
         } catch (e) {
@@ -284,7 +296,6 @@ $(document).ready(function() {
             preConfirm: (value) => {
                 return $.post(url + value)
                         .always(function(jqXHR) {
-                            // debugger
                             var data;
                             if (jqXHR.hasOwnProperty('responseText')) { 
                                 data = jqXHR.responseText;
@@ -310,20 +321,19 @@ $(document).ready(function() {
 });
     function procReq(data, query = false){
         if (query){
-            return qs2json(data)
+            return qs2json(data);
         }
-        // console.log(data)
-        var logs = data.substring(0, data.lastIndexOf('</script>') +9)
+        // console.log(data);
+        logs = data.substring(0, data.lastIndexOf('</script>') +9);
         // console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
-        data = data.substring(logs.length)
-        // console.log(data)
-        // debugger
-        return (isJson(data) ? JSON.parse(data) : data);
+        data = data.substring(logs.length);
+        // console.log(data);
+        return (data === "") ? logs.replace(/<\/?[^>]+(>|$)/g, "") : (isJson(data) ? JSON.parse(data) : data);
     }
     function qs2json(data){
-        var pairs = data.split('&')
+        var pairs = data.split('&');
         var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
         return JSON.parse(JSON.stringify('{'+retVals+'}'));
     }
@@ -381,14 +391,13 @@ $(document).ready(function() {
             subject,
             message = '';
         var details = $('fieldset#mc-edits');
-        if (details.length > 0) details.remove();
+        if (details.length > 0) {details.remove();}
         if (this.checked) {
             var sections = [];
             var element, attributes, attribute;
             name = this.value;
             subject = this.dataset.confirm;
             var choice = document.getElementById(name + '-code');
-            // debugger;
             if (choice !== null) {
                 $('input[name="selection[]"]').not(this)
                     .attr('checked', false)
@@ -405,7 +414,7 @@ $(document).ready(function() {
                         for (var i = 0; i < attributes.length; i++) {
                             attribute = attributes[i];
                             if (attribute.name.startsWith('mc:')) {
-                                if (attribute.value !== "") sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });
+                                if (attribute.value !== "") {sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });}
                                 console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                             }
                         }
@@ -484,7 +493,7 @@ $(document).ready(function() {
         
     }
     $('input[name=use_templates]').change(function() {
-        var toggle = this.value == 'y' ? 'slow' : false;
+        var toggle = this.value === 'y' ? 'slow' : false;
         $('#embed_templates').fadeToggle(toggle);
         $('#template_name').parents('fieldset').fadeToggle(toggle);
     });
@@ -589,7 +598,7 @@ function countEmails() {
     // preserve  original label just append count string
     if (origText.includes('Count')) {
         var idx = origText.indexOf(' (Count: ');
-        if (idx > -1) origText = origText.substr(0, idx);
+        if (idx > -1) {origText = origText.substr(0, idx);}
     }
     var countText = count > 0 ? ` (Count: ${count})` : '';
     label.text(origText + countText);
@@ -639,7 +648,7 @@ function validate_csv(data) {
 
     // validate required columns
     var required_columns = validateRequiredKeys(data.headers);
-    if (required_columns.errors.length > 0) errDetail = errDetail.concat(required_columns.errors);
+    if (required_columns.errors.length > 0) {errDetail = errDetail.concat(required_columns.errors);}
     header_valid = required_columns.validHeader;
     email_column = required_columns.email_column;
 
@@ -655,7 +664,7 @@ function validate_csv(data) {
                 emails.push(current_email.trim());
             } else {
                 var tmp = 'Column (' + email_column.original + '): does not contain email data';
-                if (!errDetail.includes(tmp)) errDetail.unshift(tmp);
+                if (!errDetail.includes(tmp)) {errDetail.unshift(tmp);}
             }
         }
         for (var itm in row) {
@@ -665,10 +674,10 @@ function validate_csv(data) {
         tokenized_obj.push(newRow);
     });
 
-    if (!header_valid) errs.unshift('Invalid Header');
-    if (!email_column || !file_contains_emails) errDetail.unshift('No Valid Email Column Header Found');
-    if (file_contains_emails && !email_column) errDetail.unshift('Email column is mislabeled');
-    if (!required_columns) errDetail.unshift('Required Columns: email, first_name, last_name');
+    if (!header_valid) {errs.unshift('Invalid Header');}
+    if (!email_column || !file_contains_emails) {errDetail.unshift('No Valid Email Column Header Found');}
+    if (file_contains_emails && !email_column) {errDetail.unshift('Email column is mislabeled');}
+    if (!required_columns) {errDetail.unshift('Required Columns: email, first_name, last_name');}
     if (errs.length === 0) {
         return {
             mailkey: required_columns.email_column.val,
@@ -740,7 +749,7 @@ function validateRequiredKeys(data) {
     };
     var invalidColumns = Object.keys(reqKeys).filter((k) => {
         var isNotSet = reqKeys[k] === '' || reqKeys[k] === false;
-        if (isNotSet) reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);
+        if (isNotSet) {reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);}
     });
     reqKeys.validHeader = reqKeys.errors.length === 0 && header_has_no_email_data;
     return reqKeys;
@@ -801,7 +810,7 @@ function showPlaceholders(headers) {
                     var textBefore = v.substring(0, cursorPosStart);
                     var textAfter = v.substring(cursorPosEnd, v.length);
                     message.val(textBefore + insertedText + textAfter);
-                    $(this).caretTo(insertedText, true);
+                    $('textarea[name=message]').caretTo(insertedText, true);
                     // cursorPosEnd = cursorPosEnd + insertedText.length;
                     // message.focus();
                     // message.setSelectionRange(cursorPosEnd, cursorPosEnd);
@@ -909,7 +918,7 @@ function parseData(str) {
 
             data.data.forEach((itm) => {
                 var itmVals = Object.values(itm);
-                if (itmVals.length != data.dtCols.length) {
+                if (itmVals.length !== data.dtCols.length) {
                     var diff = data.dtCols.length - itmVals.length;
                     do {
                         itmVals.push('');

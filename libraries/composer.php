@@ -1387,6 +1387,7 @@ class Composer
         if (!is_null($service)) {
             $templates = ee()->{$service}->get_templates($req_settings);
         }
+        ee()->dbg->c_log($templates, __METHOD__);
 
         return $templates;
     }
@@ -1829,7 +1830,7 @@ class Composer
             }
         }
 
-        //ee()->dbg->c_log($vars, __METHOD__);
+        ee()->dbg->c_log($vars, __METHOD__);
         $table->setData($data);
         $count = 1;
         $base_url = ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates');
