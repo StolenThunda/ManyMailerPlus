@@ -710,7 +710,7 @@ class Composer
     {
         $tmp = explode('/', $_SERVER['HTTP_REFERER']);
         $sender = end($tmp);
-        ee()->dbg->c_log($_POST, __METHOD__);
+        // ee()->dbg->c_log($_POST, __METHOD__);
         ee()->load->library('email');
 
         // Fetch $_POST data
@@ -833,7 +833,7 @@ class Composer
             'plaintext_alt' => $plaintext_alt,
             'attachments' => $this->attachments,
         );
-        ee()->dbg->c_log($cache_data, __METHOD__);
+        ee()->dbg->c_log($cache_data, __METHOD__.': Cache');
         $email = ee('Model')->make('EmailCache', $cache_data);
         $email->save();
 
@@ -1081,11 +1081,11 @@ class Composer
         $formatted_message = $this->formatMessage($email, true);
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
-            ee()->dbg->c_log($email_address, __METHOD__);
+            // ee()->dbg->c_log($email_address, __METHOD__);
             if ($csv_lookup_loaded) {
                 $tmp_plaintext = $email->plaintext_alt;
                 $record = $this->csv_lookup[$email_address];
-                ee()->dbg->c_log($record, __METHOD__);
+                // ee()->dbg->c_log($record, __METHOD__);
                 // standard 'First Last <email address> format
                 if (isset($record['{{first_name}}']) && isset($record['{{last_name}}'])) {
                     $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record['{{email}}']}>"; //TODO: https://trello.com/c/1lffhlXm
@@ -1118,10 +1118,12 @@ class Composer
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
-                ee()->dbg->c_log($cache_data, __METHOD__);
+                ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
                 if ($this->email_send($cache_data)) {
                     ++$singleEmail->total_sent;
                     $singleEmail->save();
+                } elseif (!$this->deliverEmail($email, $email_address)) {
+                    $this->_removeMail($email);
                 } else {
                     $this->_removeMail($email);
                 }
@@ -1333,7 +1335,7 @@ class Composer
                     ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
                 }
             }
-            ee()->dbg->c_log($sent, __METHOD__);
+            // ee()->dbg->c_log($sent, __METHOD__);
             if ($sent == true) {
                 ee()->extensions->end_script = true;
 
@@ -1830,7 +1832,6 @@ class Composer
             }
         }
 
-        ee()->dbg->c_log($vars, __METHOD__);
         $table->setData($data);
         $count = 1;
         $base_url = ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates');

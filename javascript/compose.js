@@ -124,7 +124,6 @@ $(document).ready(function() {
                 range.move('character', index);
                 range.select();
             } else if (el.selectionStart !== null) {
-                debugger
                 el.focus();
                 el.setSelectionRange(index, index);
             }
@@ -137,7 +136,6 @@ $(document).ready(function() {
         // Set caret to a particular index
         $.fn.caretTo = function(index, offset) {
             return this.queue(function(next) {
-                debugger
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
                     if (i === -1) {i = $(this).text().indexOf(index);}

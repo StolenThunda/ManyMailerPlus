@@ -154,7 +154,7 @@ class Debughelper
                         // no break
                     default:    // console.log, .info, .group, .groupCollapsed, .error,
                         $this->_string .= "console.{$method}";
-                        $this->_string .= '("'.nl2br($str).'"';
+                        $this->_string .= '("'.trim(nl2br($str)).'"';
                         $this->_string .= (is_null($style) ? null : ",'{$style}'");
                         $this->_string .= (is_null($obj) ? '' : ",{$obj}");
                         $this->_string .= ");\n";
@@ -271,7 +271,8 @@ class Debughelper
             'style' => self::STYLES[$detailLogLevel],
         );
         $str_msg = array(
-            'str' => "%cString Val: {$value}",
+            'str' => '%cString Val: '.preg_replace('/[\x00-\x1F\x74]/u', '<br />', $value),
+
             'type' => 'content',
             'method' => 'log',
             'style' => self::STYLES[$detailLogLevel],
