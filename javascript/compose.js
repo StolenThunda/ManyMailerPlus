@@ -1,4 +1,3 @@
-
 const TLN = {
     eventList: {},
     update_line_numbers: function(ta, el) {
