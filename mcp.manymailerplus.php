@@ -9,8 +9,8 @@ class Manymailerplus_mcp
     private $version = EXT_VERSION;
     private $vars = array();
     private $config = array();
-    // private $debug = true;
-    private $debug = false;
+    private $debug = true;
+    // private $debug = false;
 
     /**
      * Constructor.
@@ -83,7 +83,7 @@ class Manymailerplus_mcp
     public function _update_service_options($additional_links = array())
     {
         if (!empty($additional_links)) {
-            $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], ee()->mail_svc->service_order));
+            $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], ee()->mail_svc->get_service_order()));
         }
         // ee()->dbg->c_log($this->sidebar_options['services']['links'], __METHOD__);
     }
