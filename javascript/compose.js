@@ -58,7 +58,7 @@ const TLN = {
                     e.code === 'Enter' ||
                     e.key === 'Enter' ||
                     e.code === 'NumpadEnter'
-                ) { ta.scrollLeft = 0;}
+                ) { ta.scrollLeft = 0; }
                 TLN.update_line_numbers(ta, el);
             };
         })(ta, el);
@@ -101,7 +101,7 @@ const TLN = {
 
         ta.previousSibling.remove();
 
-    if (!TLN.eventList[id]) {return;}
+        if (!TLN.eventList[id]) { return; }
         for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
             const evt = TLN.eventList[id][i];
             ta.removeEventListener(evt.evt, evt.hdlr);
@@ -117,7 +117,7 @@ $(document).ready(function() {
         // Behind the scenes method deals with browser
         // idiosyncrasies and such
         $.caretTo = function(el, index) {
-            
+
             if (el.createTextRange) {
                 var range = el.createTextRange();
                 range.move('character', index);
@@ -137,7 +137,7 @@ $(document).ready(function() {
             return this.queue(function(next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
-                    if (i === -1) {i = $(this).text().indexOf(index);}
+                    if (i === -1) { i = $(this).text().indexOf(index); }
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
@@ -183,7 +183,7 @@ $(document).ready(function() {
                 $(this).addClass('disabled-service');
             }
             $(this).attr('data-service', list_item);
-        }); 
+        });
         // $('.service-list').sortable({
         //     axis: 'y',
         //     opacity: 0.5,
@@ -213,8 +213,8 @@ $(document).ready(function() {
         //                 }else{
         //                     console.dir(data);
         //                 }
-                        
-                        
+
+
         //             })
         //             .fail(function(err){
         //                 data = procReq(this.data, true);
@@ -225,14 +225,15 @@ $(document).ready(function() {
     } else {
         service_list.hide('fast');
     }
+
     function isJson(item) {
-        item = typeof item !== "string" ? JSON.stringify(item): item;    
+        item = typeof item !== "string" ? JSON.stringify(item) : item;
         try {
             item = JSON.parse(item);
         } catch (e) {
             return false;
         }
-    
+
         if (typeof item === "object" && item !== null) {
             return true;
         }
@@ -275,7 +276,7 @@ $(document).ready(function() {
         $('.app-overlay').removeClass('app-overlay---open');
         return;
     });
-    $('#btnData').on('click', function(e){ 
+    $('#btnData').on('click', function(e) {
         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
         Swal.fire({
             title: 'Select Fuction',
@@ -285,44 +286,44 @@ $(document).ready(function() {
                 'get_settings': 'Get Settings',
                 'get_service_order': 'Get SO',
                 'get_active_services': 'Active',
-                'get_initial_service' : 'Priority Service'
+                'get_initial_service': 'Priority Service'
             },
             inputPlaceholder: "Select Function",
             showCancelButton: true,
             allowOutsideClick: () => !Swal.isLoading(),
             preConfirm: (value) => {
                 return $.post(url + value)
-                        .always(function(jqXHR) {
-                            // debugger
-                            var data;
-                            if (jqXHR.hasOwnProperty('responseText')) { 
-                                data = jqXHR.responseText;
-                            }else{
-                                data = jqXHR;
-                            }
-                            if (isJson(data)){
-                                data = jqXHR; 
-                            }else{
-                               data = procReq(data);
-                            }
-                            console.dir(data);
-                            data = JSON.stringify(data, null, 4);
-                            
-                            Swal.fire({
-                                type: 'question',
-                                html: data,
-                            })
+                    .always(function(jqXHR) {
+                        // debugger
+                        var data;
+                        if (jqXHR.hasOwnProperty('responseText')) {
+                            data = jqXHR.responseText;
+                        } else {
+                            data = jqXHR;
+                        }
+                        if (isJson(data)) {
+                            data = jqXHR;
+                        } else {
+                            data = procReq(data);
+                        }
+                        console.dir(data);
+                        data = JSON.stringify(data, null, 4);
+
+                        Swal.fire({
+                            type: 'question',
+                            html: data,
                         });
-                }
-            })
-            ;
-});
-    function procReq(data, query = false){
-        if (query){
+                    });
+            }
+        });
+    });
+
+    function procReq(data, query = false) {
+        if (query) {
             return qs2json(data);
         }
         // console.log(data);
-        logs = data.substring(0, data.lastIndexOf('</script>') +9);
+        logs = data.substring(0, data.lastIndexOf('</script>') + 9);
         // console.log(logs);
         var d1 = document.getElementsByTagName('head')[0];
         d1.insertAdjacentHTML('beforeend', logs);
@@ -330,10 +331,11 @@ $(document).ready(function() {
         // console.log(data);
         return (data === "") ? logs.replace(/<\/?[^>]+(>|$)/g, "") : (isJson(data) ? JSON.parse(data) : data);
     }
-    function qs2json(data){
+
+    function qs2json(data) {
         var pairs = data.split('&');
         var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
-        return JSON.parse(JSON.stringify('{'+retVals+'}'));
+        return JSON.parse(JSON.stringify('{' + retVals + '}'));
     }
     $('#csv_recipient')
         .bind('interact', (e) => {
@@ -389,7 +391,7 @@ $(document).ready(function() {
             subject,
             message = '';
         var details = $('fieldset#mc-edits');
-        if (details.length > 0) {details.remove();}
+        if (details.length > 0) { details.remove(); }
         if (this.checked) {
             var sections = [];
             var element, attributes, attribute;
@@ -412,13 +414,13 @@ $(document).ready(function() {
                         for (var i = 0; i < attributes.length; i++) {
                             attribute = attributes[i];
                             if (attribute.name.startsWith('mc:')) {
-                                if (attribute.value !== "") {sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML });}
+                                if (attribute.value !== "") { sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML }); }
                                 console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                             }
                         }
                     }
-                }               
-                createEC(sections);              
+                }
+                createEC(sections);
             }
             $('legend').trigger('click');
         }
@@ -428,11 +430,11 @@ $(document).ready(function() {
 
     function createEC(sections) {
         var email_body = ['main', 'content'];
-        var found = sections.find(function(el){
+        var found = sections.find(function(el) {
             return ($.inArray(el.edit_section, email_body) !== -1);
         });
-        var suggested = (found) ? `(suggested: <b>'${found.edit_section}')</b>`: "";
-        sections.forEach((el_obj) =>{
+        var suggested = (found) ? `(suggested: <b>'${found.edit_section}')</b>` : "";
+        sections.forEach((el_obj) => {
             var id = el_obj.edit_section;
             var val = el_obj.content;
             var parent = $('#template_name').parents('fieldset').eq(0);
@@ -445,7 +447,7 @@ $(document).ready(function() {
                 fs.append(
                     $('<div>')
                     .addClass('field-instruct')
-                    .append($(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`))    
+                    .append($(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`))
                 );
             }
 
@@ -488,7 +490,7 @@ $(document).ready(function() {
             });
 
         });
-        
+
     }
     $('input[name=use_templates]').change(function() {
         var toggle = this.value === 'y' ? 'slow' : false;
@@ -510,6 +512,7 @@ $(document).ready(function() {
     });
 });
 var $sections = $('.form-section');
+
 function navigateTo(index) {
     // Mark the current section with the class 'current'
     $sections.removeClass('current').eq(index).addClass('current');
@@ -517,7 +520,7 @@ function navigateTo(index) {
     $('.form-navigation .previous').toggle(index > 0);
     var atTheEnd = index >= $sections.length - 1;
     $('.form-navigation .next').toggle(!atTheEnd);
-    
+
     $('.form-navigation input[type="submit"]').toggle(atTheEnd);
 }
 
@@ -596,7 +599,7 @@ function countEmails() {
     // preserve  original label just append count string
     if (origText.includes('Count')) {
         var idx = origText.indexOf(' (Count: ');
-        if (idx > -1) {origText = origText.substr(0, idx);}
+        if (idx > -1) { origText = origText.substr(0, idx); }
     }
     var countText = count > 0 ? ` (Count: ${count})` : '';
     label.text(origText + countText);
@@ -646,7 +649,7 @@ function validate_csv(data) {
 
     // validate required columns
     var required_columns = validateRequiredKeys(data.headers);
-    if (required_columns.errors.length > 0) {errDetail = errDetail.concat(required_columns.errors);}
+    if (required_columns.errors.length > 0) { errDetail = errDetail.concat(required_columns.errors); }
     header_valid = required_columns.validHeader;
     email_column = required_columns.email_column;
 
@@ -662,7 +665,7 @@ function validate_csv(data) {
                 emails.push(current_email.trim());
             } else {
                 var tmp = 'Column (' + email_column.original + '): does not contain email data';
-                if (!errDetail.includes(tmp)) {errDetail.unshift(tmp);}
+                if (!errDetail.includes(tmp)) { errDetail.unshift(tmp); }
             }
         }
         for (var itm in row) {
@@ -672,10 +675,10 @@ function validate_csv(data) {
         tokenized_obj.push(newRow);
     });
 
-    if (!header_valid) {errs.unshift('Invalid Header');}
-    if (!email_column || !file_contains_emails) {errDetail.unshift('No Valid Email Column Header Found');}
-    if (file_contains_emails && !email_column) {errDetail.unshift('Email column is mislabeled');}
-    if (!required_columns) {errDetail.unshift('Required Columns: email, first_name, last_name');}
+    if (!header_valid) { errs.unshift('Invalid Header'); }
+    if (!email_column || !file_contains_emails) { errDetail.unshift('No Valid Email Column Header Found'); }
+    if (file_contains_emails && !email_column) { errDetail.unshift('Email column is mislabeled'); }
+    if (!required_columns) { errDetail.unshift('Required Columns: email, first_name, last_name'); }
     if (errs.length === 0) {
         return {
             mailkey: required_columns.email_column.val,
@@ -747,7 +750,7 @@ function validateRequiredKeys(data) {
     };
     var invalidColumns = Object.keys(reqKeys).filter((k) => {
         var isNotSet = reqKeys[k] === '' || reqKeys[k] === false;
-        if (isNotSet) {reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);}
+        if (isNotSet) { reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`); }
     });
     reqKeys.validHeader = reqKeys.errors.length === 0 && header_has_no_email_data;
     return reqKeys;
@@ -809,9 +812,6 @@ function showPlaceholders(headers) {
                     var textAfter = v.substring(cursorPosEnd, v.length);
                     message.val(textBefore + insertedText + textAfter);
                     $('textarea[name=message]').caretTo(insertedText, true);
-                    // cursorPosEnd = cursorPosEnd + insertedText.length;
-                    // message.focus();
-                    // message.setSelectionRange(cursorPosEnd, cursorPosEnd);
                 }
             })
             .wrap('<tr><td align="center"></td></tr>')
