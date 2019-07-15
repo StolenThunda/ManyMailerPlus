@@ -293,6 +293,7 @@ $(document).ready(function() {
             preConfirm: (value) => {
                 return $.post(url + value)
                         .always(function(jqXHR) {
+                            // debugger
                             var data;
                             if (jqXHR.hasOwnProperty('responseText')) { 
                                 data = jqXHR.responseText;
@@ -310,7 +311,7 @@ $(document).ready(function() {
                             Swal.fire({
                                 type: 'question',
                                 html: data,
-                            });
+                            })
                         });
                 }
             })

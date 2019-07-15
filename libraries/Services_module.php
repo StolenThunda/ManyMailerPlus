@@ -197,8 +197,7 @@ class Services_module
 
         $active_services = $this->get_active_services();
         if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
-            return array();
-            // return array_keys($this->services);
+            return array(); //array_keys($this->services);
         } else {
             $other_services = array_diff(array_keys($this->services), $active_services);
             foreach ($other_services as $service) {
