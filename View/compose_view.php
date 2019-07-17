@@ -10,6 +10,7 @@
 	<?php endif; ?>
 	<?php
         if (isset($current_settings) && $debug) {
+			echo '<div class="app-notice-wrap">'. ee("CP/Alert")->getAllInlines() .'</div>';
 			// ee()->dbg->c_log($current_settings,"Current Settings");
 			echo "<script>console.groupCollapsed('Current Services Settings');</script>";
 			echo "<script>console.dir(". json_encode($current_settings).");</script>";
@@ -19,7 +20,7 @@
     ?>
 </div>
 <div class="col-group ">
-<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
+
 	<?php if (isset($table)) : ?>
 		<?php $this->embed(EXT_SHORT_NAME.((isset($emails)) ? ':email/sent' : ':email/templates'), $table); ?>
 	<?php elseif (empty($sections)):  ?>

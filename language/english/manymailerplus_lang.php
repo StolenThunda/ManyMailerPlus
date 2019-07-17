@@ -137,6 +137,7 @@ $lang = array(
     'sendgrid_link' => 'http://sendgrid.com',
     'sendgrid_name' => 'SendGrid',
     'sent_name' => 'View Sent Mail',
+    'sent_service' => 'Your message has been successfully sent using the following service: %s ',
     'services_heading' => 'Services Overview',
     'services_name' => 'Services',
     'services_text' => '<p>Activate and configure as many services as you like via the links in the sidebar.</p>
