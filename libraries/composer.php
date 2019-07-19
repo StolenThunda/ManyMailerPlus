@@ -1088,7 +1088,7 @@ class Composer
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
             // ee()->dbg->c_log($email_address, __METHOD__);
-            if ($csv_lookup_loaded) {
+            if ( $csv_lookup_loaded) {
                 $tmp_plaintext = $email->plaintext_alt;
                 $record = $this->csv_lookup[$email_address];
                 // ee()->dbg->c_log($record, __METHOD__);
@@ -1133,6 +1133,7 @@ class Composer
                         $singleEmail->save();
                     } 
                 }else{
+                    $this->success_sent = 
                     ++$singleEmail->total_sent;
                     $singleEmail->save();
                 } 

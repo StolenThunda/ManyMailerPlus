@@ -38,7 +38,11 @@
 								<li>
 									<b><?=lang('sent')?>:</b> 
 									<?php echo ee()->localize->human_time($email->cache_date->format('U'))?> 
-									<?=lang('to')?> <?=$email->total_sent?> <?=lang('recipients')?></li>
+									<?=lang('to')?> <?=$email->total_sent?> <?=lang('recipients')?>
+								</li>
+								<li>
+									Recipient(s):  <br><?php echo str_replace(',', '<br>', $email->recipient);?> 
+								</li>
 							</ul>
 							<?=ee('Security/XSS')->clean($email->message)?>
 						</div>
