@@ -9,8 +9,8 @@ class Manymailerplus_mcp
     private $version = EXT_VERSION;
     private $vars = array();
     private $config = array();
-    private $debug = true;
-    // private $debug = false;
+    // private $debug = true;
+    private $debug = false;
 
     /**
      * Constructor.
@@ -38,7 +38,7 @@ class Manymailerplus_mcp
 
         ee()->load->library('services_module', $this->config, 'mail_svc');
         ee()->load->library('composer', $this->config, 'mail_funcs');
-        ee()->load->library('settings', $this->config, 'mail_opts');
+        // ee()->load->library('settings', $this->config, 'mail_opts');
         $this->services = ee()->config->item('services', 'services');
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
