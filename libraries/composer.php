@@ -905,7 +905,13 @@ class Composer
             $debug_msg = ee()->email->print_debugger(array());
 
             $this->deleteAttachments($email); // Remove attachments now
-
+            $service = $this->get_service();
+            // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
+            if ($debug_msg != "") {
+                $debug_msg .= sprintf(lang('missing_service_credentials'),  $service);
+            }else{
+                $debug_msg = sprintf(lang('sent_service'),  $service);
+            }
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
             ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
         }
@@ -1149,7 +1155,7 @@ class Composer
         ee()->dbg->c_log($debug_msg, __METHOD__);
         ee()->logger->developer($err_msg);
         //show_error($err_msg);
-        return;
+        return false;
     }
 
     /**
@@ -1352,16 +1358,19 @@ class Composer
 
     public function get_service()
     {
+        
         if (!isset($this->service)) {
             $settings = ee()->mail_svc->get_settings();
-            $service = ee()->mail_svc->get_initial_service();
+            $service = ucfirst(ee()->mail_svc->get_initial_service());
+           
             $service_settings = array('debug' => $this->debug, 'settings' => $settings);
-            $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php', ucfirst($service));
-
+            $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php',$service);
+            $this->service = strtolower($service);
             if (!ee()->load->is_loaded($service)) {
+                ee()->dbg->c_log(ee()->load->is_loaded(strtolower($service)), __METHOD__);
                 if (file_exists($file_path)) {
                     ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
-                    $this->service = $service;
+                    $this->service = ucfirst($service);
                 } else {
                     ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
 
@@ -1800,7 +1809,7 @@ class Composer
 
         $offset = ($page - 1) * 50; // Offset is 0 indexed
         $service_name = $this->get_service();
-        $templates = $this->_get_service_templates(array('service' => $service_name));
+        $templates = $this->_get_service_templates(array('service' => strtolower($service_name)));
         $data = array();
         if (!empty($templates)) {
             foreach ($templates as $template) {

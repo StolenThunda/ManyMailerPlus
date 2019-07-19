@@ -106,6 +106,9 @@ class Postageapp extends TransactionService
         return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
     }
 
+    public function save_template(){
+        return true;
+    }
     public function lookup_to_merger($lookup)
     {
         $merge_vars = array();
