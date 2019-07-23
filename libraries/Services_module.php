@@ -266,7 +266,9 @@ class Services_module
 
     public function get_initial_service()
     {
-        return $this->get_service_order()[0];
+        $active = $this->get_active_services();
+       
+        return  (!empty($active)) ? $active[0] : "";
     }
 
     public function get_active_services()

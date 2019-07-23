@@ -5,6 +5,9 @@ require_once(PATH_THIRD.EXT_SHORT_NAME.'/config.php');
 class Manymailerplus_upd {
     var $version = EXT_VERSION;
 
+	function __construct(){
+		if (!ee()->load->is_loaded('dbg')) ee()->load->library('debughelper', null, 'dbg');
+	}
 	function ee_version()
 	{
 		return substr(APP_VER, 0, 1);
@@ -49,15 +52,13 @@ class Manymailerplus_upd {
 		ee()->db->where('module_name', EXT_NAME);
 		ee()->db->delete('modules');
 
-		// ee()->db->delete('modules', array( 'module_name' => EXT_NAME));
-		// $result = ee()->db->simple_query('delete from exp_modules where module_name like "Manymailerplus%');
-		//ee()->dbg->c_log(ee()->db->last_query(), ee()->db->affected_rows()." Rows Deleted", TRUE);
+		ee()->db->delete('modules', array( 'module_name' => EXT_NAME));
 
         ee()->load->dbforge();
 		foreach (array('csv_object', 'mailKey') as $column){
 			ee()->dbg->c_log("$column TEST", __METHOD__);
-			if( ee()->db->field_exists($column, 'exp_email_cache')){
-				$result = ee()->dbforge->drop_column('exp_email_cache', $column);
+			if( ee()->db->field_exists($column, 'email_cache')){
+				$result = ee()->dbforge->drop_column('email_cache', $column);
 				ee()->dbg->c_log($result, __METHOD__);
 			}else{
 
@@ -94,17 +95,16 @@ class Manymailerplus_upd {
 			)
 			);
 		foreach (array_keys($fields) as $column){
-			$hasColumns = ee()->db->field_exists($column, 'exp_email_cache');
-			// ee()->dbg->c_log(ee()->db->last_query(), ee()->db->affected_rows()." Rows Affected");
-			// ee()->dbg->c_log($column,"Has Column : ".(($hasColumns) ? 'TRUE': 'FALSE'));
+			$hasColumns = ee()->db->field_exists($column, 'email_cache');
+			ee()->dbg->c_log(ee()->db->last_query(), ee()->db->affected_rows()." Rows Affected");
+			ee()->dbg->c_log($column,"Has Column : ".(($hasColumns) ? 'TRUE': 'FALSE'));
 			if ($hasColumns) break;
 		} 
 		
 		if (!$hasColumns) {
 			$result = ee()->dbforge->add_column('email_cache', $fields);
-			// ee()->dbg->c_log($result->num_rows(), (string) $hasColumns);
 		}
-		return ee()->db->field_exists('csv_object', 'exp_email_cache');
+		return ee()->db->field_exists('csv_object', 'email_cache');
 	}
 }
 

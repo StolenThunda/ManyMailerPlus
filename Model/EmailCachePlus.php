@@ -7,7 +7,7 @@
  * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
-namespace EXT_NAME\EmailCachePlus;
+namespace Manymailerplus\Model\EmailCachePlus;
 use EllisLab\ExpressionEngine\Model\Email;
 use EllisLab\ExpressionEngine\Service\Model\Model;
 
