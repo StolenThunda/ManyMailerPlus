@@ -101,6 +101,7 @@ class Manymailerplus_mcp
 
     public function email($func = '')
     {
+        ee()->dbg->c_log($this->vars, __METHOD__);
         $breadcrumbs = array(
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/email')->compile() => lang('email_title'),

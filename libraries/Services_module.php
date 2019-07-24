@@ -199,7 +199,7 @@ class Services_module
                
 
         if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) ) {
-            return array(); 
+            return array_keys($this->services); 
         
         } else {
             $other_services = array_diff(array_keys($this->services), $active_services); 
@@ -219,8 +219,7 @@ class Services_module
     public function get_initial_service()
     {
         $active = $this->get_active_services();
-       
-        return  (!empty($active)) ? $active[0] : "";
+        return  (empty($active)) ? null : $active[0];
     }
 
     public function get_active_services()
