@@ -1368,9 +1368,10 @@ class Composer
            
             $service_settings = array('debug' => $this->debug, 'settings' => $settings);
             $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php',$service);
-            $this->service = $service;
+            $this->service = strtolower($service);
+           
             if (!ee()->load->is_loaded($service)) {
-                ee()->dbg->c_log(ee()->load->is_loaded(strtolower($service)), __METHOD__);
+                ee()->dbg->c_log(ee()->load->is_loaded(strtolower($service)), __METHOD__. ": ${service}");
                 if (file_exists($file_path)) {
                     ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
                     $this->service = ucfirst($service);
@@ -1381,7 +1382,7 @@ class Composer
                 }
             }
         }
-
+        ee()->dbg->c_log($settings, __METHOD__ . ": SERVICE");
         return $this->service;
     }
 
@@ -1812,8 +1813,7 @@ class Composer
 
         $offset = ($page - 1) * 50; // Offset is 0 indexed
         $service_name = $this->get_service();
-        ee()->dbg->c_log($service_name, __METHOD__, true);
-        $templates = $this->_get_service_templates(array('service' => strtolower($service_name)));
+        $templates = (!$service_name) ? array() : $this->_get_service_templates(array('service' => strtolower($service_name)));
         $data = array();
         if (!empty($templates)) {
             foreach ($templates as $template) {

@@ -196,10 +196,14 @@ class Services_module
         $settings = (empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
 
         $active_services = $this->get_active_services();
-        if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
-            return array(); //array_keys($this->services);
+               
+
+        if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) ) {
+            return array_keys($this->services); 
+        
         } else {
-            $other_services = array_diff(array_keys($this->services), $active_services);
+            $other_services = array_diff(array_keys($this->services), $active_services); 
+            ee()->dbg->c_log($other_services, __METHOD__);
             foreach ($other_services as $service) {
                 $active_services[] = $service;
             }
@@ -210,65 +214,12 @@ class Services_module
 
             return $active_services;
         }
-        // ee()->dbg->c_log($settings, __METHOD__);
-        // foreach ($settings as $k => $v) {
-        //     $service = strstr($k, '_active', true);
-
-        //     if ($service !== false && $v === 'y') {
-        //         ee()->dbg->c_log($k, __METHOD__." $v");
-        //         if (!in_array($service, $active_services)) {
-        //             $active_services[] = $service;
-        //         }
-        //         $settings['service_order'] = array_diff($settings['service_order'], $active_services);
-        //     }
-        // }
-
-        // // Look at custom service order
-        // foreach ($settings['service_order'] as $service) {
-        //     if (!array_search($service, $active_services)) {
-        //         $active_services[] = $service;
-        //     }
-        // }
-
-        // // ee()->dbg->c_log($active_services, __METHOD__.':sort');
-
-        // return $active_services;
-
-        // $settings = $this->_get_db_settings();
-
-        // // Look at custom service order
-        // if (!isset($settings[$this->site_id]['service_order'])) {
-        //     $settings[$this->site_id]['service_order'] = array_keys($this->services);
-        //     $this->model->settings = $settings;
-        //     $this->model->save();
-        // }else{
-        //     $services_sorted = $this->get_active_services();
-        //     ee()->dbg->c_log($services_sorted, __METHOD__);
-        //     if (empty($services_sorted)) {
-        //         $services_sorted =  array_keys($this->services);
-        //     }
-
-        //     foreach ($settings['service_order'] as $service) {
-        //         if (!array_search($service, $services_sorted)) {
-        //             $services_sorted[] = $service;
-        //         }
-        //     }
-        //     if ($settings[$this->site_id]['service_order'] != $services_sorted) {
-        //         $settings[$this->site_id]['service_order'] = array_unique($services_sorted);
-        //         $this->model->settings = $settings;
-        //         $this->model->save();
-        //     }
-        // }
-        // ee()->dbg->c_log( $settings['service_order'], __METHOD__);
-
-        // return (isset($settings['service_order'])) ? $settings['service_order'] : array();
     }
 
     public function get_initial_service()
     {
         $active = $this->get_active_services();
-       
-        return  (!empty($active)) ? $active[0] : "";
+        return  (empty($active)) ? null : $active[0];
     }
 
     public function get_active_services()

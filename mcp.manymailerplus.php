@@ -9,8 +9,8 @@ class Manymailerplus_mcp
     private $version = EXT_VERSION;
     private $vars = array();
     private $config = array();
-    private $debug = true;
-    // private $debug = false;
+    // private $debug = true;
+    private $debug = false;
 
     /**
      * Constructor.
@@ -39,6 +39,7 @@ class Manymailerplus_mcp
 
         ee()->load->library('services_module', $this->config, 'mail_svc');
         ee()->load->library('composer', $this->config, 'mail_funcs');
+        // ee()->load->library('settings', $this->config, 'mail_opts');
         $this->services = ee()->config->item('services', 'services');
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
@@ -101,6 +102,7 @@ class Manymailerplus_mcp
 
     public function email($func = '')
     {
+        ee()->dbg->c_log($this->vars, __METHOD__);
         $breadcrumbs = array(
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/email')->compile() => lang('email_title'),
@@ -171,6 +173,24 @@ class Manymailerplus_mcp
         return $this->view_page($breadcrumbs);
     }
 
+    public function settings($func = '')
+    {
+        $breadcrumbs = array(
+            ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
+            ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings')->compile() => lang('settings'),
+        );
+        $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
+        $this->vars['cp_page_title'] = lang(__FUNCTION__.'_title');
+        $this->vars['current_action'] = __FUNCTION__;
+        switch ($func) {
+            
+            default:
+                // if the current = the service detail page
+                $this->vars = array_merge($this->vars, ee()->mail_opts->{$func}());
+                break;
+        }
+        return $this->view_page($breadcrumbs);
+    }
     public function view_page($breadcrumbs = null)
     {
         $breadcrumbs = (is_null($breadcrumbs) ? array(

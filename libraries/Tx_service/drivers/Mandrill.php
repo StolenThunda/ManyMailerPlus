@@ -78,7 +78,7 @@ class Mandrill extends TransactionService
             }
             $body_field = substr(array_keys(array_filter($content['message']['extras'], function ($v, $k) {
                 return 'mc-check_' == substr($k, 0, strlen('mc-check_'));
-            }, ARRAY_FILTER_USE_BOTH))[0], strlen('mc-check_'));
+            }, ARRAY_FILTER_USE_BOTH))[0], strlen('mc-check_')) || array();
 
             if (isset($content['message']['extras']['mc-edit'])) {
                 $t_content = array();

@@ -21,10 +21,10 @@ class Settings {
 	 */
 	function __construct($settings=array())
 	{
+		$CI = ee();
 		$this->settings = $settings;
 		$this->site_id = ee()->config->item('site_id');
-		$this->model = ee('Model')->get(EXT_SHORT_NAME)
-			->first();
+		// $this->model = ee('Model')->get(EXT_SHORT_NAME)->first();
 	}
 
 	function get_options(){
@@ -54,9 +54,6 @@ class Settings {
 				)
 			)
 		);
-		
-
-		
 		ee()->dbg->c_log($vars, __METHOD__);
 		return $vars;
 	}
@@ -85,8 +82,8 @@ class Settings {
 	
 		// ee()->db->where('module_name', EXT_NAME);
 		// ee()->db->update(EXT_SHORT_NAME, array('settings' => serialize($_POST)));
-		$this->model->settings = $settings;
-		$this->model->save();
+		// $this->model->settings = $settings;
+		// $this->model->save();
 		ee('CP/Alert')->makeInline('message_success')
 		->asAttention()
 		->withTitle('message_success')
