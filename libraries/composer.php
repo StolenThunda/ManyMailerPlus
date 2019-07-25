@@ -909,7 +909,7 @@ class Composer
             $service = $this->get_service();
             // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
             if ($debug_msg != "") {
-                $debug_msg .= sprintf(lang('missing_service_credentials'),  $service);
+                if (!is_null($service)) $debug_msg .= sprintf(lang('missing_service_credentials'),  $service);
             }else{
                 $debug_msg = sprintf(lang('sent_service'),  $service);
             }
@@ -1125,7 +1125,7 @@ class Composer
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
-                ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send', true);
+                ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
                 if (!$this->email_send($cache_data)) {
                     if (!$this->deliverEmail($email, $email_address)) {
                         $this->_removeMail($email);
@@ -1142,6 +1142,7 @@ class Composer
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
             }
+            ee()->dbg->c_log($id, __METHOD__.': Cache ID');
             ++$email->total_sent;
         }
         $email->save();
