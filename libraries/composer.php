@@ -9,8 +9,8 @@
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
-use EllisLab\ExpressionEngine\Model\Email\EmailCache;
-// use ManymailerPlus\Model\EmailCachePlus as EmailCache;
+// use EllisLab\ExpressionEngine\Model\Email\EmailCache;
+use ManymailerPlus\Model\EmailCachePlus as EmailCache;
 
 /**
  * Copy of Communicate Controller.
@@ -699,7 +699,8 @@ class Composer
         );
 
         // $email = ee('Model')->get(EXT_SHORT_NAME.':', $cache_data);
-        $email = ee('Model')->get('EmailCache', $cache_data);
+        ee()->dbg->c_log(EXT_NAME.':EmailCachePlus', __METHOD__);
+        $email = ee('Model')->get(EXT_NAME. ':EmailCachePlus', $cache_data);
         $email->removeMemberGroups();
         $this->compose($email);
     }
@@ -835,7 +836,7 @@ class Composer
             'attachments' => $this->attachments,
         );
         ee()->dbg->c_log($cache_data, __METHOD__.': Cache');
-        $email = ee('Model')->make('EmailCache', $cache_data);
+        $email = ee('Model')->make(EXT_SHORT_NAME. ':' . 'EmailCachePlus', $cache_data);
         $email->save();
 
         // Get member group emails
@@ -1003,7 +1004,7 @@ class Composer
         }
 
         // $caches = ee('Model')->get(EXT_SHORT_NAME.'EmailCachePlus', $id)
-        $caches = ee('Model')->get('EmailCache', $id)
+        $caches = ee('Model')->get(EXT_SHORT_NAME. ':' . 'EmailCachePlus', $id)
             ->with('MemberGroups')
             ->all();
 
@@ -1119,7 +1120,7 @@ class Composer
                     'attachments' => $this->attachments,
                 );
 
-                $singleEmail = ee('Model')->make('EmailCache', $cache_data);
+                $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':' . 'EmailCachePlus', $cache_data);
                 $singleEmail->save();
 
                 $cache_data['lookup'] = $record;
@@ -1632,7 +1633,7 @@ class Composer
         }
 
         if (ee()->input->post('bulk_action') == 'remove') {
-            ee('Model')->get('EmailCache', ee()->input->get_post('selection'))->all()->delete();
+            ee('Model')->get(EXT_SHORT_NAME. ':' . 'EmailCachePlus', ee()->input->get_post('selection'))->all()->delete();
             ee()->view->set_message('success', lang('emails_removed'), '');
         }
 
@@ -1661,7 +1662,7 @@ class Composer
         $count = 0;
 
         // $emails =ee('Model')->get(EXT_SHORT_NAME.':');
-        $emails = ee('Model')->get('EmailCache');
+        $emails = ee('Model')->get(EXT_SHORT_NAME. ':' . 'EmailCachePlus');
 
         $search = $table->search;
         if (!empty($search)) {

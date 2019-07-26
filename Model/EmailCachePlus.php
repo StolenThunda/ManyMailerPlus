@@ -8,7 +8,6 @@
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
 namespace Manymailerplus\Model\EmailCachePlus;
-use EllisLab\ExpressionEngine\Model\Email;
 use EllisLab\ExpressionEngine\Service\Model\Model;
 
 /**

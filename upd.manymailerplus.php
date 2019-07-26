@@ -39,7 +39,7 @@ class Manymailerplus_upd {
 
 		$previousInstall = ee()->db->get_where('modules', $mod_data);
 		if ($previousInstall->num_rows() == 0) ee()->db->insert('modules', $mod_data);			
-		return $this->addCsvColumn();
+		return $this->createCache();
 	}	
 	
 
@@ -54,26 +54,23 @@ class Manymailerplus_upd {
 
 		ee()->db->delete('modules', array( 'module_name' => EXT_NAME));
 
-        ee()->load->dbforge();
-		foreach (array('csv_object', 'mailKey') as $column){
-			ee()->dbg->c_log("$column TEST", __METHOD__);
-			if( ee()->db->field_exists($column, 'email_cache')){
-				$result = ee()->dbforge->drop_column('email_cache', $column);
-				ee()->dbg->c_log($result, __METHOD__);
-			}else{
+		ee()->load->dbforge();
+		$sql[] = "DROP TABLE IF EXISTS exp_email_cache_plus";
 
-				ee()->dbg->c_log("$column does not exist", __METHOD__);
-			}
-        }
+		foreach ($sql as $query)
+		{
+			ee()->db->query($query);
+		}
 		return TRUE;
 	}
 
 
 	function update($version = '') 
 	{
-		if(version_compare($version, '0.1.4', '<='))
+		
+		if(version_compare($version, '0.1.5', '>='))
 		{
-			return $this->addCsvColumn();
+			return $this->createCache();
 		}
 		if(version_compare($version, $this->version) === 0)
 		{
@@ -82,29 +79,35 @@ class Manymailerplus_upd {
 		return TRUE;		
 	}	
 
-	function addCsvColumn(){
-		$hasColumns = FALSE;
+	function createCache(){
 		ee()->load->dbforge();
-		$fields = array(
-			'csv_object' => array(
-				'type' => 'JSON'
-			),
-			'mailKey' => array(
-				'type' => 'VARCHAR',
-				'constraint' => 100
-			)
-			);
-		foreach (array_keys($fields) as $column){
-			$hasColumns = ee()->db->field_exists($column, 'email_cache');
-			ee()->dbg->c_log(ee()->db->last_query(), ee()->db->affected_rows()." Rows Affected");
-			ee()->dbg->c_log($column,"Has Column : ".(($hasColumns) ? 'TRUE': 'FALSE'));
-			if ($hasColumns) break;
-		} 
-		
-		if (!$hasColumns) {
-			$result = ee()->dbforge->add_column('email_cache', $fields);
+		$sql[] = "CREATE TABLE IF NOT EXISTS `exp_email_cache_plus`(
+			`cache_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
+  			`cache_date` int(10) unsigned NOT NULL DEFAULT '0',
+			`total_sent` int(6) unsigned NOT NULL,
+			`from_name` varchar(70) COLLATE utf8mb4_unicode_ci NOT NULL,
+			`from_email` varchar(75) COLLATE utf8mb4_unicode_ci NOT NULL,
+			`recipient` text COLLATE utf8mb4_unicode_ci NOT NULL,
+			`cc` text COLLATE utf8mb4_unicode_ci NOT NULL,
+			`bcc` text COLLATE utf8mb4_unicode_ci NOT NULL,
+			`recipient_array` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+			`subject` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
+			`message` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+			`plaintext_alt` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+			`mailtype` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL,
+			`text_fmt` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+			`wordwrap` char(1) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'y',
+			`attachments` mediumtext COLLATE utf8mb4_unicode_ci,
+			`csv_object` json DEFAULT NULL,
+			`mailKey` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+			PRIMARY KEY (`cache_id`)
+			) ENGINE=InnoDB AUTO_INCREMENT=2570 DEFAULT CHARACTER SET ".ee()->db->escape_str(ee()->db->char_set)." COLLATE ".ee()->db->escape_str(ee()->db->dbcollat);
+
+		foreach ($sql as $query)
+		{
+			ee()->db->query($query);
 		}
-		return ee()->db->field_exists('csv_object', 'email_cache');
+		return true;
 	}
 }
 
