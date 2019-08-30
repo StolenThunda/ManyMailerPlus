@@ -170,7 +170,6 @@ $(document).ready(function() {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
     var service_list = $('h2:contains("Services")').next('ul');
-    debugger;
     service_list
         .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
         .addClass('service-list');
