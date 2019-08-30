@@ -1,4 +1,10 @@
-
+vendor/
+src/
+tests/
+phpunit*
+.phpunit*
+*phar*
+composer*
 .vscode/ee.code-snippets
 .vscode/launch.json
 .vscode/settings.json
@@ -4034,3 +4040,4 @@ node_modules/yargs/locales/zh_CN.json
 node_modules/yargs/locales/zh_TW.json
 node_modules/yargs/README.md
 node_modules/yargs/yargs.js
+phpcs.phar
