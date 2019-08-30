@@ -884,7 +884,7 @@ class Composer
 
         //  Store email cache
         $email->recipient_array = $email_addresses;
-        $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
+        // $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
         $email->save();
         $id = $email->cache_id;
 

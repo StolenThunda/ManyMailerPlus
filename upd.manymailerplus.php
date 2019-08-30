@@ -68,7 +68,7 @@ class Manymailerplus_upd {
 	function update($version = '') 
 	{
 		
-		if(version_compare($version, '0.1.5', '>='))
+		if(version_compare($version, '0.1.4', '>='))
 		{
 			return $this->createCache();
 		}
