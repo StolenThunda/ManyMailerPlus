@@ -20,6 +20,7 @@ class Manymailerplus_mcp
         $CI = ee();
         $this->config = array('debug' => $this->debug);
         ee()->load->library('debughelper', $this->config, 'dbg');
+        if (ee()->load->is_loaded('dbg')) ee()->dbg->c_log("Works",null, true);
         ee()->extensions->end_script = true;
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
