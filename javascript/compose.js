@@ -359,11 +359,14 @@ $(document).ready(function () {
             resetRecipients();
             var fileType = /csv.*/;
             var file = evt.target.files[0];
+            debugger
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
                     reader.onload = function (e) {
-                        $('#csv_recipient').val_with_linenum(reader.result);
+                        $('#csv_recipient')
+                            .val_with_linenum(reader.result)
+                            .parents('fieldset').show();
                     };
                     reader.readAsText(file);
                 } else {
@@ -381,12 +384,13 @@ $(document).ready(function () {
     $('input[name=recipient]').prop('readonly', true);
     $('input[name=recipient]').change(countEmails);
     $("select[name='mailtype']").change(messageType);
-
+    $('#csv_recipient').parents('fieldset').toggle();
     $('fieldset[data-control=recipient_review').toggle();
 
     $('select[name=recipient_entry]').change(function () {
-        $('input[name=file_recipient]').parents('fieldset').toggle('slow');
-        $('#csv_recipient').parents('fieldset').toggle('slow');
+        let showTextEntry = (this.value === 'csv_recipient');
+        $('input[name=file_recipient]').parents('fieldset').toggle(!showTextEntry);
+        $('#csv_recipient').parents('fieldset').toggle(showTextEntry);
     });
 
     $('#embed_templates').toggle();
@@ -570,7 +574,10 @@ $sections.each(function (index, section) {
 navigateTo(0); // Start at the beginning
 function resetRecipients(all) {
     if (all) {
-        $('#csv_recipient').val_with_linenum('');
+        $('#csv_recipient')
+            .val_with_linenum('')
+            .parents('fieldset')
+            .toggle($('select[name=recipient_entry]').val() === 'csv_recipient');
         // reset upload
         var file_recip = $('input[name=file_recipient');
         file_recip.wrap('<form>').closest('form').get(0).reset();
