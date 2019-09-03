@@ -1,6 +1,6 @@
 const TLN = {
     eventList: {},
-    update_line_numbers: function(ta, el) {
+    update_line_numbers: function (ta, el) {
         let lines = ta.value.split('\n').length;
         let child_count = el.children.length;
         let difference = lines - child_count;
@@ -20,7 +20,7 @@ const TLN = {
             difference++;
         }
     },
-    append_line_numbers: function(id) {
+    append_line_numbers: function (id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -44,8 +44,8 @@ const TLN = {
             'keydown',
             'keyup'
         ];
-        const __change_hdlr = (function(ta, el) {
-            return function(e) {
+        const __change_hdlr = (function (ta, el) {
+            return function (e) {
                 if (
                     (+ta.scrollLeft === 10 &&
                         (e.keyCode === 37 || e.which === 37 || e.code === 'ArrowLeft' || e.key === 'ArrowLeft')) ||
@@ -58,7 +58,9 @@ const TLN = {
                     e.code === 'Enter' ||
                     e.key === 'Enter' ||
                     e.code === 'NumpadEnter'
-                ) { ta.scrollLeft = 0; }
+                ) {
+                    ta.scrollLeft = 0;
+                }
                 TLN.update_line_numbers(ta, el);
             };
         })(ta, el);
@@ -75,8 +77,8 @@ const TLN = {
             'mousewheel',
             'scroll'
         ];
-        const __scroll_hdlr = (function(ta, el) {
-            return function() {
+        const __scroll_hdlr = (function (ta, el) {
+            return function () {
                 el.scrollTop = ta.scrollTop;
             };
         })(ta, el);
@@ -88,7 +90,7 @@ const TLN = {
             });
         }
     },
-    remove_line_numbers: function(id) {
+    remove_line_numbers: function (id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -101,7 +103,9 @@ const TLN = {
 
         ta.previousSibling.remove();
 
-        if (!TLN.eventList[id]) { return; }
+        if (!TLN.eventList[id]) {
+            return;
+        }
         for (let i = TLN.eventList[id].length - 1; i >= 0; i--) {
             const evt = TLN.eventList[id][i];
             ta.removeEventListener(evt.evt, evt.hdlr);
@@ -109,14 +113,14 @@ const TLN = {
         delete TLN.eventList[id];
     }
 };
-$(document).ready(function() {
+$(document).ready(function () {
     // Set caret position easily in jQuery
     // Written by and Copyright of Luke Morton, 2011
     // Licensed under MIT
-    (function($) {
+    (function ($) {
         // Behind the scenes method deals with browser
         // idiosyncrasies and such
-        $.caretTo = function(el, index) {
+        $.caretTo = function (el, index) {
 
             if (el.createTextRange) {
                 var range = el.createTextRange();
@@ -133,11 +137,13 @@ $(document).ready(function() {
         // jQuery effects.
 
         // Set caret to a particular index
-        $.fn.caretTo = function(index, offset) {
-            return this.queue(function(next) {
+        $.fn.caretTo = function (index, offset) {
+            return this.queue(function (next) {
                 if (isNaN(index)) {
                     var i = $(this).val().indexOf(index);
-                    if (i === -1) { i = $(this).text().indexOf(index); }
+                    if (i === -1) {
+                        i = $(this).text().indexOf(index);
+                    }
                     if (offset === true) {
                         i += index.length;
                     } else if (offset) {
@@ -154,19 +160,19 @@ $(document).ready(function() {
         };
 
         // Set caret to beginning of an element
-        $.fn.caretToStart = function() {
+        $.fn.caretToStart = function () {
             return this.caretTo(0);
         };
 
         // Set caret to the end of an element
-        $.fn.caretToEnd = function() {
-            return this.queue(function(next) {
+        $.fn.caretToEnd = function () {
+            return this.queue(function (next) {
                 $.caretTo(this, $(this).val().length);
                 next();
             });
         };
     })(jQuery);
-    $('input[readonly]').click(function() {
+    $('input[readonly]').click(function () {
         Swal.fire('Invalid!', 'Please enter emails using csv entry (file upload/paste).', 'error');
     });
     var service_list = $('h2:contains("Services")').next('ul');
@@ -175,7 +181,7 @@ $(document).ready(function() {
         .addClass('service-list');
     var active_services = $('#active_services').val();
     if (active_services) {
-        $.each(service_list.children(), function() {
+        $.each(service_list.children(), function () {
             var list_item = $(this).text().toLowerCase();
             if (active_services && active_services.indexOf(list_item) > -1) {
                 $(this).addClass('enabled-service');
@@ -241,13 +247,13 @@ $(document).ready(function() {
         return false;
     }
     $.fn.extend({
-        val_with_linenum: function(v) {
+        val_with_linenum: function (v) {
             return this.each(() => {
                 $(this).val(v).trigger('input');
             });
         }
     });
-    $('body').on('click', '#mc-edits legend', function() {
+    $('body').on('click', '#mc-edits legend', function () {
         $(this).nextAll('div').fadeToggle('slow');
     });
     // hijacks default 'view email' button for SweetAlert2 action!
@@ -257,7 +263,7 @@ $(document).ready(function() {
         var rel = e.target.rel;
         sweetAlertbyID(`.${rel}`);
     });
-    $('body').on('click', '*[data-conditional-modal]', function(e) {
+    $('body').on('click', '*[data-conditional-modal]', function (e) {
         e.preventDefault();
         $('.modal-confirm-remove').hide();
         swal
@@ -276,7 +282,7 @@ $(document).ready(function() {
         $('.app-overlay').removeClass('app-overlay---open');
         return;
     });
-    $('#btnData').on('click', function(e) {
+    $('#btnData').on('click', function (e) {
         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
         Swal.fire({
             title: 'Select Fuction',
@@ -293,7 +299,7 @@ $(document).ready(function() {
             allowOutsideClick: () => !Swal.isLoading(),
             preConfirm: (value) => {
                 return $.post(url + value)
-                    .always(function(jqXHR) {
+                    .always(function (jqXHR) {
                         // debugger
                         var data;
                         if (jqXHR.hasOwnProperty('responseText')) {
@@ -356,7 +362,7 @@ $(document).ready(function() {
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function (e) {
                         $('#csv_recipient').val_with_linenum(reader.result);
                     };
                     reader.readAsText(file);
@@ -378,7 +384,7 @@ $(document).ready(function() {
 
     $('fieldset[data-control=recipient_review').toggle();
 
-    $('select[name=recipient_entry]').change(function() {
+    $('select[name=recipient_entry]').change(function () {
         $('input[name=file_recipient]').parents('fieldset').toggle('slow');
         $('#csv_recipient').parents('fieldset').toggle('slow');
     });
@@ -386,12 +392,14 @@ $(document).ready(function() {
     $('#embed_templates').toggle();
     $('#template_name').parents('fieldset').toggle();
 
-    $('input[name="selection[]"').change(function() {
+    $('input[name="selection[]"').change(function () {
         var name,
             subject,
             message = '';
         var details = $('fieldset#mc-edits');
-        if (details.length > 0) { details.remove(); }
+        if (details.length > 0) {
+            details.remove();
+        }
         if (this.checked) {
             var sections = [];
             var element, attributes, attribute;
@@ -414,7 +422,12 @@ $(document).ready(function() {
                         for (var i = 0; i < attributes.length; i++) {
                             attribute = attributes[i];
                             if (attribute.name.startsWith('mc:')) {
-                                if (attribute.value !== "") { sections.push({ 'edit_section': attribute.value, 'content': element.innerHTML }); }
+                                if (attribute.value !== "") {
+                                    sections.push({
+                                        'edit_section': attribute.value,
+                                        'content': element.innerHTML
+                                    });
+                                }
                                 console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                             }
                         }
@@ -430,7 +443,7 @@ $(document).ready(function() {
 
     function createEC(sections) {
         var email_body = ['main', 'content'];
-        var found = sections.find(function(el) {
+        var found = sections.find(function (el) {
             return ($.inArray(el.edit_section, email_body) !== -1);
         });
         var suggested = (found) ? `(suggested: <b>'${found.edit_section}')</b>` : "";
@@ -471,9 +484,9 @@ $(document).ready(function() {
                 .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
             );
 
-            $('input[name^="mc-check"').change(function() {
+            $('input[name^="mc-check"').change(function () {
                 var chk = this.checked;
-                $('input[name^="mc-check"').not(this).each(function(el) {
+                $('input[name^="mc-check"').not(this).each(function (el) {
                     if (chk) {
                         $(this)
                             .attr('checked', false)
@@ -492,7 +505,7 @@ $(document).ready(function() {
         });
 
     }
-    $('input[name=use_templates]').change(function() {
+    $('input[name=use_templates]').change(function () {
         var toggle = this.value === 'y' ? 'slow' : false;
         $('#embed_templates').fadeToggle(toggle);
         $('#template_name').parents('fieldset').fadeToggle(toggle);
@@ -507,7 +520,7 @@ $(document).ready(function() {
         $('select[name=recipient_entry]').val('file_recipient').trigger('change');
     });
 
-    $('body').on('click', '*[data-conditional-modal]', function(e) {
+    $('body').on('click', '*[data-conditional-modal]', function (e) {
         e.preventDefault();
     });
 });
@@ -530,18 +543,18 @@ function curIndex() {
 }
 
 // Previous button is easy, just go back
-$('.form-navigation .previous').click(function() {
+$('.form-navigation .previous').click(function () {
     navigateTo(curIndex() - 1);
 });
 
 // Next button goes forward iff current block validates
-$('.form-navigation .next').click(function() {
+$('.form-navigation .next').click(function () {
     $('.demo-form')
         .parsley()
         .whenValidate({
             group: 'block-' + curIndex()
         })
-        .done(function() {
+        .done(function () {
             navigateTo(curIndex() + 1);
         });
 });
@@ -551,7 +564,7 @@ function getCurrentSlug() {
 }
 
 // Prepare sections by setting the `data-parsley-group` attribute to 'block-0', 'block-1', etc.
-$sections.each(function(index, section) {
+$sections.each(function (index, section) {
     $(section).find(':input').attr('data-parsley-group', 'block-' + index);
 });
 navigateTo(0); // Start at the beginning
@@ -599,7 +612,9 @@ function countEmails() {
     // preserve  original label just append count string
     if (origText.includes('Count')) {
         var idx = origText.indexOf(' (Count: ');
-        if (idx > -1) { origText = origText.substr(0, idx); }
+        if (idx > -1) {
+            origText = origText.substr(0, idx);
+        }
     }
     var countText = count > 0 ? ` (Count: ${count})` : '';
     label.text(origText + countText);
@@ -627,7 +642,7 @@ function getEmails(data) {
     if (csvObj) {
         $('input[name="csv_object"]').val(csvObj.data_string);
         $("input[name='recipient_count']").val(csvObj.recipient_count);
-        $("input[name='mailKey']").val(csvObj.mailkey);
+        $("input[name='mailKey']").val(csvObj.mailKey);
         $('input[name=recipient]').val(csvObj.email_list);
         showPlaceholders(csvObj.headers);
         countEmails();
@@ -649,7 +664,9 @@ function validate_csv(data) {
 
     // validate required columns
     var required_columns = validateRequiredKeys(data.headers);
-    if (required_columns.errors.length > 0) { errDetail = errDetail.concat(required_columns.errors); }
+    if (required_columns.errors.length > 0) {
+        errDetail = errDetail.concat(required_columns.errors);
+    }
     header_valid = required_columns.validHeader;
     email_column = required_columns.email_column;
 
@@ -665,7 +682,9 @@ function validate_csv(data) {
                 emails.push(current_email.trim());
             } else {
                 var tmp = 'Column (' + email_column.original + '): does not contain email data';
-                if (!errDetail.includes(tmp)) { errDetail.unshift(tmp); }
+                if (!errDetail.includes(tmp)) {
+                    errDetail.unshift(tmp);
+                }
             }
         }
         for (var itm in row) {
@@ -675,13 +694,21 @@ function validate_csv(data) {
         tokenized_obj.push(newRow);
     });
 
-    if (!header_valid) { errs.unshift('Invalid Header'); }
-    if (!email_column || !file_contains_emails) { errDetail.unshift('No Valid Email Column Header Found'); }
-    if (file_contains_emails && !email_column) { errDetail.unshift('Email column is mislabeled'); }
-    if (!required_columns) { errDetail.unshift('Required Columns: email, first_name, last_name'); }
+    if (!header_valid) {
+        errs.unshift('Invalid Header');
+    }
+    if (!email_column || !file_contains_emails) {
+        errDetail.unshift('No Valid Email Column Header Found');
+    }
+    if (file_contains_emails && !email_column) {
+        errDetail.unshift('Email column is mislabeled');
+    }
+    if (!required_columns) {
+        errDetail.unshift('Required Columns: email, first_name, last_name');
+    }
     if (errs.length === 0) {
         return {
-            mailkey: required_columns.email_column.val,
+            mailKey: required_columns.email_column.val,
             headers: Object.values(required_columns.headerKeyMap),
             data_string: JSON.stringify(tokenized_obj),
             data: tokenized_obj,
@@ -750,7 +777,9 @@ function validateRequiredKeys(data) {
     };
     var invalidColumns = Object.keys(reqKeys).filter((k) => {
         var isNotSet = reqKeys[k] === '' || reqKeys[k] === false;
-        if (isNotSet) { reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`); }
+        if (isNotSet) {
+            reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);
+        }
     });
     reqKeys.validHeader = reqKeys.errors.length === 0 && header_has_no_email_data;
     return reqKeys;
@@ -798,7 +827,7 @@ function showPlaceholders(headers) {
         var test = $('<button/>', {
                 class: 'btn placeholder',
                 text: el,
-                click: function() {
+                click: function () {
                     var plain = $("textarea[name='plaintext_alt']");
                     var msg = $("textarea[name='message']");
                     var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
@@ -806,7 +835,7 @@ function showPlaceholders(headers) {
                     // Insert text into textarea at cursor position and replace selected text
                     var cursorPosStart = message.prop('selectionStart');
                     var cursorPosEnd = message.prop('selectionEnd');
-                    var insertedText = $(this).text();
+                    var insertedText = $(this).text() + " ";
                     var v = message.val();
                     var textBefore = v.substring(0, cursorPosStart);
                     var textAfter = v.substring(cursorPosEnd, v.length);
@@ -946,9 +975,9 @@ function initTable(data) {
     return $('#csv_content').addClass('fixed_header display').DataTable({
         defaultContent: '',
         dom: '<"top"i>rt<"bottom"flp><"clear">',
-        initComplete: function() {
+        initComplete: function () {
             var api = this.api();
-            api.$('td').click(function() {
+            api.$('td').click(function () {
                 api.search(this.innerHTML).draw();
             });
         },
@@ -1014,7 +1043,7 @@ function sweetAlertbyID(id) {
 
 function dumpHiddenVals() {
     var msg = $('<table/>');
-    $('input[type="hidden"]').each(function() {
+    $('input[type="hidden"]').each(function () {
         var val = $(this).val();
         val = val.length > 100 ? val.substring(0, 100) + '...' : val;
         console.log($(this).attr('name') + ': ' + $(this).val());
@@ -1030,7 +1059,7 @@ function dumpHiddenVals() {
 
 function dumpFormVals() {
     var msg = $('<table/>');
-    $('form :input').each(function() {
+    $('form :input').each(function () {
         var val = this.value;
         val = val.length > 100 ? val.substring(0, 100) + '...' : val;
         val = (val === 'on' || val === 'off') ? this.checked : val;
