@@ -9,6 +9,12 @@ composer*
 .vscode/launch.json
 .vscode/settings.json
 .vscode/sftp.json
+vendor/
+tests/
+src/
+.phpunit*
+phpunit*
+composer*
 .jshintrc
 View/email/csv-field.php
 manymailerplus/View/sidebar_view.php

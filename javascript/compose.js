@@ -229,7 +229,7 @@ $(document).ready(function () {
         //     }
         // });
     } else {
-        service_list.hide('fast');
+        service_list.hide();
     }
 
     function isJson(item) {

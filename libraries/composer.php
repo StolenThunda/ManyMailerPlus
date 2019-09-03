@@ -926,7 +926,7 @@ class Composer
         ee()->dbg->c_log($email_addresses, __METHOD__);
         //  Store email cache
         $email->recipient_array = $email_addresses;
-        $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
+        // $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
         $email->save();
         $id = $email->cache_id;
 
