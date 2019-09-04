@@ -30,25 +30,11 @@ class Debughelper
     {
         error_reporting(E_ALL);
         ini_set('display_errors', null);
-        $this->debug = (isset($config['debug']) ? $config['debug'] : false);
-        // $old_error_handler = set_error_handler($this->genericErrorHandler);
-
-        // if ($params instanceof SOMETHING) {
-        //     // single parameter, of object type SOMETHING
-        // } else if (is_string($params)) {
-        //     // single argument given as string
-        // } else if (is_array($params)) {
-        //     // params could be an array of properties like array('x' => 'x1', 'y' => 'y1')
-        // } else if (func_num_args() == 3) {
-        //     $args = func_get_args();
-
-        //     // 3 parameters passed
-        // } else if (func_num_args() == 5) {
-        //     $args = func_get_args();
-        //     // 5 parameters passed
-        // } else {
-        //     if ( ! is_null($params)) $this->sections = $params;
-        // }
+        foreach ($config as $key => $value) {
+            if (in_array($key, array('debug'))){
+                 $this->{$key} = $value;
+            }           
+        }
     }
 
     public function add_message($str = '', $type = 'content', $method = 'log', $style = null, $obj = null)
@@ -162,7 +148,6 @@ class Debughelper
                 }
            }
         }
-
         return $this->scriptWrap($this->_string);
     }
 
@@ -191,16 +176,15 @@ class Debughelper
         );
 
         $this->_generate_messages($this->_get_stack_info($valueObj));
-
+        //  ee()->logger->developer((string) $this->messages);
+        //  ee()->logger->developer(mb_strimwidth("ADDING MESSAGE: ".$this, 0, 50000, '...(truncated)'));
         if ($this->debug) {
             ob_start();
             echo $this;
             $value = ob_get_contents();
         }
 
-        if ($exit) {
-            exit();
-        }
+        if ($exit) exit();
     }
 
     public function lastClass($bt = array(), $offset = 0)
@@ -352,7 +336,7 @@ class Debughelper
 
     public function scriptWrap($str)
     {
-        return ($str === '') ? '' : "<script async='true' defer='true'>{$str}</script>";
+        return ($str !== '') ?  "<script async='true' defer='true'>{$str}</script>" : '';
     }
 
     public function genericErrorHandler($errno, $errstr, $errfile, $errline)

@@ -57,6 +57,7 @@ class Composer
     private function extractBracketedEmail($str = NULL){
         $emails = explode(',', $str);
         ee()->dbg->c_log($str, __METHOD__);
+        $matches = null;
         foreach($emails as $email){
             preg_match_all($this->email_regex, $email, $matches, PREG_SET_ORDER, 0);
             foreach($matches as $key=>$match ){
@@ -149,6 +150,7 @@ class Composer
 
         $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
         ee()->dbg->c_log($this->debug, __METHOD__);
+      
         $vars['sections'] = array(
             'sender_info' => array(
                 array(
@@ -254,7 +256,7 @@ class Composer
                 ),
             ),
             'compose_email_detail' => array(
-                array(
+                  array(
                     'fields' => array(
                         'btn' => array(
                             'type' => ($this->debug) ? 'html' : 'hidden',
@@ -263,33 +265,6 @@ class Composer
                         'btn2' => array(
                             'type' => ($this->debug) ? 'html' : 'hidden',
                             'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn" onClick="dumpFormVals()"'),
-                        ),
-                    ),
-                        ),
-                array(
-                    'title' => 'use_templates',
-                    'desc' => 'use_templates_desc',
-                    'fields' => array(
-                        'use_template' => array(
-                            'type' => 'html',
-                            'content' => form_yes_no_toggle('use_templates', false), //.BR.BR. $template_view->render($this->view_templates()),
-                        ),
-                        'template_list' => array(
-                            'type' => 'html',
-                            'content' => $template_view->render($this->view_templates()),
-                        ),
-                    ),
-                ),
-                array(
-                    'title' => 'template_name',
-                    'desc' => '_template_name',
-                    'fields' => array(
-                        'template_name' => array(
-                            'type' => 'html',
-                            'content' => form_input(array(
-                                'id' => 'template_name',
-                                'name' => 'template_name',
-                            )),
                         ),
                     ),
                 ),
@@ -372,6 +347,36 @@ class Composer
         //         ),
         //     );
         // }
+        $temp_vars = $this->view_templates();
+        if (count($temp_vars['table']['data']) > 0) {
+            array_unshift($vars['sections']['compose_email_detail'], array(
+                'title' => 'use_templates',
+                'desc' => 'use_templates_desc',
+                'fields' => array(
+                    'use_template' => array(
+                        'type' => 'html',
+                        'content' => form_yes_no_toggle('use_templates', false), 
+                    ),
+                    'template_list' => array(
+                        'type' => 'html',
+                        'content' => $template_view->render($this->view_templates()),
+                    ),
+                ),
+            ),
+            array(
+                'title' => 'template_name',
+                'desc' => '_template_name',
+                'fields' => array(
+                    'template_name' => array(
+                        'type' => 'html',
+                        'content' => form_input(array(
+                            'id' => 'template_name',
+                            'name' => 'template_name',
+                        )),
+                    ),
+                ),
+            ));
+        }
         $vars['cp_page_title'] = lang('compose_heading');
         // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
@@ -1165,10 +1170,6 @@ class Composer
                     'mailKey' => $this->csv_email_column
                 );
                 ee()->dbg->c_log($cache_data, __METHOD__);   
-                $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
-
-                $singleEmail->save();
-
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
@@ -1431,7 +1432,7 @@ class Composer
 
     public function get_service()
     {
-        
+        $settings = null;
         if (!isset($this->service)) {
             $settings = ee()->mail_svc->get_settings();
             $service = ucfirst(ee()->mail_svc->get_initial_service());

@@ -5,9 +5,9 @@ require_once(PATH_THIRD.EXT_SHORT_NAME.'/config.php');
 class Manymailerplus_upd {
     var $version = EXT_VERSION;
 
-	function __construct(){
-		if (!ee()->load->is_loaded('dbg')) ee()->load->library('debughelper', null, 'dbg');
-	}
+	// function __construct(){
+	// 	if (!ee()->load->is_loaded('dbg')) ee()->load->library('debughelper', array('debug'=>true), 'dbg');
+	// }
 	function ee_version()
 	{
 		return substr(APP_VER, 0, 1);

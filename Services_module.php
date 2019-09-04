@@ -40,7 +40,7 @@ class Services_module
     public $is_func = null;
     public $service_order = array();
 
-    public function __construct($settings = '')
+    public function __construct($settings)
     {
         ee()->load->helper('MessageArray');
         ee()->load->helper('html');

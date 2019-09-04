@@ -359,7 +359,6 @@ $(document).ready(function () {
             resetRecipients();
             var fileType = /csv.*/;
             var file = evt.target.files[0];
-            debugger
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();

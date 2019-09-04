@@ -6,11 +6,8 @@ if (!defined('BASEPATH')) {
 
 class Manymailerplus_mcp
 {
-    private $version = EXT_VERSION;
     private $vars = array();
-    private $config = array();
-    // private $debug = true;
-    private $debug = false;
+    private $config =  array('debug' => TRUE);
 
     /**
      * Constructor.
@@ -18,9 +15,7 @@ class Manymailerplus_mcp
     public function __construct()
     {
         $CI = ee();
-        $this->config = array('debug' => $this->debug);
         ee()->load->library('debughelper', $this->config, 'dbg');
-        if (ee()->load->is_loaded('dbg')) ee()->dbg->c_log("Works",null, true);
         ee()->extensions->end_script = true;
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
