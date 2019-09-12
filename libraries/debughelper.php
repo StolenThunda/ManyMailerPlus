@@ -158,27 +158,28 @@ class Debughelper
 
     public function c_log($value, $title = null, $exit = false)
     {
-        $this->_string = '';
-        $this->messages = array();
-        $needs_encoded = (is_array($value) or is_object($value));
-        if ($needs_encoded) {
-            $value = json_encode($value);
-        } elseif (is_bool($value)) {
-            $value = $value ? 'TRUE' : 'FALSE';
-        } else { // $value stays the same
-            $value = $value;
-        }
-        $valueObj = array(
-            'title' => $title,
-            'value' => $value,
-            'type' => gettype($value),
-            'exit' => $exit,
-        );
-
-        $this->_generate_messages($this->_get_stack_info($valueObj));
-        //  ee()->logger->developer((string) $this->messages);
-        //  ee()->logger->developer(mb_strimwidth("ADDING MESSAGE: ".$this, 0, 50000, '...(truncated)'));
         if ($this->debug) {
+            $this->_string = '';
+            $this->messages = array();
+            $needs_encoded = (is_array($value) or is_object($value));
+            if ($needs_encoded) {
+                $value = json_encode($value);
+            } elseif (is_bool($value)) {
+                $value = $value ? 'TRUE' : 'FALSE';
+            } else { // $value stays the same
+                $value = $value;
+            }
+            $valueObj = array(
+                'title' => $title,
+                'value' => $value,
+                'type' => gettype($value),
+                'exit' => $exit,
+            );
+
+            $this->_generate_messages($this->_get_stack_info($valueObj));
+            //  ee()->logger->developer((string) $this->messages);
+            //  ee()->logger->developer(mb_strimwidth("ADDING MESSAGE: ".$this, 0, 50000, '...(truncated)'));
+        
             ob_start();
             echo $this;
             $value = ob_get_contents();
