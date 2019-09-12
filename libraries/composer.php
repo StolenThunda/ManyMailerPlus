@@ -260,11 +260,11 @@ class Composer
                     'fields' => array(
                         'btn' => array(
                             'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump', 'Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"'),
+                            'content' => form_button('btnDump', 'Dump Hidden Values', 'class="btn" onClick="ManyMailerPlus_mod.dumpHiddenVals()"'),
                         ),
                         'btn2' => array(
                             'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn" onClick="dumpFormVals()"'),
+                            'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn" onClick="ManyMailerPlus_mod.dumpFormVals()"'),
                         ),
                     ),
                 ),
