@@ -1,5 +1,5 @@
 class CSV_Validator {
-    constructor() {}
+    constructor() { }
 
     validate_csv(data) {
         var errs = [];
@@ -73,7 +73,7 @@ class CSV_Validator {
             let new_csv = current_csv.join('\n');
             $('#csv_recipient').val_with_linenum(new_csv);
 
-            return null;
+            return { errors: errs, detail: errDetail, };
         }
     }
 
@@ -85,7 +85,7 @@ class CSV_Validator {
             if (regX.test(testColumn)) {
                 foundColumn.push({
                     original: csvColumn.trim(),
-                    val: tokenizeKey(testColumn)
+                    val: this.tokenizeKey(testColumn)
                 });
             }
         });
@@ -114,14 +114,14 @@ class CSV_Validator {
             return new RegExp(arr.join('|'), 'i');
         };
         var header_has_no_email_data = data.filter((word) => this.isValidEmailAddress(word)).length === 0;
-        var email_column = intersection(data, regexify(validHeaders.email_column));
-        var first = intersection(data, regexify(validHeaders.first));
-        var last = intersection(data, regexify(validHeaders.last));
+        var email_column = this.intersection(data, regexify(validHeaders.email_column));
+        var first = this.intersection(data, regexify(validHeaders.first));
+        var last = this.intersection(data, regexify(validHeaders.last));
         var reqKeys = {
             email_column: email_column.length > 0 ? email_column[0] : false,
             first: first.length > 0 ? first[0] : '',
             last: last.length > 0 ? last[0] : '',
-            headerKeyMap: header_has_no_email_data ? genKeyMap(data) : data,
+            headerKeyMap: header_has_no_email_data ? this.genKeyMap(data) : data,
             errors: []
         };
         var invalidColumns = Object.keys(reqKeys).filter((k) => {
@@ -135,11 +135,7 @@ class CSV_Validator {
     }
 
     genKeyMap(data) {
-        var obj = {};
-        Object.values(data).forEach((key) => {
-            obj[key] = tokenizeKey(key);
-        });
-        return obj;
+        return this.tokenizeKeys(data);
     }
 
     isValidEmailAddress(emailAddress) {
@@ -148,9 +144,9 @@ class CSV_Validator {
     }
 
     tokenizeKeys(data) {
-        var newData = [];
+        var newData = {};
         data.forEach((key) => {
-            newData.push(tokenizeKey(key));
+            newData[key] = this.tokenizeKey(key);
         });
         return newData;
     }
