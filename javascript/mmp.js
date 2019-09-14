@@ -1,6 +1,6 @@
 const TLN = {
     eventList: {},
-    update_line_numbers: function (ta, el) {
+    update_line_numbers: function(ta, el) {
         'use strict';
         let lines = ta.value.split('\n').length;
         let child_count = el.children.length;
@@ -21,7 +21,8 @@ const TLN = {
             difference++;
         }
     },
-    append_line_numbers: function (id) {
+    append_line_numbers: function(id) {
+        'use strict';
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -45,8 +46,8 @@ const TLN = {
             'keydown',
             'keyup'
         ];
-        const __change_hdlr = (function (ta, el) {
-            return function (e) {
+        const __change_hdlr = (function(ta, el) {
+            return function(e) {
                 if (
                     (+ta.scrollLeft === 10 &&
                         (e.keyCode === 37 || e.which === 37 || e.code === 'ArrowLeft' || e.key === 'ArrowLeft')) ||
@@ -78,8 +79,8 @@ const TLN = {
             'mousewheel',
             'scroll'
         ];
-        const __scroll_hdlr = (function (ta, el) {
-            return function () {
+        const __scroll_hdlr = (function(ta, el) {
+            return function() {
                 el.scrollTop = ta.scrollTop;
             };
         })(ta, el);
@@ -91,7 +92,7 @@ const TLN = {
             });
         }
     },
-    remove_line_numbers: function (id) {
+    remove_line_numbers: function(id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -119,10 +120,10 @@ class ManyMailerPlus_mod {
         'use strict';
         this.b_isApiAvailable = apiAvailable || false;
         this.b_swalLoaded = Swal !== undefined;
-        this.b_inEmailFunctions = (function () {
+        this.b_inEmailFunctions = (function() {
             return window.location.href.split('/').slice(-2)[0] === 'email';
         })();
-        this.csvObj = {};
+        this.theCSV_obj = {};
         this.doc_body = $('body');
         // orig EE spec
         this.mail_type = $("select[name='mailtype']"); // markdown,html,plain
@@ -150,7 +151,7 @@ class ManyMailerPlus_mod {
         this.csvValidator = new CSV_Validator();
         this.Stepper = new Stepper($('.form-section'));
         $.fn.extend({
-            val_with_linenum: function (v) {
+            val_with_linenum: function(v) {
                 return this.each(() => {
                     $(this).val(v).trigger('input');
                 });
@@ -163,7 +164,47 @@ class ManyMailerPlus_mod {
         this.initializePage();
     }
 
-    // SweetAlert2 messenger
+    set csvObj(results) {
+        var data = Object.assign({}, results);
+        data.headers = results.meta.fields;
+        // data.errors = results.errors;
+        // data.data = results.data;
+
+        if (data.data.length === 0) {
+            this.showPapaErrors(data.errors);
+            return;
+        }
+        data.dtCols = [];
+        data.dtData = [];
+
+        data.headers.forEach((col) => {
+            data.dtCols.push({
+                title: col
+            });
+        });
+
+        data.data.forEach((itm) => {
+            var itmVals = Object.values(itm);
+            if (itmVals.length !== data.dtCols.length) {
+                var diff = data.dtCols.length - itmVals.length;
+                do {
+                    itmVals.push('');
+                    diff--;
+                } while (diff > 0);
+            }
+            data.dtData.push(itmVals);
+        });
+
+        data.string = Papa.unparse({
+            fields: data.headers,
+            data: data.dtData
+        });
+        this.theCSV_obj = data;
+    }
+    get csvObj() {
+            return this.theCSV_obj;
+        }
+        // SweetAlert2 messenger
     show_message(config) {
         if (Swal !== undefined) {
             Swal.fire(config);
@@ -174,14 +215,14 @@ class ManyMailerPlus_mod {
     }
 
     sweetAlertbyID(id) {
-        var html = $(id).html();
-        var title = $($.parseHTML(html)).find('h1').text();
-        var info = $($.parseHTML(html)).find('.txt-wrap').html();
-        this.show_message({ title: title, html: info, type: 'info' });
-    }
-    /**
-     * set all events for dom elements
-     */
+            var html = $(id).html();
+            var title = $($.parseHTML(html)).find('h1').text();
+            var info = $($.parseHTML(html)).find('.txt-wrap').html();
+            this.show_message({ title: title, html: info, type: 'info' });
+        }
+        /**
+         * set all events for dom elements
+         */
     initializePage() {
         this.toggleInitState(false).init_service_list().init_dom_events();
         if (this.b_isApiAvailable) {
@@ -204,7 +245,7 @@ class ManyMailerPlus_mod {
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function (e) {
+                    reader.onload = function(e) {
                         this.val_with_linenum(reader.result);
                         this.con_csv_recipient.show();
                     }.bind(this);
@@ -225,10 +266,10 @@ class ManyMailerPlus_mod {
     }
 
     init_placeholder_funcs() {
-        (function ($) {
+        (function($) {
             // Behind the scenes method deals with browser
             // idiosyncrasies and such
-            $.caretTo = function (el, index) {
+            $.caretTo = function(el, index) {
                 if (el.createTextRange) {
                     var range = el.createTextRange();
                     range.move('character', index);
@@ -244,8 +285,8 @@ class ManyMailerPlus_mod {
             // jQuery effects.
 
             // Set caret to a particular index
-            $.fn.caretTo = function (index, offset) {
-                return this.queue(function (next) {
+            $.fn.caretTo = function(index, offset) {
+                return this.queue(function(next) {
                     if (isNaN(index)) {
                         var i = $(this).val().indexOf(index);
                         if (i === -1) {
@@ -267,13 +308,13 @@ class ManyMailerPlus_mod {
             };
 
             // Set caret to beginning of an element
-            $.fn.caretToStart = function () {
+            $.fn.caretToStart = function() {
                 return this.caretTo(0);
             };
 
             // Set caret to the end of an element
-            $.fn.caretToEnd = function () {
-                return this.queue(function (next) {
+            $.fn.caretToEnd = function() {
+                return this.queue(function(next) {
                     $.caretTo(this, $(this).val().length);
                     next();
                 });
@@ -283,117 +324,117 @@ class ManyMailerPlus_mod {
     }
 
     init_dom_events() {
-        this.doc_body
-            .on('click', '*[data-conditional-modal]', function (e) {
-                e.preventDefault();
-                $('.modal-confirm-remove').hide();
-                swal
-                    .fire({
-                        type: 'warning',
-                        html: $('.modal-confirm-remove').find('.form-standard'),
-                        showCloseButton: true,
-                        showCancelButton: false,
-                        showConfirmButton: false
-                    })
-                    .then((result) => {
-                        if (result.value) {
-                            this.show_message({
-                                title: 'Deleted!',
-                                html: 'Your file has been deleted.',
-                                type: 'success'
-                            });
-                        }
-                    });
-                $('.app-overlay').removeClass('app-overlay---open');
-                return;
-            })
-            .on('click', '#mc-edits legend', function () {
-                $(this).nextAll('div').fadeToggle('slow');
-            })
-            .bind(this);
-        if (this.b_inEmailFunctions) {
-            // hijacks default 'view email' button for SweetAlert2 action!
-            $('a.m-link')
-                .bind('click', (e) => {
+            this.doc_body
+                .on('click', '*[data-conditional-modal]', function(e) {
                     e.preventDefault();
-                    e.stopImmediatePropagation();
-                    var rel = e.target.rel;
-                    this.sweetAlertbyID(`.${rel}`);
+                    $('.modal-confirm-remove').hide();
+                    swal
+                        .fire({
+                            type: 'warning',
+                            html: $('.modal-confirm-remove').find('.form-standard'),
+                            showCloseButton: true,
+                            showCancelButton: false,
+                            showConfirmButton: false
+                        })
+                        .then((result) => {
+                            if (result.value) {
+                                this.show_message({
+                                    title: 'Deleted!',
+                                    html: 'Your file has been deleted.',
+                                    type: 'success'
+                                });
+                            }
+                        });
+                    $('.app-overlay').removeClass('app-overlay---open');
+                    return;
+                })
+                .on('click', '#mc-edits legend', function() {
+                    $(this).nextAll('div').fadeToggle('slow');
                 })
                 .bind(this);
-            this.mail_type[0].addEventListener(
-                'change',
-                function (e) {
-                    this.change_mail_type(e);
-                }.bind(this),
-                false
-            );
+            if (this.b_inEmailFunctions) {
+                // hijacks default 'view email' button for SweetAlert2 action!
+                $('a.m-link')
+                    .bind('click', (e) => {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        var rel = e.target.rel;
+                        this.sweetAlertbyID(`.${rel}`);
+                    })
+                    .bind(this);
+                this.mail_type[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.change_mail_type(e);
+                    }.bind(this),
+                    false
+                );
 
-            this.sel_csv_entry[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_toggle_csv_entry(e);
-                }.bind(this),
-                false
-            );
+                this.sel_csv_entry[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_toggle_csv_entry(e);
+                    }.bind(this),
+                    false
+                );
 
-            this.csv_recipient
-                .bind('interact', (e) => {
-                    if (e.currentTarget.value === '') {
-                        TLN.remove_line_numbers('csv_recipient');
-                    } else {
-                        TLN.append_line_numbers('csv_recipient');
-                    }
-                })
-                .wrap('<div id="csv_recipient_wrapper" ></div>');
-            this.file_recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_load_csv_file(e);
-                }.bind(this),
-                false
-            );
-            this.recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.countEmails();
-                }.bind(this),
-                false
-            );
-            $('input[name=use_templates]')[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_toggle_templates(e);
-                }.bind(this),
-                false
-            );
-            $('[name$=linenum], #reset')[0].addEventListener(
-                'click',
-                function (e) {
-                    this.resetRecipients(true);
-                }.bind(this),
-                false
-            );
+                this.csv_recipient
+                    .bind('interact', (e) => {
+                        if (e.currentTarget.value === '') {
+                            TLN.remove_line_numbers('csv_recipient');
+                        } else {
+                            TLN.append_line_numbers('csv_recipient');
+                        }
+                    })
+                    .wrap('<div id="csv_recipient_wrapper" ></div>');
+                this.file_recipient[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_load_csv_file(e);
+                    }.bind(this),
+                    false
+                );
+                this.recipient[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.countEmails();
+                    }.bind(this),
+                    false
+                );
+                $('input[name=use_templates]')[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_toggle_templates(e);
+                    }.bind(this),
+                    false
+                );
+                $('[name$=linenum], #reset')[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.resetRecipients(true);
+                    }.bind(this),
+                    false
+                );
 
-            $('button[name=convert_csv]')[0].addEventListener(
-                'click',
-                function (e) {
-                    this.evt_convert_csv(e);
-                }.bind(this),
-                false
-            );
+                $('button[name=convert_csv]')[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.evt_convert_csv(e);
+                    }.bind(this),
+                    false
+                );
 
-            this.tmp_selections[0].addEventListener(
-                'click',
-                function (e) {
-                    this.evt_select_template(e);
-                }.bind(this),
-                false
-            );
+                this.tmp_selections[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.evt_select_template(e);
+                    }.bind(this),
+                    false
+                );
+            }
+            return this;
         }
-        return this;
-    }
-    // BEGIN EVENT FUNCTIONS
+        // BEGIN EVENT FUNCTIONS
     evt_load_csv_file(evt) {
         this.resetRecipients();
         var fileType = /csv.*/;
@@ -401,7 +442,7 @@ class ManyMailerPlus_mod {
         if (file) {
             if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                 var reader = new FileReader();
-                reader.onload = function (e) {
+                reader.onload = function(e) {
                     this.val_with_linenum(reader.result);
                     this.show_csv_recipient_fieldset(true);
                 }.bind(this);
@@ -435,58 +476,59 @@ class ManyMailerPlus_mod {
         this.con_csv_recipient.toggle(showTextEntry);
     }
     evt_select_template() {
-        var name,
-            subject,
-            message = '';
-        var details = $('fieldset#mc-edits');
-        if (details.length > 0) {
-            details.remove();
-        }
-        if (this.checked) {
-            var sections = [];
-            var element, attributes, attribute;
-            name = this.value;
-            subject = this.dataset.confirm;
-            var choice = document.getElementById(name + '-code');
-            if (choice !== null) {
-                $('input[name="selection[]"]').not(this).attr('checked', false).parents('tr').removeClass('selected');
-                message = choice.innerHTML;
-                var test_element = document.createElement('div');
-                test_element.innerHTML = message;
-                var list = test_element.getElementsByTagName('*');
-                for (var j = 0; j < list.length; j++) {
-                    element = list[j];
-                    attributes = element.attributes;
-                    if (element.attributes) {
-                        for (var i = 0; i < attributes.length; i++) {
-                            attribute = attributes[i];
-                            if (attribute.name.startsWith('mc:')) {
-                                if (attribute.value !== '') {
-                                    sections.push({
-                                        edit_section: attribute.value,
-                                        content: element.innerHTML
-                                    });
+            var name,
+                subject,
+                message = '';
+            var details = $('fieldset#mc-edits');
+            if (details.length > 0) {
+                details.remove();
+            }
+            if (this.checked) {
+                var sections = [];
+                var element, attributes, attribute;
+                name = this.value;
+                subject = this.dataset.confirm;
+                var choice = document.getElementById(name + '-code');
+                if (choice !== null) {
+                    $('input[name="selection[]"]').not(this).attr('checked', false).parents('tr').removeClass('selected');
+                    message = choice.innerHTML;
+                    var test_element = document.createElement('div');
+                    test_element.innerHTML = message;
+                    var list = test_element.getElementsByTagName('*');
+                    for (var j = 0; j < list.length; j++) {
+                        element = list[j];
+                        attributes = element.attributes;
+                        if (element.attributes) {
+                            for (var i = 0; i < attributes.length; i++) {
+                                attribute = attributes[i];
+                                if (attribute.name.startsWith('mc:')) {
+                                    if (attribute.value !== '') {
+                                        sections.push({
+                                            edit_section: attribute.value,
+                                            content: element.innerHTML
+                                        });
+                                    }
+                                    console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                                 }
-                                console.log(attribute.name + '(' + element.nodeType + ')', '=>', attribute.value);
                             }
                         }
                     }
+                    this.create_editable_content(sections);
                 }
-                this.create_editable_content(sections);
+                $('legend').trigger('click');
             }
-            $('legend').trigger('click');
+            this.tmp_name.val(name);
+            $('input[name=subject]').val(subject);
         }
-        this.tmp_name.val(name);
-        $('input[name=subject]').val(subject);
-    }
-    /// End EVENT FUNCTIONS
+        /// End EVENT FUNCTIONS
 
     prep_data_for_parse() {
         // remove validation errors
         var arr_current_csv = this.get_csv_recip(true);
         if (arr_current_csv[0] === arr_current_csv[0].toUpperCase()) {
+            // remove possible error string IN ALL CAPS
             arr_current_csv.shift();
-            this.val_with_linenum(current_csv.join('\n'));
+            this.val_with_linenum(arr_current_csv.join('\n'));
             arr_current_csv = this.get_csv_recip(true);
         }
         if (arr_current_csv.length < 1) {
@@ -496,7 +538,7 @@ class ManyMailerPlus_mod {
             });
             return;
         }
-        return arr_current_csv;
+        return arr_current_csv.join('\n');
     }
     toggleInitState(show) {
         if (this.b_inEmailFunctions) {
@@ -506,7 +548,7 @@ class ManyMailerPlus_mod {
             this.con_embed_tmps.toggle(show);
             this.con_tmp_name.toggle(show);
             this.recipient.prop('readonly', true);
-            this.recipient[0].addEventListener('click', function (e) {
+            this.recipient[0].addEventListener('click', function(e) {
                 this.show_message({
                     title: 'Invalid!',
                     html: 'Please enter emails using csv entry (file upload/paste).',
@@ -519,56 +561,19 @@ class ManyMailerPlus_mod {
     }
     parse_csv_data(str_data) {
         str_data = this.prep_data_for_parse(str_data);
-        // config
-        let Papa_config = {
+        Papa.parse(str_data, {
             header: true,
+            quoteChar: '',
             skipEmptyLines: 'greedy',
             error: (e, file) => {
                 this.showPapaErrors(data.errors);
                 return;
             },
             complete: (results, file) => {
-                var data = {};
-                data.headers = results.meta.fields;
-                data.errors = results.errors;
-                data.data = results.data;
-
-                if (data.data.length === 0) {
-                    this.showPapaErrors(data.errors);
-                    return;
-                }
-                data.dtCols = [];
-                data.dtData = [];
-
-                data.headers.forEach((col) => {
-                    data.dtCols.push({
-                        title: col
-                    });
-                });
-
-                data.data.forEach((itm) => {
-                    var itmVals = Object.values(itm);
-                    if (itmVals.length !== data.dtCols.length) {
-                        var diff = data.dtCols.length - itmVals.length;
-                        do {
-                            itmVals.push('');
-                            diff--;
-                        } while (diff > 0);
-                    }
-                    data.dtData.push(itmVals);
-                });
-
-                data.string = Papa.unparse({
-                    fields: data.headers,
-                    data: data.dtData
-                });
-
-                console.log('Parsing: Processing ', results, file);
-                console.log('Parsing Complete:', data);
-                return data;
+                this.csvObj = results;
             }
-        };
-        return Papa.parse(str_data, Papa_config);
+        });
+        return this.csvObj;
     }
 
     showPapaErrors(arr_errors) {
@@ -585,7 +590,7 @@ class ManyMailerPlus_mod {
                 };
             }
             errMsgs[err.type][err.code].message = err.message;
-            var linenum_offset = 2;
+            var linenum_offset = 3;
             if (!errMsgs[err.type][err.code].affected.includes(err.row + linenum_offset)) {
                 errMsgs[err.type][err.code].affected.push(err.row + linenum_offset);
             }
@@ -593,7 +598,7 @@ class ManyMailerPlus_mod {
         Object.keys(errMsgs).forEach((type) => {
             var li = $('<li />', {
                 text: type
-            });
+            }).addClass(type.substring(0, 4) !== 'MMP_' ? 'validation_warning' : 'validation_error');
             var sub_ul = $('<ul />');
             Object.keys(errMsgs[type]).forEach((code) => {
                 $('<li />')
@@ -608,7 +613,7 @@ class ManyMailerPlus_mod {
             li.append(sub_ul).appendTo(ul);
         });
 
-        ul.appendTo(con_errors);
+        ul.appendTo(this.con_errors);
         this.show_message({
             title: 'Errors',
             type: 'error',
@@ -622,7 +627,9 @@ class ManyMailerPlus_mod {
             this.val_with_linenum('');
             this.con_csv_recipient.toggle($('select[name=recipient_entry]').val() === 'csv_recipient');
             // reset upload
-            this.file_recipient.wrap('<form>').closest('form').get(0).reset().unwrap();
+            this.file_recipient.replaceWith(this.file_recipient.val('').clone(true));
+            this.file_recipient.wrap('<form>').closest('form').get(0).reset();
+            if (file_input) file_input.unwrap();
         }
         // reset emails and errors
         this.recipient.val('');
@@ -640,10 +647,12 @@ class ManyMailerPlus_mod {
         parent.wrapInner(table);
 
         this.btn_reset.hide();
+        return this;
     }
 
     show_csv_recipient_fieldset(show) {
         this.con_csv_recipient.toggle(show);
+        return this;
     }
 
     create_editable_content(sections) {
@@ -651,7 +660,7 @@ class ManyMailerPlus_mod {
             'main',
             'content'
         ];
-        var found = sections.find(function (el) {
+        var found = sections.find(function(el) {
             return $.inArray(el.edit_section, email_body) !== -1;
         });
         var suggested = found ? `(suggested: <b>'${found.edit_section}')</b>` : '';
@@ -665,36 +674,36 @@ class ManyMailerPlus_mod {
                 parent.after(fs);
                 fs.append(
                     $('<div>')
-                        .addClass('field-instruct')
-                        .append(
-                            $(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`)
-                        )
+                    .addClass('field-instruct')
+                    .append(
+                        $(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`)
+                    )
                 );
             }
 
             fs.append(
                 $('<div>')
-                    .addClass('field-instruct')
-                    .append($(`<label>${id}</label>`).css('color', 'red').css('font-size', '20px'))
-                    .append(
-                        $(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
-                            'data-parsley-mincheck': '1',
-                            'data-parsley-multiple': 'mc-check'
-                        })
-                    )
-                    .append(
-                        $(`<label for="mc-check_${id}">(Body?)</label>`)
-                            .css('text-align', 'right')
-                            .css('display', 'inline-block')
-                    ),
+                .addClass('field-instruct')
+                .append($(`<label>${id}</label>`).css('color', 'red').css('font-size', '20px'))
+                .append(
+                    $(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
+                        'data-parsley-mincheck': '1',
+                        'data-parsley-multiple': 'mc-check'
+                    })
+                )
+                .append(
+                    $(`<label for="mc-check_${id}">(Body?)</label>`)
+                    .css('text-align', 'right')
+                    .css('display', 'inline-block')
+                ),
                 $('<div>')
-                    .addClass('field-control')
-                    .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+                .addClass('field-control')
+                .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
             );
 
-            $('input[name^="mc-check"').change(function () {
+            $('input[name^="mc-check"').change(function() {
                 var chk = this.checked;
-                $('input[name^="mc-check"').not(this).each(function (el) {
+                $('input[name^="mc-check"').not(this).each(function(el) {
                     if (chk) {
                         $(this).attr('checked', false).hide();
                         $(`label[for=${this.name}]`).hide();
@@ -759,7 +768,7 @@ class ManyMailerPlus_mod {
 
     show_active_services() {
         var val = this.active_services.val();
-        $.each(this.service_list.children(), function () {
+        $.each(this.service_list.children(), function() {
             var list_item = $(this).text().toLowerCase();
             if (val && val.indexOf(list_item) > -1) {
                 $(this).addClass('enabled-service');
@@ -776,33 +785,33 @@ class ManyMailerPlus_mod {
             this.con_placeholder.remove();
         }
         $('<div />', {
-            id: 'stick-here',
-            class: 'stick-here',
-            height: $('div.col.w-12').height()
-        })
+                id: 'stick-here',
+                class: 'stick-here',
+                height: $('div.col.w-12').height()
+            })
             .append("<table id='placeholder'><caption>Placeholders</caption></table>")
             .appendTo('.sidebar');
 
         headers.forEach((el) => {
             var test = $('<button/>', {
-                class: 'btn placeholder',
-                text: el,
-                click: function () {
-                    var plain = $("textarea[name='plaintext_alt']");
-                    var msg = $("textarea[name='message']");
-                    var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
+                    class: 'btn placeholder',
+                    text: el,
+                    click: function() {
+                        var plain = $("textarea[name='plaintext_alt']");
+                        var msg = $("textarea[name='message']");
+                        var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
 
-                    // Insert text into textarea at cursor position and replace selected text
-                    var cursorPosStart = message.prop('selectionStart');
-                    var cursorPosEnd = message.prop('selectionEnd');
-                    var insertedText = $(this).text() + ' ';
-                    var v = message.val();
-                    var textBefore = v.substring(0, cursorPosStart);
-                    var textAfter = v.substring(cursorPosEnd, v.length);
-                    message.val(textBefore + insertedText + textAfter);
-                    $('textarea[name=message]').caretTo(insertedText, true);
-                }
-            })
+                        // Insert text into textarea at cursor position and replace selected text
+                        var cursorPosStart = message.prop('selectionStart');
+                        var cursorPosEnd = message.prop('selectionEnd');
+                        var insertedText = $(this).text() + ' ';
+                        var v = message.val();
+                        var textBefore = v.substring(0, cursorPosStart);
+                        var textAfter = v.substring(cursorPosEnd, v.length);
+                        message.val(textBefore + insertedText + textAfter);
+                        $('textarea[name=message]').caretTo(insertedText, true);
+                    }
+                })
                 .wrap('<tr><td align="center"></td></tr>')
                 .closest('tr');
 
@@ -810,7 +819,9 @@ class ManyMailerPlus_mod {
         });
     }
 
-    displayCSVErrors(errs, errDetail) {
+    displayCSVErrors(errObj) {
+        var errs = errObj.errors || [];
+        var errDetail = errObj.detail || [];
         var title = '';
         var msg = $("<ul style='color:red' />");
         var detail = $("<ul style='white-space: pre-wrap; color:red' />");
@@ -853,15 +864,17 @@ class ManyMailerPlus_mod {
         label.text(origText + countText);
     }
 
-    get_csv_recip(asString) {
+    get_csv_recip(asArray) {
         let val = this.csv_recipient.val().trim();
-        return (asString) ? val : val.split(/\n+/g);
+        return asArray ? val.split(/\n+/g) : val;
     }
 
     convertCSV() {
         this.resetRecipients();
-        if (this.validate(this.parse_csv_data())) {
-            this.init_datatable().setFormValues();
+        let obj_parsed = this.parse_csv_data();
+        debugger;
+        if (this.validate(obj_parsed)) {
+            this.init_datatable(this.csvObj).setFormValues();
             console.dir(this.csvObj);
         }
         return this;
@@ -879,10 +892,24 @@ class ManyMailerPlus_mod {
         return this;
     }
 
-    validate(data) {
-        let result = this.csvValidator.validate_csv(data);
-        let is_valid_csv = (!('errors' in result));
-        if (is_valid_csv) this.csvObj = result;
+    validate(obj_parsed) {
+        let is_valid_csv = false;
+        if (!obj_parsed.meta.aborted) {
+            let validation_result = this.csvValidator.validate_csv(obj_parsed);
+            if (!validation_result.has_MMP_ERR) {
+                is_valid_csv = true;
+                this.csvObj = validation_result;
+            } else {
+                // this.displayCSVErrors(validation_result);
+                this.showPapaErrors(validation_result.errors, 'warning');
+                let current_csv = this.get_csv_recip(true);
+                current_csv.unshift(validation_result.errors[0].message.toUpperCase());
+                let new_csv = current_csv.join('\n');
+                this.val_with_linenum(new_csv);
+            }
+        } else {
+            this.showPapaErrors(obj_parsed.errors);
+        }
         return is_valid_csv;
     }
 
@@ -911,9 +938,9 @@ class ManyMailerPlus_mod {
         $('#csv_content').addClass('fixed_header display').DataTable({
             defaultContent: '',
             dom: '<"top"i>rt<"bottom"flp><"clear">',
-            initComplete: function () {
+            initComplete: function() {
                 var api = this.api();
-                api.$('td').click(function () {
+                api.$('td').click(function() {
                     api.search(this.innerHTML).draw();
                 });
             },
@@ -927,7 +954,7 @@ class ManyMailerPlus_mod {
 
     dumpHiddenVals() {
         var msg = $('<table/>');
-        $('input[type="hidden"]').each(function () {
+        $('input[type="hidden"]').each(function() {
             var val = $(this).val();
             val = val.length > 100 ? val.substring(0, 100) + '...' : val;
             console.log($(this).attr('name') + ': ' + $(this).val());
@@ -943,7 +970,7 @@ class ManyMailerPlus_mod {
 
     dumpFormVals() {
         var msg = $('<table/>');
-        $('form :input').each(function () {
+        $('form :input').each(function() {
             var val = this.value;
             val = val.length > 100 ? val.substring(0, 100) + '...' : val;
             val = val === 'on' || val === 'off' ? this.checked : val;
@@ -975,7 +1002,7 @@ class ManyMailerPlus_mod {
     }
 
     test_funcs() {
-        $('#btnData').on('click', function (e) {
+        $('#btnData').on('click', function(e) {
             var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
             Swal.fire({
                 title: 'Select Fuction',
@@ -991,7 +1018,7 @@ class ManyMailerPlus_mod {
                 showCancelButton: true,
                 allowOutsideClick: () => !Swal.isLoading(),
                 preConfirm: (value) => {
-                    return $.post(url + value).always(function (jqXHR) {
+                    return $.post(url + value).always(function(jqXHR) {
                         // debugger
                         var data;
                         if (jqXHR.hasOwnProperty('responseText')) {
@@ -1018,7 +1045,7 @@ class ManyMailerPlus_mod {
     }
 }
 
-$(document).ready(function () {
+$(document).ready(function() {
     'use strict';
 
     function isAPIAvailable() {

@@ -65,17 +65,26 @@
     align-items: flex-start !important;
 }
 
-span>ul,
+
+/* span>ul,
 parsley-errors-list>ul {
     color: red !important;
     padding: 0 20px !important;
     margin: 10px 0 !important;
     list-style-type: none;
-}
+} */
 
 .errCode {
     padding: 0 20px !important;
     list-style-type: none;
+}
+
+.validation_warning {
+    color: orange !important;
+}
+
+.validation_error {
+    color: red !important;
 }
 
 .fixed_header {

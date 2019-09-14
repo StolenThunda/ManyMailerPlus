@@ -1,82 +1,109 @@
 class CSV_Validator {
-    constructor() { }
+    constructor() {}
 
     validate_csv(data) {
-        var errs = [];
-        var errDetail = [];
+        var errObj = { errors: [], detail: [] };
+
         var header_valid, email_column;
-        var rowdata = Object.values(data.data[0]);
-        var first_row_values = rowdata.filter((val) => !Array.isArray(val));
+        if (data.data.length > 0) {
+            var rowdata = Object.values(data.data[0]);
+            var first_row_values = rowdata.filter((val) => !Array.isArray(val));
 
-        // email column in file?
-        var file_contains_emails = first_row_values.filter((word) => this.isValidEmailAddress(word)).length > 0;
+            // email column in file?
+            var file_contains_emails = first_row_values.filter((word) => this.isValidEmailAddress(word)).length > 0;
 
-        // validate required columns
-        var required_columns = this.validateRequiredKeys(data.headers);
-        if (required_columns.errors.length > 0) {
-            errDetail = errDetail.concat(required_columns.errors);
-        }
-        header_valid = required_columns.validHeader;
-        email_column = required_columns.email_column;
+            // validate required columns
+            var required_columns = this.validateRequiredKeys(data.headers);
+            if (required_columns.errors.length > 0) {
+                errObj.detail = errObj.detail.concat(required_columns.errors);
+            }
+            header_valid = required_columns.validHeader;
+            email_column = required_columns.email_column;
 
-        // generate email list and generate converted data to obj with tokenized keys
-        var emails = [];
-        var tokenized_obj = [];
-        data.data.forEach((row) => {
-            var newRow = {};
-            var token_key;
-            var current_email = row[email_column.original];
-            if (email_column) {
-                if (current_email && this.isValidEmailAddress(current_email)) {
-                    emails.push(current_email.trim());
-                } else {
-                    var tmp = 'Column (' + email_column.original + '): does not contain email data';
-                    if (!errDetail.includes(tmp)) {
-                        errDetail.unshift(tmp);
+            // generate email list and generate converted data to obj with tokenized keys
+            var emails = [];
+            var tokenized_obj = [];
+            data.data.forEach((row) => {
+                var newRow = {};
+                var token_key;
+                var current_email = row[email_column.original];
+                if (email_column) {
+                    if (current_email && this.isValidEmailAddress(current_email)) {
+                        emails.push(current_email.trim());
+                    } else {
+                        var tmp = 'Column (' + email_column.original + '): does not contain email data';
+                        if (!errObj.detail.includes(tmp)) {
+                            errObj.detail.unshift(tmp);
+                        }
                     }
                 }
-            }
-            for (var itm in row) {
-                token_key = required_columns.headerKeyMap[itm];
-                newRow[token_key] = row[itm];
-            }
-            tokenized_obj.push(newRow);
-        });
+                for (var itm in row) {
+                    token_key = required_columns.headerKeyMap[itm];
+                    newRow[token_key] = row[itm];
+                }
+                tokenized_obj.push(newRow);
+            });
 
-        if (!header_valid) {
-            errs.unshift('Invalid Header');
+            if (!header_valid) {
+                errObj.errors.unshift('Invalid Header');
+                this.pushError({
+                    code: 'InvalidHeader',
+                    message: 'Invalid Header',
+                    row: 0,
+                    type: 'MMP_InvalidFile'
+                });
+            }
+            if (!email_column || !file_contains_emails) {
+                errObj.detail.unshift('No Valid Email Column Header Found');
+                this.pushError({
+                    code: 'MissingEmailColumn',
+                    message: 'Invalid Email Column Header',
+                    row: 0,
+                    type: 'MMP_MissingColumn'
+                });
+            }
+            if (file_contains_emails && !email_column) {
+                errObj.detail.unshift('Email column is mislabeled');
+                this.pushError({
+                    code: 'InvalidEmailColumn',
+                    message: 'Email column is mislabeled',
+                    row: 0,
+                    type: 'MMP_InvalidColumn'
+                });
+            }
+            if (!required_columns) {
+                errObj.detail.unshift('Required Columns: email, first_name, last_name');
+                this.pushError({
+                    code: 'MissingRequiredColumn',
+                    message: 'Required Columns: email, first_name, last_name',
+                    row: 0,
+                    type: 'MMP_MissingColumn'
+                });
+            }
+            if (errObj.errors.length === 0) {
+                return Object.assign({
+                        mailKey: required_columns.email_column.val,
+                        headers: Object.values(required_columns.headerKeyMap),
+                        data_string: JSON.stringify(tokenized_obj),
+                        data: tokenized_obj,
+                        rawdata: data.data,
+                        recipient_count: emails.length,
+                        validated_data: required_columns,
+                        email_list: emails.join(',')
+                    },
+                    data
+                );
+            }
+        } else if (data.errors.length > 0) {
+            return data;
         }
-        if (!email_column || !file_contains_emails) {
-            errDetail.unshift('No Valid Email Column Header Found');
-        }
-        if (file_contains_emails && !email_column) {
-            errDetail.unshift('Email column is mislabeled');
-        }
-        if (!required_columns) {
-            errDetail.unshift('Required Columns: email, first_name, last_name');
-        }
-        if (errs.length === 0) {
-            return {
-                mailKey: required_columns.email_column.val,
-                headers: Object.values(required_columns.headerKeyMap),
-                data_string: JSON.stringify(tokenized_obj),
-                data: tokenized_obj,
-                rawdata: data.data,
-                recipient_count: emails.length,
-                validated_data: required_columns,
-                email_list: emails.join(',')
-            };
-        } else {
-            this.displayCSVErrors(errs, errDetail);
-            var current_csv = $('#csv_recipient').val().split(/\n+/g);
-            current_csv.unshift(errs[0].toUpperCase());
-            let new_csv = current_csv.join('\n');
-            $('#csv_recipient').val_with_linenum(new_csv);
-
-            return { errors: errs, detail: errDetail, };
-        }
+        return errObj;
     }
 
+    pushError(origData, errObj) {
+        origData.has_MMP_ERR = true;
+        return origData.errors.push(errObj);
+    }
     intersection(d, regX) {
         var dataArray = d;
         var foundColumn = [];
