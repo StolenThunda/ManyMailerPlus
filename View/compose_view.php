@@ -3,7 +3,9 @@
 ?>
 
 <div>
-	
+	<!-- Loader -->
+<div class="loader loader-default"></div>
+
 	<?php if (isset($active_service_names)) : ?>		
 		<input id='active_services' type='hidden' value='<?php echo $active_service_names; ?>' />
 		

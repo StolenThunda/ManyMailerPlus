@@ -3,97 +3,110 @@ class CSV_Validator {
 
     validate_csv(data) {
         var errObj = { errors: [], detail: [] };
-
-        var header_valid, email_column;
         if (data.data.length > 0) {
-            var rowdata = Object.values(data.data[0]);
-            var first_row_values = rowdata.filter((val) => !Array.isArray(val));
+            var first_row_values = Object.values(data.data[0]).filter((val) => !Array.isArray(val));
 
             // email column in file?
-            var file_contains_emails = first_row_values.filter((word) => this.isValidEmailAddress(word)).length > 0;
+            var file_contains_emails =
+                first_row_values.filter((word) => {
+                    return null !== this.isValidEmailAddress(word);
+                }).length > 0;
 
             // validate required columns
             var required_columns = this.validateRequiredKeys(data.headers);
-            if (required_columns.errors.length > 0) {
-                errObj.detail = errObj.detail.concat(required_columns.errors);
-            }
-            header_valid = required_columns.validHeader;
-            email_column = required_columns.email_column;
+            required_columns.errors.forEach((err) => {
+                this.pushError(data, {
+                    code: 'MMP_MissingRequiredKeys',
+                    message: err,
+                    row: 0,
+                    type: 'Missing Required Keys'
+                });
+            });
+
+            var email_column = required_columns.email_column;
 
             // generate email list and generate converted data to obj with tokenized keys
             var emails = [];
             var tokenized_obj = [];
-            data.data.forEach((row) => {
-                var newRow = {};
-                var token_key;
-                var current_email = row[email_column.original];
-                if (email_column) {
-                    if (current_email && this.isValidEmailAddress(current_email)) {
-                        emails.push(current_email.trim());
-                    } else {
-                        var tmp = 'Column (' + email_column.original + '): does not contain email data';
-                        if (!errObj.detail.includes(tmp)) {
-                            errObj.detail.unshift(tmp);
+            if (required_columns.validHeader && email_column) {
+                data.data.forEach((row) => {
+                    var newRow = {};
+                    var token_key;
+                    var current_email = this.isValidEmailAddress(row[email_column.original]);
+                    if (email_column) {
+                        if (current_email) {
+                            emails.push(current_email);
+                            row[email_column.original] = current_email;
+                        } else {
+                            var tmp = 'Column (' + email_column.original + '): does not contain email data';
+                            if (!errObj.detail.includes(tmp)) {
+                                errObj.detail.unshift(tmp);
+                                this.pushError(data, {
+                                    code: 'MMP_MissingColumn',
+                                    message: tmp,
+                                    row: 0,
+                                    type: 'MissingEmailColumn'
+                                });
+                            }
                         }
                     }
-                }
-                for (var itm in row) {
-                    token_key = required_columns.headerKeyMap[itm];
-                    newRow[token_key] = row[itm];
-                }
-                tokenized_obj.push(newRow);
-            });
+                    for (var itm in row) {
+                        token_key = required_columns.headerKeyMap[itm];
+                        newRow[token_key] = row[itm];
+                    }
+                    tokenized_obj.push(newRow);
+                });
+            }
 
-            if (!header_valid) {
+            if (!required_columns.validHeader) {
                 errObj.errors.unshift('Invalid Header');
-                this.pushError({
-                    code: 'InvalidHeader',
-                    message: 'Invalid Header',
+                this.pushError(data, {
+                    code: 'MMP_InvalidFile',
+                    message: 'Header Does Not Conform to Standard (email, first, last, etc...)',
                     row: 0,
-                    type: 'MMP_InvalidFile'
+                    type: 'Invalid Header'
                 });
             }
             if (!email_column || !file_contains_emails) {
                 errObj.detail.unshift('No Valid Email Column Header Found');
-                this.pushError({
-                    code: 'MissingEmailColumn',
-                    message: 'Invalid Email Column Header',
+                this.pushError(data, {
+                    code: 'MMP_MissingColumn',
+                    message: 'Invalid Email Column Header (see Missing Required Keys) for details',
                     row: 0,
-                    type: 'MMP_MissingColumn'
+                    type: 'Missing Email Column'
                 });
             }
             if (file_contains_emails && !email_column) {
                 errObj.detail.unshift('Email column is mislabeled');
-                this.pushError({
-                    code: 'InvalidEmailColumn',
-                    message: 'Email column is mislabeled',
+                this.pushError(data, {
+                    code: 'MMP_InvalidColumn',
+                    message: 'Emails FOUND But Email Column is Mislabeled',
                     row: 0,
-                    type: 'MMP_InvalidColumn'
+                    type: 'Invalid Email Column'
                 });
             }
             if (!required_columns) {
                 errObj.detail.unshift('Required Columns: email, first_name, last_name');
-                this.pushError({
-                    code: 'MissingRequiredColumn',
+                this.pushError(data, {
+                    code: 'MMP_MissingColumn',
                     message: 'Required Columns: email, first_name, last_name',
                     row: 0,
-                    type: 'MMP_MissingColumn'
+                    type: 'Missing Required Column'
                 });
             }
-            if (errObj.errors.length === 0) {
-                return Object.assign({
-                        mailKey: required_columns.email_column.val,
-                        headers: Object.values(required_columns.headerKeyMap),
-                        data_string: JSON.stringify(tokenized_obj),
-                        data: tokenized_obj,
-                        rawdata: data.data,
-                        recipient_count: emails.length,
-                        validated_data: required_columns,
-                        email_list: emails.join(',')
-                    },
-                    data
-                );
-            }
+            return Object.assign({
+                    csv_valid: errObj.errors.length === 0,
+                    mailKey: required_columns.email_column.val,
+                    headers: Object.values(required_columns.headerKeyMap),
+                    data_string: JSON.stringify(tokenized_obj),
+                    data: tokenized_obj,
+                    rawdata: data.data,
+                    recipient_count: emails.length,
+                    validated_data: required_columns,
+                    email_list: emails.join(',')
+                },
+                data
+            );
         } else if (data.errors.length > 0) {
             return data;
         }
@@ -102,7 +115,8 @@ class CSV_Validator {
 
     pushError(origData, errObj) {
         origData.has_MMP_ERR = true;
-        return origData.errors.push(errObj);
+        origData.errors.push(errObj);
+        return this;
     }
     intersection(d, regX) {
         var dataArray = d;
@@ -120,7 +134,34 @@ class CSV_Validator {
     }
 
     validateRequiredKeys(data) {
-        var validHeaders = {
+        var regexify = (arr) => {
+            return new RegExp(arr.join('|'), 'i');
+        };
+        var header_has_no_email_data =
+            data.filter((word) => {
+                return false === this.isValidEmailAddress(word);
+            }).length === data.length;
+        var email_column = this.intersection(data, regexify(this.validHeaders.email_column));
+        var first = this.intersection(data, regexify(this.validHeaders.first));
+        var last = this.intersection(data, regexify(this.validHeaders.last));
+        var reqKeys = {
+            email_column: email_column.length > 0 ? email_column[0] : false,
+            first: first.length > 0 ? first[0] : '',
+            last: last.length > 0 ? last[0] : '',
+            headerKeyMap: header_has_no_email_data ? this.genKeyMap(data) : data,
+            errors: []
+        };
+        Object.keys(reqKeys).filter((k) => {
+            if (reqKeys[k] === '' || reqKeys[k] === false) {
+                reqKeys.errors.push(`Acceptable Values for ${k}: ${this.validHeaders[k]}`);
+            }
+        });
+        reqKeys.validHeader = reqKeys.errors.length === 0 && header_has_no_email_data;
+        return reqKeys;
+    }
+
+    get validHeaders() {
+        return {
             email_column: [
                 'mail',
                 'email',
@@ -137,37 +178,22 @@ class CSV_Validator {
                 'surname'
             ]
         };
-        var regexify = (arr) => {
-            return new RegExp(arr.join('|'), 'i');
-        };
-        var header_has_no_email_data = data.filter((word) => this.isValidEmailAddress(word)).length === 0;
-        var email_column = this.intersection(data, regexify(validHeaders.email_column));
-        var first = this.intersection(data, regexify(validHeaders.first));
-        var last = this.intersection(data, regexify(validHeaders.last));
-        var reqKeys = {
-            email_column: email_column.length > 0 ? email_column[0] : false,
-            first: first.length > 0 ? first[0] : '',
-            last: last.length > 0 ? last[0] : '',
-            headerKeyMap: header_has_no_email_data ? this.genKeyMap(data) : data,
-            errors: []
-        };
-        var invalidColumns = Object.keys(reqKeys).filter((k) => {
-            var isNotSet = reqKeys[k] === '' || reqKeys[k] === false;
-            if (isNotSet) {
-                reqKeys.errors.push(`Acceptable Values for ${k}: ${validHeaders[k]}`);
-            }
-        });
-        reqKeys.validHeader = reqKeys.errors.length === 0 && header_has_no_email_data;
-        return reqKeys;
     }
-
     genKeyMap(data) {
         return this.tokenizeKeys(data);
     }
 
     isValidEmailAddress(emailAddress) {
-        var pattern = /^([a-z\d!#$%&'*+\-\/=?^_`{|}~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+(\.[a-z\d!#$%&'*+\-\/=?^_`{|}~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+)*|"((([ \t]*\r\n)?[ \t]+)?([\x01-\x08\x0b\x0c\x0e-\x1f\x7f\x21\x23-\x5b\x5d-\x7e\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]|\\[\x01-\x09\x0b\x0c\x0d-\x7f\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))*(([ \t]*\r\n)?[ \t]+)?")@(([a-z\d\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]|[a-z\d\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF][a-z\d\-._~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]*[a-z\d\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])\.)+([a-z\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]|[a-z\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF][a-z\d\-._~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]*[a-z\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])\.?$/i;
-        return pattern.test(emailAddress.trim());
+        var result = false;
+        if (emailAddress) {
+            //test email pattern
+            var pattern = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            var str_test = emailAddress;
+            // remove surrounding quotes and trim value for testing
+            str_test = str_test.replace(/['"]+/g, '').trim();
+            result = pattern.exec(str_test); //str_test.match(pattern);
+        }
+        return Array.isArray(result) ? result[0] : false;
     }
 
     tokenizeKeys(data) {

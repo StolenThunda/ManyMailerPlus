@@ -146,6 +146,7 @@ class ManyMailerPlus_mod {
         this.tmp_selections = $('input[name="selection[]"');
         this.con_placeholder = $('#placeholder'); // container for placeholders
         this.con_errors = $('#csv_errors'); // container for error messages
+        this.loader = $('.loader'); // css loading visuals
 
         // modules
         this.csvValidator = new CSV_Validator();
@@ -161,9 +162,14 @@ class ManyMailerPlus_mod {
     }
 
     init() {
-        this.initializePage();
+        this.toggle_loading(this.initializePage.bind(this));
     }
 
+    toggle_loading(fn, ...args) {
+        // this.loader.addClass('is-active');
+        fn(...args);
+        // this.loader.removeClass('is-active');
+    }
     set csvObj(results) {
         var data = Object.assign({}, results);
         data.headers = results.meta.fields;
@@ -390,7 +396,7 @@ class ManyMailerPlus_mod {
                 this.file_recipient[0].addEventListener(
                     'change',
                     function(e) {
-                        this.evt_load_csv_file(e);
+                        this.toggle_loading(this.evt_load_csv_file.bind(this), e);
                     }.bind(this),
                     false
                 );
@@ -419,7 +425,7 @@ class ManyMailerPlus_mod {
                 $('button[name=convert_csv]')[0].addEventListener(
                     'click',
                     function(e) {
-                        this.evt_convert_csv(e);
+                        this.toggle_loading(this.evt_convert_csv.bind(this), e);
                     }.bind(this),
                     false
                 );
@@ -465,7 +471,8 @@ class ManyMailerPlus_mod {
         this.con_tmp_name.fadeToggle(toggle);
     }
     evt_convert_csv(e) {
-        this.convertCSV().sel_csv_entry.val('file_recipient').trigger('change');
+        this.convertCSV();
+        this.sel_csv_entry.val('file_recipient').trigger('change');
     }
     evt_change_mail_type() {
         this.plaintext.toggle(this.val() === 'html');
@@ -547,14 +554,19 @@ class ManyMailerPlus_mod {
             this.con_recip_review.toggle(show);
             this.con_embed_tmps.toggle(show);
             this.con_tmp_name.toggle(show);
+            this.con_errors.toggle(show);
             this.recipient.prop('readonly', true);
-            this.recipient[0].addEventListener('click', function(e) {
-                this.show_message({
-                    title: 'Invalid!',
-                    html: 'Please enter emails using csv entry (file upload/paste).',
-                    type: 'error'
-                });
-            });
+            this.recipient[0].addEventListener(
+                'click',
+                function(e) {
+                    this.show_message({
+                        title: 'Invalid!',
+                        html: 'Please enter emails using csv entry (file upload/paste).',
+                        type: 'error'
+                    });
+                }.bind(this),
+                false
+            );
         }
 
         return this;
@@ -577,63 +589,72 @@ class ManyMailerPlus_mod {
     }
 
     showPapaErrors(arr_errors) {
-        var errMsgs = {};
-        var ul = $('<ul class="errCode" />');
-        // consolidate error array
-        arr_errors.forEach((err) => {
-            if (!Object.keys(errMsgs).includes(err.type)) {
-                errMsgs[err.type] = {};
-            }
-            if (!Object.keys(errMsgs[err.type]).includes(err.code)) {
-                errMsgs[err.type][err.code] = {
-                    affected: []
-                };
-            }
-            errMsgs[err.type][err.code].message = err.message;
-            var linenum_offset = 3;
-            if (!errMsgs[err.type][err.code].affected.includes(err.row + linenum_offset)) {
-                errMsgs[err.type][err.code].affected.push(err.row + linenum_offset);
-            }
-        });
+        var errMsgs = this.compile_errMsgs(arr_errors);
+        var container = $('<div class="errCode" />');
+        // consotype_containerdate error array
         Object.keys(errMsgs).forEach((type) => {
-            var li = $('<li />', {
-                text: type
-            }).addClass(type.substring(0, 4) !== 'MMP_' ? 'validation_warning' : 'validation_error');
-            var sub_ul = $('<ul />');
+            var type_container = $('<details/>')
+                .append($('<summary />', { text: type }))
+                .addClass(type.indexOf(' ') > -1 ? 'validation_error' : 'validation_warning');
+            var typ_sub_container = $('<dl />');
             Object.keys(errMsgs[type]).forEach((code) => {
-                $('<li />')
-                    .text(errMsgs[type][code].message)
+                $('<dt />')
+                    .html(errMsgs[type][code].message)
                     .append(
-                        $('<p />', {
+                        $('<dd/>', {
                             text: 'Affected Row(s): ' + errMsgs[type][code].affected.join(', ')
                         })
                     )
-                    .appendTo(sub_ul);
+                    .addClass(code.substring(0, 4) !== 'MMP_' ? 'validation_warning' : 'validation_error')
+                    .appendTo(typ_sub_container);
             });
-            li.append(sub_ul).appendTo(ul);
+            type_container.append(typ_sub_container).appendTo(container);
         });
 
-        ul.appendTo(this.con_errors);
+        container.appendTo(this.con_errors);
         this.show_message({
             title: 'Errors',
             type: 'error',
             html: Object.keys(errMsgs).join(', ')
         });
-        return true;
+        return this;
+    }
+
+    compile_errMsgs(errors) {
+        var errMsgs = {};
+        errors.forEach((err) => {
+            if (!Object.keys(errMsgs).includes(err.type)) {
+                errMsgs[err.type] = {};
+            }
+            if (!Object.keys(errMsgs[err.type]).includes(err.code)) {
+                errMsgs[err.type][err.code] = {
+                    message: '',
+                    affected: []
+                };
+            }
+            errMsgs[err.type][err.code].message += err.message !== undefined ? `${err.message}<br />` : '';
+            var offset = this.linenum_offset;
+            if (!errMsgs[err.type][err.code].affected.includes(err.row + offset)) {
+                errMsgs[err.type][err.code].affected.push(err.row + offset);
+            }
+        });
+        return errMsgs;
+    }
+    get linenum_offset() {
+        var data = this.get_csv_recip(true);
+        var errLines = data.filter((val) => val === val.toUpperCase()).length;
+        return errLines > 0 ? ++errLines : 1;
     }
 
     resetRecipients(all) {
         if (all) {
             this.val_with_linenum('');
-            this.con_csv_recipient.toggle($('select[name=recipient_entry]').val() === 'csv_recipient');
-            // reset upload
-            this.file_recipient.replaceWith(this.file_recipient.val('').clone(true));
-            this.file_recipient.wrap('<form>').closest('form').get(0).reset();
-            if (file_input) file_input.unwrap();
+            this.show_csv_recipient_fieldset($('select[name=recipient_entry]').val() === 'csv_recipient');
+            this.resetFileInput();
         }
         // reset emails and errors
         this.recipient.val('');
-        this.con_errors.html('');
+        this.con_errors.html('').toggle(false);
 
         // reset recipient label
         this.countEmails();
@@ -646,7 +667,13 @@ class ManyMailerPlus_mod {
         var table = $("<table id='csv_content' class='fixed_header'></table>");
         parent.wrapInner(table);
 
-        this.btn_reset.hide();
+        this.btn_reset.toggle(false);
+        return this;
+    }
+
+    resetFileInput() {
+        // reset upload
+        this.file_recipient.replaceWith(this.file_recipient.val('').clone(true));
         return this;
     }
 
@@ -872,10 +899,11 @@ class ManyMailerPlus_mod {
     convertCSV() {
         this.resetRecipients();
         let obj_parsed = this.parse_csv_data();
-        debugger;
         if (this.validate(obj_parsed)) {
-            this.init_datatable(this.csvObj).setFormValues();
+            this.init_datatable(this.csvObj).setFormValues().show_csv_recipient_fieldset(false).resetFileInput();
             console.dir(this.csvObj);
+        } else {
+            this.con_errors.toggle(true);
         }
         return this;
     }
@@ -901,11 +929,10 @@ class ManyMailerPlus_mod {
                 this.csvObj = validation_result;
             } else {
                 // this.displayCSVErrors(validation_result);
-                this.showPapaErrors(validation_result.errors, 'warning');
-                let current_csv = this.get_csv_recip(true);
-                current_csv.unshift(validation_result.errors[0].message.toUpperCase());
-                let new_csv = current_csv.join('\n');
-                this.val_with_linenum(new_csv);
+                this.insert_errors_in_file(validation_result.errors[0]).showPapaErrors(
+                    validation_result.errors,
+                    'warning'
+                );
             }
         } else {
             this.showPapaErrors(obj_parsed.errors);
@@ -913,6 +940,13 @@ class ManyMailerPlus_mod {
         return is_valid_csv;
     }
 
+    insert_errors_in_file(errs) {
+        let current_csv = this.get_csv_recip(true);
+        current_csv.unshift(errs.message.toUpperCase());
+        let new_csv = current_csv.join('\n');
+        this.val_with_linenum(new_csv);
+        return this;
+    }
     procReq(data, query = false) {
         if (query) {
             return this.qs2json(data);

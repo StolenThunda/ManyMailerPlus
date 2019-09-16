@@ -227,7 +227,7 @@ class Composer
                     'fields' => array(
                         'csv_errors' => array(
                             'type' => 'html',
-                            'content' => '<span id="csv_errors"></span>',
+                            'content' => '<details id="csv_errors" class="validation_error"></details>',
                         ),
                         'csv_recipient' => array(
                             'type' => 'html',
@@ -238,15 +238,15 @@ class Composer
                 array(
                     'title' => 'primary_recipients',
                     'desc' => 'primary_recipients_desc',
-                    'fields' => array(
+                    'fields' => array(                        
+                        'csv_reset' => array(
+                            'type' => 'html',
+                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
+                        ),
                         'recipient' => array(
                             'type' => 'text',
                             'value' => $default['recipient'],
                             'required' => true,
-                        ),
-                        'csv_reset' => array(
-                            'type' => 'html',
-                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
                         ),
                         'csv_content' => array(
                             'type' => 'html',
