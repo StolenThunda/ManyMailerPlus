@@ -1,3 +1,4 @@
+/* jslint es6 */
 const TLN = {
     eventList: {},
     update_line_numbers: function(ta, el) {
@@ -149,7 +150,6 @@ class ManyMailerPlus_mod {
         this.loader = $('.loader'); // css loading visuals
 
         // modules
-        this.csvValidator = new CSV_Validator();
         this.Stepper = new Stepper($('.form-section'));
         $.fn.extend({
             val_with_linenum: function(v) {
@@ -923,7 +923,7 @@ class ManyMailerPlus_mod {
     validate(obj_parsed) {
         let is_valid_csv = false;
         if (!obj_parsed.meta.aborted) {
-            let validation_result = this.csvValidator.validate_csv(obj_parsed);
+            let validation_result = new CSV_Validator(obj_parsed);
             if (!validation_result.has_MMP_ERR) {
                 is_valid_csv = true;
                 this.csvObj = validation_result;
@@ -1078,7 +1078,7 @@ class ManyMailerPlus_mod {
         });
     }
 }
-
+export default ManyMailerPlus_mod;
 $(document).ready(function() {
     'use strict';
 

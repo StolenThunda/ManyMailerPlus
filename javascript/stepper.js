@@ -1,5 +1,7 @@
+/*jslint es6 */
 class Stepper {
     constructor(sections) {
+        'use strict;';
         if (sections) {
             this.sections = sections;
 
