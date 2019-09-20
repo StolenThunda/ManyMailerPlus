@@ -1,0 +1,3 @@
+--reporter mochawesome
+--reporter-options reportDir=./spec/mochawesome-report,reportFilename=mocha-MMP,reportTitle=mocha-MMP,reportPageTitle="MMP-Report",overwrite=true
+--timeout 200
