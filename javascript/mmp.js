@@ -1,4 +1,6 @@
 /* jslint es6 */
+
+// import style from "./main.css";
 const TLN = {
     eventList: {},
     update_line_numbers: function(ta, el) {
@@ -121,9 +123,7 @@ class ManyMailerPlus_mod {
         'use strict';
         this.b_isApiAvailable = apiAvailable || false;
         this.b_swalLoaded = Swal !== undefined;
-        this.b_inEmailFunctions = (function() {
-            return window.location.href.split('/').slice(-2)[0] === 'email';
-        })();
+        this.b_inEmailFunctions = false;
         this.theCSV_obj = {};
         this.doc_body = $('body');
         // orig EE spec
@@ -145,7 +145,7 @@ class ManyMailerPlus_mod {
         this.file_recipient = $("input[name='file_recipient']"); // file input
         this.btn_reset = $('#reset'); // reset button for csv data
         this.tmp_selections = $('input[name="selection[]"');
-        this.con_placeholder = $('#placeholder'); // container for placeholders
+        this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         this.con_errors = $('#csv_errors'); // container for error messages
         this.loader = $('.loader'); // css loading visuals
 
@@ -165,6 +165,9 @@ class ManyMailerPlus_mod {
         this.toggle_loading(this.initializePage.bind(this));
     }
 
+    get on_compose_page() {
+        return window.location.href.split('/').slice(-1)[0].indexOf('compose') > -1;
+    }
     toggle_loading(fn, ...args) {
         // this.loader.addClass('is-active');
         fn(...args);
@@ -358,16 +361,17 @@ class ManyMailerPlus_mod {
                     $(this).nextAll('div').fadeToggle('slow');
                 })
                 .bind(this);
-            if (this.b_inEmailFunctions) {
-                // hijacks default 'view email' button for SweetAlert2 action!
-                $('a.m-link')
-                    .bind('click', (e) => {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                        var rel = e.target.rel;
-                        this.sweetAlertbyID(`.${rel}`);
-                    })
-                    .bind(this);
+            // hijacks default 'view email' button for SweetAlert2 action!
+            $('a.m-link')
+                .bind('click', (e) => {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    var rel = e.target.rel;
+                    this.sweetAlertbyID(`.${rel}`);
+                })
+                .bind(this);
+
+            if (this.on_compose_page) {
                 this.mail_type[0].addEventListener(
                     'change',
                     function(e) {
@@ -407,6 +411,17 @@ class ManyMailerPlus_mod {
                     }.bind(this),
                     false
                 );
+                this.recipient[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.show_message({
+                            title: 'Invalid!',
+                            html: 'Please enter emails using csv entry (file upload/paste).',
+                            type: 'error'
+                        });
+                    }.bind(this),
+                    false
+                );
                 $('input[name=use_templates]')[0].addEventListener(
                     'change',
                     function(e) {
@@ -429,9 +444,12 @@ class ManyMailerPlus_mod {
                     }.bind(this),
                     false
                 );
+                this.tmp_selections.bind('interact', (e) => {
+                    this.evt_select_template(e);
+                });
 
                 this.tmp_selections[0].addEventListener(
-                    'click',
+                    'change',
                     function(e) {
                         this.evt_select_template(e);
                     }.bind(this),
@@ -482,7 +500,7 @@ class ManyMailerPlus_mod {
         this.con_file_recipient.toggle(!showTextEntry);
         this.con_csv_recipient.toggle(showTextEntry);
     }
-    evt_select_template() {
+    evt_select_template(e) {
             var name,
                 subject,
                 message = '';
@@ -490,14 +508,14 @@ class ManyMailerPlus_mod {
             if (details.length > 0) {
                 details.remove();
             }
-            if (this.checked) {
+            if (e.target.checked) {
                 var sections = [];
                 var element, attributes, attribute;
-                name = this.value;
-                subject = this.dataset.confirm;
+                name = e.target.value;
+                subject = e.target.dataset.confirm;
                 var choice = document.getElementById(name + '-code');
                 if (choice !== null) {
-                    $('input[name="selection[]"]').not(this).attr('checked', false).parents('tr').removeClass('selected');
+                    this.tmp_selections.not(this).attr('checked', false).parents('tr').removeClass('selected');
                     message = choice.innerHTML;
                     var test_element = document.createElement('div');
                     test_element.innerHTML = message;
@@ -532,12 +550,12 @@ class ManyMailerPlus_mod {
     prep_data_for_parse() {
         // remove validation errors
         var arr_current_csv = this.get_csv_recip(true);
-        if (arr_current_csv[0] === arr_current_csv[0].toUpperCase()) {
-            // remove possible error string IN ALL CAPS
-            arr_current_csv.shift();
-            this.val_with_linenum(arr_current_csv.join('\n'));
-            arr_current_csv = this.get_csv_recip(true);
-        }
+        // if (arr_current_csv[0] === arr_current_csv[0].toUpperCase()) {
+        //     // remove possible error string IN ALL CAPS
+        //     arr_current_csv.shift();
+        //     this.val_with_linenum(arr_current_csv.join('\n'));
+        //     arr_current_csv = this.get_csv_recip(true);
+        // }
         if (arr_current_csv.length < 1) {
             this.show_message({
                 title: 'No CSV Data Provided',
@@ -548,7 +566,7 @@ class ManyMailerPlus_mod {
         return arr_current_csv.join('\n');
     }
     toggleInitState(show) {
-        if (this.b_inEmailFunctions) {
+        if (this.on_compose_page) {
             this.btn_reset.toggle(show);
             this.show_csv_recipient_fieldset(show);
             this.con_recip_review.toggle(show);
@@ -556,17 +574,6 @@ class ManyMailerPlus_mod {
             this.con_tmp_name.toggle(show);
             this.con_errors.toggle(show);
             this.recipient.prop('readonly', true);
-            this.recipient[0].addEventListener(
-                'click',
-                function(e) {
-                    this.show_message({
-                        title: 'Invalid!',
-                        html: 'Please enter emails using csv entry (file upload/paste).',
-                        type: 'error'
-                    });
-                }.bind(this),
-                false
-            );
         }
 
         return this;
@@ -622,6 +629,9 @@ class ManyMailerPlus_mod {
 
     compile_errMsgs(errors) {
         var errMsgs = {};
+        var testMsg = function(val, testVal) {
+            return testVal !== undefined && val.indexOf(testVal) < 0;
+        };
         errors.forEach((err) => {
             if (!Object.keys(errMsgs).includes(err.type)) {
                 errMsgs[err.type] = {};
@@ -632,7 +642,9 @@ class ManyMailerPlus_mod {
                     affected: []
                 };
             }
-            errMsgs[err.type][err.code].message += err.message !== undefined ? `${err.message}<br />` : '';
+            errMsgs[err.type][err.code].message += testMsg(errMsgs[err.type][err.code].message, err.message) ?
+                `${err.message}<br />` :
+                '';
             var offset = this.linenum_offset;
             if (!errMsgs[err.type][err.code].affected.includes(err.row + offset)) {
                 errMsgs[err.type][err.code].affected.push(err.row + offset);
@@ -659,7 +671,7 @@ class ManyMailerPlus_mod {
         // reset recipient label
         this.countEmails();
 
-        $('#placeholder').parent().remove();
+        this.con_placeholder.empty();
         // reset table
 
         var parent = $('#csv_content_wrapper').parent();
@@ -807,17 +819,29 @@ class ManyMailerPlus_mod {
     }
 
     showPlaceholders(headers) {
-        var el_exists = document.getElementById('placeholder');
-        if (this.con_placeholder) {
-            this.con_placeholder.remove();
-        }
+        // if (this.con_placeholder[0]) {
+        //     this.con_placeholder.detach();
+        //     this.con_placeholder.append($('<tbody/>'));
+        // } else {
+        $('#stick-here').remove();
         $('<div />', {
                 id: 'stick-here',
                 class: 'stick-here',
                 height: $('div.col.w-12').height()
             })
-            .append("<table id='placeholder'><caption>Placeholders</caption></table>")
+            .append(
+                $('<table />', {
+                    id: 'csv_placeholder',
+                    class: 'placeholder'
+                }).append(
+                    $('<caption />', {
+                        text: 'Placeholders'
+                    })
+                )
+            )
             .appendTo('.sidebar');
+        this.con_placeholder = $('#csv_placeholder');
+        // }
 
         headers.forEach((el) => {
             var test = $('<button/>', {
@@ -875,9 +899,7 @@ class ManyMailerPlus_mod {
     }
 
     countEmails() {
-        var emails = this.recipient.val().split(',');
-        var count = emails[0] === '' ? 0 : emails.length;
-
+        var count = this.theCSV_obj.recipient_count;
         var label = this.csv_recipient.parent().prev().find('label');
         var origText = label.text();
         // preserve  original label just append count string
@@ -887,6 +909,7 @@ class ManyMailerPlus_mod {
                 origText = origText.substr(0, idx);
             }
         }
+
         var countText = count > 0 ? ` (Count: ${count})` : '';
         label.text(origText + countText);
     }
@@ -909,14 +932,15 @@ class ManyMailerPlus_mod {
     }
 
     setFormValues() {
+        let tmp = this.csvObj;
         $('#reset').show();
-        this.showPlaceholders(this.csvObj.headers);
-        this.recipient.val(this.csvObj.email_list);
+        this.showPlaceholders(tmp.headers);
+        this.recipient.val(tmp.emails.join(', '));
         this.countEmails();
         // hidden form vals set
-        $('input[name="csv_object"]').val(this.csvObj.data_string);
-        $("input[name='recipient_count']").val(this.csvObj.recipient_count);
-        $("input[name='mailKey']").val(this.csvObj.mailKey);
+        $('input[name="csv_object"]').val(tmp.data_string);
+        $("input[name='recipient_count']").val(tmp.recipient_count);
+        $("input[name='mailKey']").val(tmp.mailKey);
         return this;
     }
 
@@ -929,10 +953,7 @@ class ManyMailerPlus_mod {
                 this.csvObj = validation_result;
             } else {
                 // this.displayCSVErrors(validation_result);
-                this.insert_errors_in_file(validation_result.errors[0]).showPapaErrors(
-                    validation_result.errors,
-                    'warning'
-                );
+                this.insert_errors_in_txt(validation_result.errors).showPapaErrors(validation_result.errors, 'warning');
             }
         } else {
             this.showPapaErrors(obj_parsed.errors);
@@ -940,11 +961,15 @@ class ManyMailerPlus_mod {
         return is_valid_csv;
     }
 
-    insert_errors_in_file(errs) {
-        let current_csv = this.get_csv_recip(true);
-        current_csv.unshift(errs.message.toUpperCase());
-        let new_csv = current_csv.join('\n');
-        this.val_with_linenum(new_csv);
+    insert_errors_in_txt(errs) {
+        // let message = errs.reduce(function(retVal, curr) {
+        //     let current = curr.message.toUpperCase();
+        //     return (retVal += retVal.indexOf(current) === -1 ? `\n${current}` : '');
+        // }, errs[0].message.toUpperCase());
+        // let current_csv = this.get_csv_recip(true);
+        // current_csv.unshift(message);
+        // let new_csv = current_csv.join('\n');
+        // this.val_with_linenum(new_csv);
         return this;
     }
     procReq(data, query = false) {
@@ -1078,7 +1103,11 @@ class ManyMailerPlus_mod {
         });
     }
 }
-export default ManyMailerPlus_mod;
+
+// for running test only
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = ManyMailerPlus_mod;
+}
 $(document).ready(function() {
     'use strict';
 

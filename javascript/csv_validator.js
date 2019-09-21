@@ -3,11 +3,10 @@ class CSV_Validator {
             Object.assign(this, PapaParsed_data);
             this.error_count = 0;
             this.emails = [];
-            this.csv_valid = false;
             this.b_file_contains_emails = false;
-            this.required_columns = {};
             this.rawdata = this.data;
             this.validate_csv();
+            return this;
         }
         /* #region Getters/setters */
     set is_valid(b_var) {
@@ -17,16 +16,14 @@ class CSV_Validator {
         this.b_file_contains_emails = b_var;
     }
     set required_columns(obj) {
-        this.required_columns = obj;
-    }
-    set headers(h) {
-        this._headers = h;
+        this._required_columns = obj;
     }
     set email_column(col) {
-        this.email_column = col;
+        this.required_columns.email_column = col;
     }
     set finalHeaders(v) {
         this._headers = v;
+        this.meta.fields = this._headers;
     }
     get is_valid() {
         return this.error_count === 0;
@@ -35,10 +32,7 @@ class CSV_Validator {
         return this.b_file_contains_emails;
     }
     get required_columns() {
-        return this.required_columns;
-    }
-    get email_list() {
-        return this.emails.join(',');
+        return this._required_columns;
     }
 
     get extracted_first_row() {
@@ -52,6 +46,9 @@ class CSV_Validator {
         );
     }
     get email_column() {
+        return this.required_columns.email_column;
+    }
+    get find_email_column() {
         var matches = this.intersection(this.headers, this.regexify(this.validHeaders.email_column));
         return matches.length > 0 ? matches[0] : false;
     }
@@ -85,16 +82,13 @@ class CSV_Validator {
     get genKeyMap() {
         return this.tokenizeKeys(this.headers);
     }
-    get headers() {
-        return this.headers;
-    }
     get finalHeaders() {
         return this._headers;
     }
     get validateReqHeaders() {
             var header_has_no_email_data = this.check_headers_for_email;
             var reqKeys = {
-                email_column: this.email_column,
+                email_column: this.find_email_column,
                 first: this.first_name_col,
                 last: this.last_name_col,
                 headerKeyMap: header_has_no_email_data ? this.genKeyMap : this.headers,
@@ -105,6 +99,7 @@ class CSV_Validator {
                     reqKeys.errors.push(`Acceptable Values for ${k}: ${this.validHeaders[k]}`);
                 }
             });
+            this.required_columns = reqKeys;
             this.validated_data = reqKeys;
             this.mailKey = reqKeys.email_column.val;
             this.is_valid = reqKeys.errors.length === 0 && header_has_no_email_data;
@@ -115,26 +110,28 @@ class CSV_Validator {
 
     validate_csv() {
         if (this.data.length > 0) {
-            this.tokenized_obj = first_row_values = [];
+            let tokenized_obj = [];
+            let first_row_values = [];
             first_row_values = this.extracted_first_row;
             // email column in file?
             this.contains_email = this.scan_for_emails(first_row_values);
             // validate required columns
-            this.validatedReqHeaders.scan_for_errors();
+            this.validateReqHeaders.scan_for_errors();
             //generate converted this.data to obj with tokenized keys
-            if (this.required_columns.is_valid && this.email_column) {
+            if (this.is_valid && this.required_columns.email_column) {
                 this.data.forEach((row) => {
                     var newRow = {};
                     var token_key;
-                    var current_email = this.isValidEmailAddress(row[email_column.original]);
-                    if (email_column) {
+                    var current_email = this.isValidEmailAddress(row[this.required_columns.email_column.original]);
+                    if (this.required_columns.email_column) {
                         if (current_email) {
                             this.emails.push(current_email);
-                            row[email_column.original] = current_email;
+                            row[this.required_columns.email_column.original] = current_email;
                         } else {
                             this.pushError({
                                 code: 'MMP_MissingColumn',
-                                message: `Column (${email_column.original}): does not contain email data`,
+                                message: `Column (${this.required_columns.email_column
+                                    .original}): does not contain email data`,
                                 row: 0,
                                 type: 'MissingEmailColumn'
                             });
@@ -147,17 +144,14 @@ class CSV_Validator {
                     tokenized_obj.push(newRow);
                 });
             }
-            return Object.assign({
-                    data_string: JSON.stringify(tokenized_obj),
-                    data: tokenized_obj,
-                    recipient_count: this.emails.length,
-                    email_list: this.email_list,
-                    headers: this.finalHeaders
-                },
-                this.pp_data_obj
-            );
+            return Object.assign(this, {
+                data_string: JSON.stringify(tokenized_obj),
+                data: tokenized_obj,
+                recipient_count: this.emails.length,
+                headers: this.finalHeaders
+            });
         } else if (this.errors.length > 0) {
-            return this.pp_data_obj;
+            return this;
         }
     }
     scan_for_errors() {
@@ -169,7 +163,7 @@ class CSV_Validator {
                 type: 'Missing Required Keys'
             });
         });
-        if (!this.required_columns.validHeader) {
+        if (!this.is_valid) {
             this.pushError({
                 code: 'MMP_InvalidFile',
                 message: 'Header Does Not Conform to Standard (email, first, last, etc...)',
@@ -253,9 +247,13 @@ class CSV_Validator {
     }
 
     tokenizeKey(key) {
-        return '{{' + key.trim().toLowerCase().replace(' ', '_') + '}}';
+        if (key) return '{{' + key.trim().toLowerCase().replace(' ', '_') + '}}';
     }
     regexify(arr) {
         return new RegExp(arr.join('|'), 'i');
     }
+}
+// for running test only
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = CSV_Validator;
 }

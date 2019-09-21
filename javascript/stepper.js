@@ -49,3 +49,8 @@ class Stepper {
         }
     }
 }
+
+// for running test only
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = Stepper;
+}

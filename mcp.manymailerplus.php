@@ -7,7 +7,7 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $vars = array();
-    private $config =  array('debug' => FALSE);
+    private $config =  array('debug' => TRUE);
 
     /**
      * Constructor.
@@ -19,9 +19,10 @@ class Manymailerplus_mcp
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
         }
-        $this->_js_config_autoload();
+        
         $this->_load_libs();
         $this->_load_configs();
+        $this->_js_config_autoload();        
         $this->_update_service_options(array_keys($this->services));
 
         if (!$this->sidebar_loaded) {
