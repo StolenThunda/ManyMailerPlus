@@ -1,13 +1,14 @@
 vendor/
 src/
 .vscode/
+.nyc_output/
+coverage/
 src/
 .phpunit*
 phpunit*
 composer*
 .jshintrc
 node_modules/
-node_modules/.bin/*
 View/email/csv-field.php
 manymailerplus/View/sidebar_view.php
 ext.manymailerplus.php
