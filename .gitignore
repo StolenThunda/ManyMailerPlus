@@ -1,24 +1,24 @@
 vendor/
-node_modules/
 src/
 .vscode/
-
-.bashrc
+src/
+.phpunit*
+phpunit*
+composer*
 .jshintrc
-dist/bundle.js
-
+node_modules/
+node_modules/.bin/*
 View/email/csv-field.php
 manymailerplus/View/sidebar_view.php
 ext.manymailerplus.php
 libraries/ext.manymailerplus.php
 libraries/serialized_email_cache.txt
 
-# *package*
 *webpack*
-*phar*
-*composer*
-*.diff
-*.phar
-*nyc*
-*coverage*
-*phpunit*
+.bashrc
+phpcs.phar 
+phpcbf.phar 
+dist/bundle.js
+patch.diff
+phpcbf.phar
+phpcs.phar
