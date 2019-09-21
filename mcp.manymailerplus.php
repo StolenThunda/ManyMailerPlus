@@ -63,6 +63,10 @@ class Manymailerplus_mcp
         $internal_js = ee()->config->item('internal_js');
         foreach ($internal_js as $js) {
             ee()->cp->load_package_js($js);
+            // $path = ee('CP/URL', EXT_SETTINGS_PATH.'/javascript/'.$js.'.js');           
+            // $script = "<script src='".$path."' type='module'></script>";
+            // ee()->dbg->c_log($script, __METHOD__, true);
+            // ee()->cp->add_to_foot($script);
         }
         $external_js = ee()->config->item('external_js');
         foreach ($external_js as $script) {
