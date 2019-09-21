@@ -1,7 +1,6 @@
 vendor/
 node_modules/
 src/
-tests/
 .vscode/
 
 .bashrc
@@ -14,7 +13,7 @@ ext.manymailerplus.php
 libraries/ext.manymailerplus.php
 libraries/serialized_email_cache.txt
 
-*package*
+# *package*
 *webpack*
 *phar*
 *composer*
