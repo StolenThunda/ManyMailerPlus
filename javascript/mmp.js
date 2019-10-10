@@ -3,7 +3,7 @@
 // import style from "./main.css";
 const TLN = {
     eventList: {},
-    update_line_numbers: function (ta, el) {
+    update_line_numbers: function(ta, el) {
         'use strict';
         let lines = ta.value.split('\n').length;
         let child_count = el.children.length;
@@ -24,7 +24,7 @@ const TLN = {
             difference++;
         }
     },
-    append_line_numbers: function (id) {
+    append_line_numbers: function(id) {
         'use strict';
         let ta = document.getElementById(id);
         if (ta === null) {
@@ -49,8 +49,8 @@ const TLN = {
             'keydown',
             'keyup'
         ];
-        const __change_hdlr = (function (ta, el) {
-            return function (e) {
+        const __change_hdlr = (function(ta, el) {
+            return function(e) {
                 if (
                     (+ta.scrollLeft === 10 &&
                         (e.keyCode === 37 || e.which === 37 || e.code === 'ArrowLeft' || e.key === 'ArrowLeft')) ||
@@ -82,8 +82,8 @@ const TLN = {
             'mousewheel',
             'scroll'
         ];
-        const __scroll_hdlr = (function (ta, el) {
-            return function () {
+        const __scroll_hdlr = (function(ta, el) {
+            return function() {
                 el.scrollTop = ta.scrollTop;
             };
         })(ta, el);
@@ -95,7 +95,7 @@ const TLN = {
             });
         }
     },
-    remove_line_numbers: function (id) {
+    remove_line_numbers: function(id) {
         let ta = document.getElementById(id);
         if (ta === null) {
             return console.error("[tln.js] Couldn't find textarea of id '" + id + "'");
@@ -152,7 +152,7 @@ class ManyMailerPlus_mod {
         // modules
         this.Stepper = new Stepper($('.form-section'));
         $.fn.extend({
-            val_with_linenum: function (v) {
+            val_with_linenum: function(v) {
                 return this.each(() => {
                     $(this).val(v).trigger('input');
                 });
@@ -215,11 +215,11 @@ class ManyMailerPlus_mod {
         return errLines > 0 ? ++errLines : 1;
     }
     toggle_loading(fn, ...args) {
-        // this.loader.addClass('is-active');
-        fn(...args);
-        // this.loader.removeClass('is-active');
-    }
-    // SweetAlert2 messenger
+            // this.loader.addClass('is-active');
+            fn(...args);
+            // this.loader.removeClass('is-active');
+        }
+        // SweetAlert2 messenger
     show_message(config) {
         if (Swal !== undefined) {
             Swal.fire(config);
@@ -230,14 +230,14 @@ class ManyMailerPlus_mod {
     }
 
     sweetAlertbyID(id) {
-        var html = $(id).html();
-        var title = $($.parseHTML(html)).find('h1').text();
-        var info = $($.parseHTML(html)).find('.txt-wrap').html();
-        this.show_message({ title: title, html: info, type: 'info' });
-    }
-    /**
-     * set all events for dom elements
-     */
+            var html = $(id).html();
+            var title = $($.parseHTML(html)).find('h1').text();
+            var info = $($.parseHTML(html)).find('.txt-wrap').html();
+            this.show_message({ title: title, html: info, type: 'info' });
+        }
+        /**
+         * set all events for dom elements
+         */
     initializePage() {
         this.toggleInitState(false).init_service_list().init_dom_events();
         if (this.b_isApiAvailable) {
@@ -260,7 +260,7 @@ class ManyMailerPlus_mod {
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function (e) {
+                    reader.onload = function(e) {
                         this.val_with_linenum(reader.result);
                         this.con_csv_recipient.show();
                     }.bind(this);
@@ -281,10 +281,10 @@ class ManyMailerPlus_mod {
     }
 
     init_placeholder_funcs() {
-        (function ($) {
+        (function($) {
             // Behind the scenes method deals with browser
             // idiosyncrasies and such
-            $.caretTo = function (el, index) {
+            $.caretTo = function(el, index) {
                 if (el.createTextRange) {
                     var range = el.createTextRange();
                     range.move('character', index);
@@ -300,8 +300,8 @@ class ManyMailerPlus_mod {
             // jQuery effects.
 
             // Set caret to a particular index
-            $.fn.caretTo = function (index, offset) {
-                return this.queue(function (next) {
+            $.fn.caretTo = function(index, offset) {
+                return this.queue(function(next) {
                     if (isNaN(index)) {
                         var i = $(this).val().indexOf(index);
                         if (i === -1) {
@@ -323,13 +323,13 @@ class ManyMailerPlus_mod {
             };
 
             // Set caret to beginning of an element
-            $.fn.caretToStart = function () {
+            $.fn.caretToStart = function() {
                 return this.caretTo(0);
             };
 
             // Set caret to the end of an element
-            $.fn.caretToEnd = function () {
-                return this.queue(function (next) {
+            $.fn.caretToEnd = function() {
+                return this.queue(function(next) {
                     $.caretTo(this, $(this).val().length);
                     next();
                 });
@@ -339,132 +339,132 @@ class ManyMailerPlus_mod {
     }
 
     init_dom_events() {
-        this.doc_body
-            .on('click', '*[data-conditional-modal]', function (e) {
-                e.preventDefault();
-                $('.modal-confirm-remove').hide();
-                swal
-                    .fire({
-                        type: 'warning',
-                        html: $('.modal-confirm-remove').find('.form-standard'),
-                        showCloseButton: true,
-                        showCancelButton: false,
-                        showConfirmButton: false
-                    })
-                    .then((result) => {
-                        if (result.value) {
-                            this.show_message({
-                                title: 'Deleted!',
-                                html: 'Your file has been deleted.',
-                                type: 'success'
-                            });
-                        }
-                    });
-                $('.app-overlay').removeClass('app-overlay---open');
-                return;
-            })
-            .on('click', '#mc-edits legend', function () {
-                $(this).nextAll('div').fadeToggle('slow');
-            })
-            .bind(this);
-        // hijacks default 'view email' button for SweetAlert2 action!
-        $('a.m-link')
-            .bind('click', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                var rel = e.target.rel;
-                this.sweetAlertbyID(`.${rel}`);
-            })
-            .bind(this);
-
-        if (this.on_compose_page) {
-            this.mail_type[0].addEventListener(
-                'change',
-                function (e) {
-                    this.change_mail_type(e);
-                }.bind(this),
-                false
-            );
-
-            this.sel_csv_entry[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_toggle_csv_entry(e);
-                }.bind(this),
-                false
-            );
-
-            this.csv_recipient
-                .bind('interact', (e) => {
-                    if (e.currentTarget.value === '') {
-                        TLN.remove_line_numbers('csv_recipient');
-                    } else {
-                        TLN.append_line_numbers('csv_recipient');
-                    }
+            this.doc_body
+                .on('click', '*[data-conditional-modal]', function(e) {
+                    e.preventDefault();
+                    $('.modal-confirm-remove').hide();
+                    swal
+                        .fire({
+                            type: 'warning',
+                            html: $('.modal-confirm-remove').find('.form-standard'),
+                            showCloseButton: true,
+                            showCancelButton: false,
+                            showConfirmButton: false
+                        })
+                        .then((result) => {
+                            if (result.value) {
+                                this.show_message({
+                                    title: 'Deleted!',
+                                    html: 'Your file has been deleted.',
+                                    type: 'success'
+                                });
+                            }
+                        });
+                    $('.app-overlay').removeClass('app-overlay---open');
+                    return;
                 })
-                .wrap('<div id="csv_recipient_wrapper" ></div>');
-            this.file_recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.toggle_loading(this.evt_load_csv_file.bind(this), e);
-                }.bind(this),
-                false
-            );
-            this.recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.countEmails();
-                }.bind(this),
-                false
-            );
-            this.recipient[0].addEventListener(
-                'click',
-                function (e) {
-                    this.show_message({
-                        title: 'Invalid!',
-                        html: 'Please enter emails using csv entry (file upload/paste).',
-                        type: 'error'
-                    });
-                }.bind(this),
-                false
-            );
-            $('input[name=use_templates]')[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_toggle_templates(e);
-                }.bind(this),
-                false
-            );
-            $('[name$=linenum], #reset')[0].addEventListener(
-                'click',
-                function (e) {
-                    this.resetRecipients(true);
-                }.bind(this),
-                false
-            );
+                .on('click', '#mc-edits legend', function() {
+                    $(this).nextAll('div').fadeToggle('slow');
+                })
+                .bind(this);
+            // hijacks default 'view email' button for SweetAlert2 action!
+            $('a.m-link')
+                .bind('click', (e) => {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    var rel = e.target.rel;
+                    this.sweetAlertbyID(`.${rel}`);
+                })
+                .bind(this);
 
-            $('button[name=convert_csv]')[0].addEventListener(
-                'click',
-                function (e) {
-                    this.toggle_loading(this.evt_convert_csv.bind(this), e);
-                }.bind(this),
-                false
-            );
-            this.tmp_selections.bind('interact', (e) => {
-                this.evt_select_template(e);
-            });
+            if (this.on_compose_page) {
+                this.mail_type[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.change_mail_type(e);
+                    }.bind(this),
+                    false
+                );
 
-            this.tmp_selections[0].addEventListener(
-                'change',
-                function (e) {
+                this.sel_csv_entry[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_toggle_csv_entry(e);
+                    }.bind(this),
+                    false
+                );
+
+                this.csv_recipient
+                    .bind('interact', (e) => {
+                        if (e.currentTarget.value === '') {
+                            TLN.remove_line_numbers('csv_recipient');
+                        } else {
+                            TLN.append_line_numbers('csv_recipient');
+                        }
+                    })
+                    .wrap('<div id="csv_recipient_wrapper" ></div>');
+                this.file_recipient[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.toggle_loading(this.evt_load_csv_file.bind(this), e);
+                    }.bind(this),
+                    false
+                );
+                this.recipient[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.countEmails();
+                    }.bind(this),
+                    false
+                );
+                this.recipient[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.show_message({
+                            title: 'Invalid!',
+                            html: 'Please enter emails using csv entry (file upload/paste).',
+                            type: 'error'
+                        });
+                    }.bind(this),
+                    false
+                );
+                $('input[name=use_templates]')[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_toggle_templates(e);
+                    }.bind(this),
+                    false
+                );
+                $('[name$=linenum], #reset')[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.resetRecipients(true);
+                    }.bind(this),
+                    false
+                );
+
+                $('button[name=convert_csv]')[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.toggle_loading(this.evt_convert_csv.bind(this), e);
+                    }.bind(this),
+                    false
+                );
+                this.tmp_selections.bind('interact', (e) => {
                     this.evt_select_template(e);
-                }.bind(this),
-                false
-            );
+                });
+
+                this.tmp_selections[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_select_template(e);
+                    }.bind(this),
+                    false
+                );
+            }
+            return this;
         }
-        return this;
-    }
-    // BEGIN EVENT FUNCTIONS
+        // BEGIN EVENT FUNCTIONS
     evt_load_csv_file(evt) {
         this.resetRecipients();
         var fileType = /csv.*/;
@@ -472,7 +472,7 @@ class ManyMailerPlus_mod {
         if (file) {
             if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                 var reader = new FileReader();
-                reader.onload = function (e) {
+                reader.onload = function(e) {
                     this.val_with_linenum(reader.result);
                     this.show_csv_recipient_fieldset(true);
                 }.bind(this);
@@ -552,23 +552,20 @@ class ManyMailerPlus_mod {
         $('input[name=subject]').val(subject);
     }
 
+    evt_placeholder_btn(btn) {
+        var plain = $("textarea[name='plaintext_alt']");
+        var msg = $("textarea[name='message']");
+        var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
 
-    evt_placeholder_btn(e) {
-        return function () {
-            var plain = $("textarea[name='plaintext_alt']");
-            var msg = $("textarea[name='message']");
-            var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
-
-            // Insert text into textarea at cursor position and replace selected text
-            var cursorPosStart = message.prop('selectionStart');
-            var cursorPosEnd = message.prop('selectionEnd');
-            var insertedText = $(e).val() + ' ';
-            var v = message.val();
-            var textBefore = v.substring(0, cursorPosStart);
-            var textAfter = v.substring(cursorPosEnd, v.length);
-            message.val(textBefore + insertedText + textAfter);
-            $('textarea[name=message]').caretTo(insertedText, true);
-        };
+        // Insert text into textarea at cursor position and replace selected text
+        var cursorPosStart = message.prop('selectionStart');
+        var cursorPosEnd = message.prop('selectionEnd');
+        var insertedText = $(btn).val() + ' ';
+        var strMsg = message.val();
+        var textBefore = strMsg.substring(0, cursorPosStart);
+        var textAfter = strMsg.substring(cursorPosEnd, strMsg.length);
+        message.val(textBefore + insertedText + textAfter);
+        $('textarea[name=message]').caretTo(insertedText, true);
     }
 
     /// End EVENT FUNCTIONS
@@ -655,7 +652,7 @@ class ManyMailerPlus_mod {
 
     reduce_errorMsgs(errors) {
         var errMsgs = {};
-        var testMsg = function (val, testVal) {
+        var testMsg = function(val, testVal) {
             return testVal !== undefined && val.indexOf(testVal) < 0;
         };
         errors.forEach((err) => {
@@ -720,7 +717,7 @@ class ManyMailerPlus_mod {
             'main',
             'content'
         ];
-        var found = sections.find(function (el) {
+        var found = sections.find(function(el) {
             return $.inArray(el.edit_section, email_body) !== -1;
         });
         var suggested = found ? `(suggested: <b>'${found.edit_section}')</b>` : '';
@@ -734,36 +731,36 @@ class ManyMailerPlus_mod {
                 parent.after(fs);
                 fs.append(
                     $('<div>')
-                        .addClass('field-instruct')
-                        .append(
-                            $(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`)
-                        )
+                    .addClass('field-instruct')
+                    .append(
+                        $(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`)
+                    )
                 );
             }
 
             fs.append(
                 $('<div>')
-                    .addClass('field-instruct')
-                    .append($(`<label>${id}</label>`).css('color', 'red').css('font-size', '20px'))
-                    .append(
-                        $(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
-                            'data-parsley-mincheck': '1',
-                            'data-parsley-multiple': 'mc-check'
-                        })
-                    )
-                    .append(
-                        $(`<label for="mc-check_${id}">(Body?)</label>`)
-                            .css('text-align', 'right')
-                            .css('display', 'inline-block')
-                    ),
+                .addClass('field-instruct')
+                .append($(`<label>${id}</label>`).css('color', 'red').css('font-size', '20px'))
+                .append(
+                    $(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
+                        'data-parsley-mincheck': '1',
+                        'data-parsley-multiple': 'mc-check'
+                    })
+                )
+                .append(
+                    $(`<label for="mc-check_${id}">(Body?)</label>`)
+                    .css('text-align', 'right')
+                    .css('display', 'inline-block')
+                ),
                 $('<div>')
-                    .addClass('field-control')
-                    .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+                .addClass('field-control')
+                .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
             );
 
-            $('input[name^="mc-check"').change(function () {
+            $('input[name^="mc-check"').change(function() {
                 var chk = this.checked;
-                $('input[name^="mc-check"').not(this).each(function (el) {
+                $('input[name^="mc-check"').not(this).each(function(el) {
                     if (chk) {
                         $(this).attr('checked', false).hide();
                         $(`label[for=${this.name}]`).hide();
@@ -778,10 +775,9 @@ class ManyMailerPlus_mod {
         });
     }
 
-
     show_active_services() {
         var val = this.active_services.val();
-        $.each(this.service_list.children(), function () {
+        $.each(this.service_list.children(), function() {
             var list_item = $(this).text().toLowerCase();
             if (val && val.indexOf(list_item) > -1) {
                 $(this).addClass('enabled-service');
@@ -795,10 +791,10 @@ class ManyMailerPlus_mod {
     showPlaceholders(headers) {
         $('#stick-here').remove();
         $('<div />', {
-            id: 'stick-here',
-            class: 'stick-here',
-            height: $('div.col.w-12').height()
-        })
+                id: 'stick-here',
+                class: 'stick-here',
+                height: $('div.col.w-12').height()
+            })
             .append(
                 $('<table />', {
                     id: 'csv_placeholder',
@@ -814,22 +810,25 @@ class ManyMailerPlus_mod {
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         Object.entries(this.csvObj.headerKeyMap).forEach(([key, value]) => {
             var btn = $('<button/>', {
-                class: 'btn placeholder',
-                value: value,
-                text: key
-            })
+                    class: 'btn placeholder',
+                    value: value,
+                    text: key
+                })
                 .wrap('<tr><td align="center"></td></tr>')
                 .closest('tr');
             this.con_placeholder.append(btn);
         });
-        $('.placeholder').on(
-            'click', 'button',
-            function (e) {
-                this.evt_placeholder_btn(this);
-            }.bind(this));
+        $('#csv_placeholder').on(
+            'click',
+            'button',
+            function(e) {
+                this.evt_placeholder_btn(e.currentTarget);
+            }.bind(this)
+        );
+        return this;
     }
     countEmails() {
-        var count = (this.csvObj.emails) ? this.csvObj.emails.length : 0;
+        var count = this.csvObj.emails ? this.csvObj.emails.length : 0;
         var label = this.csv_recipient.parent().prev().find('label');
         var origText = label.text();
         // preserve  original label just append count string
@@ -841,6 +840,7 @@ class ManyMailerPlus_mod {
         }
         var countText = count > 0 ? ` (Count: ${count})` : '';
         label.text(origText + countText);
+        return this;
     }
 
     get_csv_recip(asArray) {
@@ -861,8 +861,7 @@ class ManyMailerPlus_mod {
 
     setFormValues() {
         $('#reset').show();
-        this.showPlaceholders(this.csvObj.headers);
-        this.recipient.val(this.csvObj.emails.join(', '));
+        this.showPlaceholders().recipient.val(this.csvObj.emails.join(', '));
         this.countEmails();
         // hidden form vals set
         $('input[name="csv_object"]').val(JSON.stringify(this.csvObj.data));
@@ -886,15 +885,14 @@ class ManyMailerPlus_mod {
         return validation_result.is_valid || false;
     }
 
-
     init_datatable() {
         // this.val_with_linenum('');
         $('#csv_content').addClass('fixed_header display').DataTable({
             defaultContent: '',
             dom: '<"top"i>rt<"bottom"flp><"clear">',
-            initComplete: function () {
+            initComplete: function() {
                 var api = this.api();
-                api.$('td').click(function () {
+                api.$('td').click(function() {
                     api.search(this.innerHTML).draw();
                 });
             },
@@ -908,7 +906,7 @@ class ManyMailerPlus_mod {
 
     dumpHiddenVals() {
         var msg = $('<table/>');
-        $('input[type="hidden"]').each(function () {
+        $('input[type="hidden"]').each(function() {
             var val = $(this).val();
             val = val.length > 100 ? val.substring(0, 100) + '...' : val;
             console.log($(this).attr('name') + ': ' + $(this).val());
@@ -924,7 +922,7 @@ class ManyMailerPlus_mod {
 
     dumpFormVals() {
         var msg = $('<table/>');
-        $('form :input').each(function () {
+        $('form :input').each(function() {
             var val = this.value;
             val = val.length > 100 ? val.substring(0, 100) + '...' : val;
             val = val === 'on' || val === 'off' ? this.checked : val;
@@ -1003,7 +1001,6 @@ class ManyMailerPlus_mod {
     //     return false;
     // }
 
-
     // qs2json(data) {
     //     var pairs = data.split('&');
     //     var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
@@ -1074,7 +1071,7 @@ class ManyMailerPlus_mod {
     }
 })();
 
-$(document).ready(function () {
+$(document).ready(function() {
     'use strict';
 
     function isAPIAvailable() {
