@@ -1,18 +1,18 @@
 class CSV_Validator {
     constructor(PapaParsed_data) {
-            Object.assign(this, PapaParsed_data);
-            this.error_count = 0;
-            this.emails = [];
-            this.b_file_contains_emails = false;
-            this.rawdata = this.data;
-            this.validate_csv();
-            return this;
-        }
-        /* #region Getters/setters */
+        Object.assign(this, PapaParsed_data);
+        this.error_count = 0;
+        this.emails = [];
+        this.b_file_contains_emails = false;
+        this.headers = this.meta.fields;
+        this.validate_csv();
+        return this;
+    }
+    /* #region Getters/setters */
     set is_valid(b_var) {
         this.csv_valid = b_var;
     }
-    set contains_emails(b_var) {
+    set contains_email(b_var) {
         this.b_file_contains_emails = b_var;
     }
     set required_columns(obj) {
@@ -28,7 +28,7 @@ class CSV_Validator {
     get is_valid() {
         return this.error_count === 0;
     }
-    get contains_emails() {
+    get contains_email() {
         return this.b_file_contains_emails;
     }
     get required_columns() {
@@ -86,27 +86,27 @@ class CSV_Validator {
         return this._headers;
     }
     get validateReqHeaders() {
-            var header_has_no_email_data = this.check_headers_for_email;
-            var reqKeys = {
-                email_column: this.find_email_column,
-                first: this.first_name_col,
-                last: this.last_name_col,
-                headerKeyMap: header_has_no_email_data ? this.genKeyMap : this.headers,
-                errors: []
-            };
-            Object.keys(reqKeys).filter((k) => {
-                if (reqKeys[k] === '' || reqKeys[k] === false) {
-                    reqKeys.errors.push(`Acceptable Values for ${k}: ${this.validHeaders[k]}`);
-                }
-            });
-            this.required_columns = reqKeys;
-            this.validated_data = reqKeys;
-            this.mailKey = reqKeys.email_column.val;
-            this.is_valid = reqKeys.errors.length === 0 && header_has_no_email_data;
-            this.finalHeaders = Object.values(reqKeys.headerKeyMap);
-            return this;
-        }
-        /* #endregion */
+        var header_has_no_email_data = this.check_headers_for_email;
+        var reqKeys = {
+            email_column: this.find_email_column,
+            first: this.first_name_col,
+            last: this.last_name_col,
+            headerKeyMap: header_has_no_email_data ? this.genKeyMap : this.headers,
+            errors: []
+        };
+        Object.keys(reqKeys).filter((k) => {
+            if (reqKeys[k] === '' || reqKeys[k] === false) {
+                reqKeys.errors.push(`Acceptable Values for ${k}: ${this.validHeaders[k]}`);
+            }
+        });
+        this.required_columns = reqKeys;
+        this.validated_data = reqKeys;
+        this.mailKey = reqKeys.email_column.val;
+        this.is_valid = reqKeys.errors.length === 0 && header_has_no_email_data;
+        this.finalHeaders = Object.values(reqKeys.headerKeyMap);
+        return this;
+    }
+    /* #endregion */
 
     validate_csv() {
         if (this.data.length > 0) {
@@ -205,7 +205,8 @@ class CSV_Validator {
         );
     }
     pushError(errObj) {
-        this.has_MMP_ERR = true;
+        this.has_MMP_ERRS = true;
+        this.csv_valid = !this.has_MMP_ERRS;
         this.errors.push(errObj);
         ++this.error_count;
         return this;
