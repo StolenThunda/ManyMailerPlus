@@ -1,17 +1,17 @@
 class CSV_Validator {
     constructor(PapaParsed_data) {
         Object.assign(this, PapaParsed_data);
+        this.b_has_MMP_ERRS = false;
+        this.b_file_contains_emails = false;
         this.error_count = 0;
         this.emails = [];
-        this.b_file_contains_emails = false;
         this.headers = this.meta.fields;
         this.validate_csv();
         return this;
     }
-    /* #region Getters/setters */
-    set is_valid(b_var) {
-        this.csv_valid = b_var;
-    }
+    // set setKeyMap() {
+    //     this.keyMap = this.genKeyMap();
+    // }
     set contains_email(b_var) {
         this.b_file_contains_emails = b_var;
     }
@@ -25,8 +25,15 @@ class CSV_Validator {
         this._headers = v;
         this.meta.fields = this._headers;
     }
-    get is_valid() {
-        return this.error_count === 0;
+    get headerKeyMap() {
+        if (!this.keyMap) { this.keyMap = this.genKeyMap; }
+        return this.keyMap;
+    }
+
+    get is_valid() { return this.csv_valid; }
+
+    get csv_valid() {
+        return this.error_count === 0 && !this.b_has_MMP_ERRS;
     }
     get contains_email() {
         return this.b_file_contains_emails;
@@ -38,12 +45,10 @@ class CSV_Validator {
     get extracted_first_row() {
         return Object.values(this.data[0]).filter((val) => !Array.isArray(val));
     }
-    get check_headers_for_email() {
-        return (
-            this.headers.filter((word) => {
-                return this.isValidEmailAddress(word);
-            }).length > 0
-        );
+    get header_contains_email() {
+        return this.headers.filter((word) => {
+            return this.isValidEmailAddress(word);
+        }).length > 0;
     }
     get email_column() {
         return this.required_columns.email_column;
@@ -86,23 +91,24 @@ class CSV_Validator {
         return this._headers;
     }
     get validateReqHeaders() {
-        var header_has_no_email_data = this.check_headers_for_email;
         var reqKeys = {
             email_column: this.find_email_column,
             first: this.first_name_col,
             last: this.last_name_col,
-            headerKeyMap: header_has_no_email_data ? this.headers : this.genKeyMap,
-            errors: []
+            headerKeyMap: this.header_contains_email ? this.headers : this.headerKeyMap
         };
         Object.keys(reqKeys).filter((k) => {
             if (reqKeys[k] === '' || reqKeys[k] === false) {
-                reqKeys.errors.push(`Acceptable Values for ${k}: ${this.validHeaders[k]}`);
+                this.pushError({
+                    code: 'MMP_MissingRequiredKeys',
+                    message: `Acceptable Values for ${k}: ${this.validHeaders[k]}`,
+                    row: 0,
+                    type: 'Missing Required Keys'
+                });
             }
         });
         this.required_columns = reqKeys;
         this.mailKey = reqKeys.email_column.val;
-        this.is_valid = reqKeys.errors.length === 0 && header_has_no_email_data;
-        this.headers = Object.values(reqKeys.headerKeyMap);
         return this;
     }
     /* #endregion */
@@ -121,7 +127,7 @@ class CSV_Validator {
 
     createTokenizedObj() {
         let token_obj = [];
-        if (this.is_valid && this.required_columns.email_column) {
+        if (this.csv_valid && this.required_columns.email_column) {
             this.data.forEach((row) => {
                 var newRow = {};
                 var token_key;
@@ -150,15 +156,7 @@ class CSV_Validator {
         return token_obj;
     }
     scan_for_errors() {
-        this.required_columns.errors.forEach((err) => {
-            this.pushError({
-                code: 'MMP_MissingRequiredKeys',
-                message: err,
-                row: 0,
-                type: 'Missing Required Keys'
-            });
-        });
-        if (!this.is_valid) {
+        if (!this.csv_valid) {
             this.pushError({
                 code: 'MMP_InvalidFile',
                 message: 'Header Does Not Conform to Standard (email, first, last, etc...)',
@@ -182,30 +180,28 @@ class CSV_Validator {
                 type: 'Invalid Email Column'
             });
         }
-        if (!this.required_columns) {
-            this.pushError({
-                code: 'MMP_MissingColumn',
-                message: 'Required Columns: email, first_name, last_name',
-                row: 0,
-                type: 'Missing Required Column'
-            });
-        }
-        // generate email list and
+        // if (!this.required_columns) {
+        //     this.pushError({
+        //         code: 'MMP_MissingColumn',
+        //         message: 'Required Columns: email, first_name, last_name',
+        //         row: 0,
+        //         type: 'Missing Required Column'
+        //     });
+
     }
     scan_for_emails(first_row) {
-        return (
-            first_row.filter((word) => {
-                return this.isValidEmailAddress(word);
-            }).length > 0
-        );
+        return (first_row.filter((word) => {
+            return this.isValidEmailAddress(word);
+        }).length > 0);
     }
+
     pushError(errObj) {
-        this.has_MMP_ERRS = true;
-        this.csv_valid = !this.has_MMP_ERRS;
+        this.b_has_MMP_ERRS = true;
         this.errors.push(errObj);
         ++this.error_count;
         return this;
     }
+
     intersection(d, regX) {
         var dataArray = d;
         var foundColumn = [];

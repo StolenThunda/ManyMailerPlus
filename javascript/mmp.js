@@ -165,54 +165,59 @@ class ManyMailerPlus_mod {
         this.toggle_loading(this.initializePage.bind(this));
     }
 
-    get on_compose_page() {
-        return window.location.href.split('/').slice(-1)[0].indexOf('compose') > -1;
-    }
-    toggle_loading(fn, ...args) {
-        // this.loader.addClass('is-active');
-        fn(...args);
-        // this.loader.removeClass('is-active');
-    }
-    set csvObj(results) {
-        var data = Object.assign({}, results);
-        debugger;
-        data.headers = results.meta.fields;
-        // data.errors = results.errors;
-        // data.data = results.data;
+    set tableData(info) {
+        let dtCols = [];
+        let dtData = [];
+        let headers = info.headers;
+        let data = info.data;
 
-        if (data.has_MMP_ERRS) {
-            this.showPapaErrors(data.errors);
-            return;
-        }
-        data.dtCols = [];
-        data.dtData = [];
-
-        data.headers.forEach((col) => {
-            data.dtCols.push({
+        headers.forEach((col) => {
+            dtCols.push({
                 title: col
             });
         });
 
-        data.data.forEach((itm) => {
+        data.forEach((itm) => {
             var itmVals = Object.values(itm);
-            if (itmVals.length !== data.dtCols.length) {
-                var diff = data.dtCols.length - itmVals.length;
+            if (itmVals.length !== dtCols.length) {
+                var diff = dtCols.length - itmVals.length;
                 do {
                     itmVals.push('');
                     diff--;
                 } while (diff > 0);
             }
-            data.dtData.push(itmVals);
+            dtData.push(itmVals);
         });
-
-        data.string = Papa.unparse({
-            fields: data.headers,
-            data: data.dtData
-        });
-        this.theCSV_obj = data;
+        this._dtCols = dtCols;
+        this._dtData = dtData;
     }
+
+    set csvObj(results) {
+        this.tableData = { headers: results.headers, data: results.data };
+        this.theCSV_obj = results;
+    }
+
     get csvObj() {
         return this.theCSV_obj;
+    }
+    get tableData() {
+        return {
+            columns: this._dtCols,
+            data: this._dtData
+        };
+    }
+    get on_compose_page() {
+        return window.location.href.split('/').slice(-1)[0].indexOf('compose') > -1;
+    }
+    get linenum_offset() {
+        var data = this.get_csv_recip(true);
+        var errLines = data.filter((val) => val === val.toUpperCase()).length;
+        return errLines > 0 ? ++errLines : 1;
+    }
+    toggle_loading(fn, ...args) {
+        // this.loader.addClass('is-active');
+        fn(...args);
+        // this.loader.removeClass('is-active');
     }
     // SweetAlert2 messenger
     show_message(config) {
@@ -239,7 +244,7 @@ class ManyMailerPlus_mod {
             this.useApi().init_placeholder_funcs();
         }
         // for debugging purposes only
-        this.test_funcs();
+        // this.test_funcs();
     }
 
     val_with_linenum(str) {
@@ -546,6 +551,26 @@ class ManyMailerPlus_mod {
         this.tmp_name.val(name);
         $('input[name=subject]').val(subject);
     }
+
+
+    evt_placeholder_btn(e) {
+        return function () {
+            var plain = $("textarea[name='plaintext_alt']");
+            var msg = $("textarea[name='message']");
+            var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
+
+            // Insert text into textarea at cursor position and replace selected text
+            var cursorPosStart = message.prop('selectionStart');
+            var cursorPosEnd = message.prop('selectionEnd');
+            var insertedText = $(e).val() + ' ';
+            var v = message.val();
+            var textBefore = v.substring(0, cursorPosStart);
+            var textAfter = v.substring(cursorPosEnd, v.length);
+            message.val(textBefore + insertedText + textAfter);
+            $('textarea[name=message]').caretTo(insertedText, true);
+        };
+    }
+
     /// End EVENT FUNCTIONS
 
     prep_data_for_parse() {
@@ -597,7 +622,7 @@ class ManyMailerPlus_mod {
     }
 
     showPapaErrors(arr_errors) {
-        var errMsgs = this.compile_errMsgs(arr_errors);
+        var errMsgs = this.reduce_errorMsgs(arr_errors);
         var container = $('<div class="errCode" />');
         // consotype_containerdate error array
         Object.keys(errMsgs).forEach((type) => {
@@ -623,12 +648,12 @@ class ManyMailerPlus_mod {
         this.show_message({
             title: 'Errors',
             type: 'error',
-            html: Object.keys(errMsgs).join(', ')
+            html: Object.keys(errMsgs).join('<br> ')
         });
         return this;
     }
 
-    compile_errMsgs(errors) {
+    reduce_errorMsgs(errors) {
         var errMsgs = {};
         var testMsg = function (val, testVal) {
             return testVal !== undefined && val.indexOf(testVal) < 0;
@@ -652,11 +677,6 @@ class ManyMailerPlus_mod {
             }
         });
         return errMsgs;
-    }
-    get linenum_offset() {
-        var data = this.get_csv_recip(true);
-        var errLines = data.filter((val) => val === val.toUpperCase()).length;
-        return errLines > 0 ? ++errLines : 1;
     }
 
     resetRecipients(all) {
@@ -758,53 +778,6 @@ class ManyMailerPlus_mod {
         });
     }
 
-    init_service_list() {
-        this.service_list
-            .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
-            .addClass('service-list');
-        if (this.active_services.length > 0) {
-            this.show_active_services();
-        } else {
-            this.service_list.hide();
-        }
-
-        //  $('.service-list').sortable({
-        //     axis: 'y',
-        //     opacity: 0.5,
-        //     update: function() {
-        //         var serviceOrder = [];
-        //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-        //         $('.service-list li').each(function() {
-        //             serviceOrder.push($(this).data('service'));
-        //         });
-        //         $.post(url, {
-        //                 service_order: serviceOrder.toString(),
-        //                 CSRF_TOKEN: EE.CSRF_TOKEN,
-        //                 XID: EE.XID
-        //             })
-        //             .success(function(data) {
-        //                 data = procReq(data);
-        //                 $('.service-list').data('order', data);
-        //                 if (data.indexOf('console') === 0){
-        //                     logs = data.split(');');
-        //                     logs.forEach(element => {
-        //                         element = element.trim() + ');';
-        //                         if (element.indexOf('console') === 0){
-        //                             eval(element);
-        //                         }
-        //                     });
-        //                 }else{
-        //                     console.dir(data);
-        //                 }
-        //             })
-        //             .fail(function(err){
-        //                 data = procReq(this.data, true);
-        //                 console.log(data);
-        //             });
-        //     }
-        // });
-        return this;
-    }
 
     show_active_services() {
         var val = this.active_services.val();
@@ -837,66 +810,26 @@ class ManyMailerPlus_mod {
                 )
             )
             .appendTo('.sidebar');
-        this.con_placeholder = $('#csv_placeholder');
-        // }
-
-        headers.forEach((el) => {
-            var test = $('<button/>', {
+        // reinitialize placeholder var because it is dynamically generated
+        this.con_placeholder = $('#csv_placeholder'); // container for placeholders
+        Object.entries(this.csvObj.headerKeyMap).forEach(([key, value]) => {
+            var btn = $('<button/>', {
                 class: 'btn placeholder',
-                text: el,
-                click: function () {
-                    var plain = $("textarea[name='plaintext_alt']");
-                    var msg = $("textarea[name='message']");
-                    var message = $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
-
-                    // Insert text into textarea at cursor position and replace selected text
-                    var cursorPosStart = message.prop('selectionStart');
-                    var cursorPosEnd = message.prop('selectionEnd');
-                    var insertedText = $(this).text() + ' ';
-                    var v = message.val();
-                    var textBefore = v.substring(0, cursorPosStart);
-                    var textAfter = v.substring(cursorPosEnd, v.length);
-                    message.val(textBefore + insertedText + textAfter);
-                    $('textarea[name=message]').caretTo(insertedText, true);
-                }
+                value: value,
+                text: key
             })
                 .wrap('<tr><td align="center"></td></tr>')
                 .closest('tr');
-
-            this.con_placeholder.append(test);
+            this.con_placeholder.append(btn);
         });
+        $('.placeholder').on(
+            'click', 'button',
+            function (e) {
+                this.evt_placeholder_btn(this);
+            }.bind(this));
     }
-
-    displayCSVErrors(errObj) {
-        var errs = errObj.errors || [];
-        var errDetail = errObj.detail || [];
-        var title = '';
-        var msg = $("<ul style='color:red' />");
-        var detail = $("<ul style='white-space: pre-wrap; color:red' />");
-        errs.forEach((element) => {
-            title += element + '<br />';
-            var itm = $('<li />', {
-                text: element
-            });
-            msg.append(itm);
-        });
-        errDetail.forEach((element) => {
-            var dt = $('<dt/>', {
-                text: element
-            });
-            detail.append(dt);
-            msg.append(detail);
-        });
-        this.con_errors.prepend(msg);
-        this.show_message({
-            title: title,
-            type: 'error',
-            html: detail
-        });
-    }
-
     countEmails() {
-        var count = this.csvObj.emails.length;
+        var count = (this.csvObj.emails) ? this.csvObj.emails.length : 0;
         var label = this.csv_recipient.parent().prev().find('label');
         var origText = label.text();
         // preserve  original label just append count string
@@ -906,7 +839,6 @@ class ManyMailerPlus_mod {
                 origText = origText.substr(0, idx);
             }
         }
-
         var countText = count > 0 ? ` (Count: ${count})` : '';
         label.text(origText + countText);
     }
@@ -920,8 +852,7 @@ class ManyMailerPlus_mod {
         this.resetRecipients();
         let obj_parsed = this.parse_csv_data();
         if (this.validate(obj_parsed)) {
-            this.init_datatable(this.csvObj).setFormValues().show_csv_recipient_fieldset(false).resetFileInput();
-            console.dir(this.csvObj);
+            this.init_datatable().setFormValues().show_csv_recipient_fieldset(false).resetFileInput();
         } else {
             this.con_errors.toggle(true);
         }
@@ -930,66 +861,34 @@ class ManyMailerPlus_mod {
 
     setFormValues() {
         $('#reset').show();
-        this.showPlaceholders(csvObj.headers);
-        this.recipient.val(csvObj.emails.join(', '));
+        this.showPlaceholders(this.csvObj.headers);
+        this.recipient.val(this.csvObj.emails.join(', '));
         this.countEmails();
         // hidden form vals set
-        $('input[name="csv_object"]').val(JSON.stringify(csvObj.data));
-        $("input[name='recipient_count']").val(csvObj.emails.length);
-        $("input[name='mailKey']").val(csvObj.mailKey);
+        $('input[name="csv_object"]').val(JSON.stringify(this.csvObj.data));
+        $("input[name='recipient_count']").val(this.csvObj.emails.length);
+        $("input[name='mailKey']").val(this.csvObj.mailKey);
         return this;
     }
 
     validate(obj_parsed) {
-        let is_valid_csv = false;
+        let validation_result = null;
         if (!obj_parsed.meta.aborted) {
-            let validation_result = new CSV_Validator(obj_parsed);
-            is_valid_csv = validation_result.is_valid;
-            if (is_valid_csv) {
+            validation_result = new CSV_Validator(obj_parsed);
+            if (validation_result.is_valid) {
                 this.csvObj = validation_result;
             } else {
-                // this.displayCSVErrors(validation_result);
-                this.insert_errors_in_txt(validation_result.errors).showPapaErrors(validation_result.errors, 'warning');
+                this.showPapaErrors(validation_result.errors, 'warning');
             }
         } else {
             this.showPapaErrors(obj_parsed.errors);
         }
-        return is_valid_csv;
+        return validation_result.is_valid || false;
     }
 
-    insert_errors_in_txt(errs) {
-        // let message = errs.reduce(function(retVal, curr) {
-        //     let current = curr.message.toUpperCase();
-        //     return (retVal += retVal.indexOf(current) === -1 ? `\n${current}` : '');
-        // }, errs[0].message.toUpperCase());
-        // let current_csv = this.get_csv_recip(true);
-        // current_csv.unshift(message);
-        // let new_csv = current_csv.join('\n');
-        // this.val_with_linenum(new_csv);
-        return this;
-    }
-    procReq(data, query = false) {
-        if (query) {
-            return this.qs2json(data);
-        }
-        // console.log(data);
-        logs = data.substring(0, data.lastIndexOf('</script>') + 9);
-        // console.log(logs);
-        var d1 = document.getElementsByTagName('head')[0];
-        d1.insertAdjacentHTML('beforeend', logs);
-        data = data.substring(logs.length);
-        // console.log(data);
-        return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : isJson(data) ? JSON.parse(data) : data;
-    }
 
-    qs2json(data) {
-        var pairs = data.split('&');
-        var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
-        return JSON.parse(JSON.stringify('{' + retVals + '}'));
-    }
-
-    init_datatable(data) {
-        this.val_with_linenum('');
+    init_datatable() {
+        // this.val_with_linenum('');
         $('#csv_content').addClass('fixed_header display').DataTable({
             defaultContent: '',
             dom: '<"top"i>rt<"bottom"flp><"clear">',
@@ -999,8 +898,8 @@ class ManyMailerPlus_mod {
                     api.search(this.innerHTML).draw();
                 });
             },
-            columns: data.dtCols,
-            data: data.dtData,
+            columns: this.tableData.columns,
+            data: this.tableData.data,
             paging: false,
             ordering: false
         });
@@ -1040,64 +939,132 @@ class ManyMailerPlus_mod {
             width: '80%'
         });
     }
-
-    isJson(item) {
-        item = typeof item !== 'string' ? JSON.stringify(item) : item;
-        try {
-            item = JSON.parse(item);
-        } catch (e) {
-            return false;
+    init_service_list() {
+        this.service_list
+            .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
+            .addClass('service-list');
+        if (this.active_services.length > 0) {
+            this.show_active_services();
+        } else {
+            this.service_list.hide();
         }
-
-        if (typeof item === 'object' && item !== null) {
-            return true;
-        }
-        console.log(item);
-        return false;
+        return this;
     }
 
-    test_funcs() {
-        $('#btnData').on('click', function (e) {
-            var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-            Swal.fire({
-                title: 'Select Fuction',
-                input: 'select',
-                inputOptions: {
-                    update_service_order: 'Update SO',
-                    get_settings: 'Get Settings',
-                    get_service_order: 'Get SO',
-                    get_active_services: 'Active',
-                    get_initial_service: 'Priority Service'
-                },
-                inputPlaceholder: 'Select Function',
-                showCancelButton: true,
-                allowOutsideClick: () => !Swal.isLoading(),
-                preConfirm: (value) => {
-                    return $.post(url + value).always(function (jqXHR) {
-                        // debugger
-                        var data;
-                        if (jqXHR.hasOwnProperty('responseText')) {
-                            data = jqXHR.responseText;
-                        } else {
-                            data = jqXHR;
-                        }
-                        if (isJson(data)) {
-                            data = jqXHR;
-                        } else {
-                            data = procReq(data);
-                        }
-                        console.dir(data);
-                        data = JSON.stringify(data, null, 4);
+    // init_sortable(){
+    //  $('.service-list').sortable({
+    //     axis: 'y',
+    //     opacity: 0.5,
+    //     update: function() {
+    //         var serviceOrder = [];
+    //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+    //         $('.service-list li').each(function() {
+    //             serviceOrder.push($(this).data('service'));
+    //         });
+    //         $.post(url, {
+    //                 service_order: serviceOrder.toString(),
+    //                 CSRF_TOKEN: EE.CSRF_TOKEN,
+    //                 XID: EE.XID
+    //             })
+    //             .success(function(data) {
+    //                 data = procReq(data);
+    //                 $('.service-list').data('order', data);
+    //                 if (data.indexOf('console') === 0){
+    //                     logs = data.split(');');
+    //                     logs.forEach(element => {
+    //                         element = element.trim() + ');';
+    //                         if (element.indexOf('console') === 0){
+    //                             eval(element);
+    //                         }
+    //                     });
+    //                 }else{
+    //                     console.dir(data);
+    //                 }
+    //             })
+    //             .fail(function(err){
+    //                 data = procReq(this.data, true);
+    //                 console.log(data);
+    //             });
+    //     }
+    // });
+    // }
+    // isJson(item) {
+    //     item = typeof item !== 'string' ? JSON.stringify(item) : item;
+    //     try {
+    //         item = JSON.parse(item);
+    //     } catch (e) {
+    //         return false;
+    //     }
 
-                        Swal.fire({
-                            type: 'question',
-                            html: data
-                        });
-                    });
-                }
-            });
-        });
-    }
+    //     if (typeof item === 'object' && item !== null) {
+    //         return true;
+    //     }
+    //     console.log(item);
+    //     return false;
+    // }
+
+
+    // qs2json(data) {
+    //     var pairs = data.split('&');
+    //     var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
+    //     return JSON.parse(JSON.stringify('{' + retVals + '}'));
+    // }
+
+    //     procReq(data, query = false) {
+    //         if (query) {
+    //             return this.qs2json(data);
+    //         }
+    //         // console.log(data);
+    //         logs = data.substring(0, data.lastIndexOf('</script>') + 9);
+    //         // console.log(logs);
+    //         var d1 = document.getElementsByTagName('head')[0];
+    //         d1.insertAdjacentHTML('beforeend', logs);
+    //         data = data.substring(logs.length);
+    //         // console.log(data);
+    //         return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : isJson(data) ? JSON.parse(data) : data;
+    //     }
+    //     test_funcs() {
+    //         $('#btnData').on('click', function (e) {
+    //             var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+    //             Swal.fire({
+    //                 title: 'Select Fuction',
+    //                 input: 'select',
+    //                 inputOptions: {
+    //                     update_service_order: 'Update SO',
+    //                     get_settings: 'Get Settings',
+    //                     get_service_order: 'Get SO',
+    //                     get_active_services: 'Active',
+    //                     get_initial_service: 'Priority Service'
+    //                 },
+    //                 inputPlaceholder: 'Select Function',
+    //                 showCancelButton: true,
+    //                 allowOutsideClick: () => !Swal.isLoading(),
+    //                 preConfirm: (value) => {
+    //                     return $.post(url + value).always(function (jqXHR) {
+    //                         // debugger
+    //                         var data;
+    //                         if (jqXHR.hasOwnProperty('responseText')) {
+    //                             data = jqXHR.responseText;
+    //                         } else {
+    //                             data = jqXHR;
+    //                         }
+    //                         if (isJson(data)) {
+    //                             data = jqXHR;
+    //                         } else {
+    //                             data = procReq(data);
+    //                         }
+    //                         console.dir(data);
+    //                         data = JSON.stringify(data, null, 4);
+
+    //                         Swal.fire({
+    //                             type: 'question',
+    //                             html: data
+    //                         });
+    //                     });
+    //                 }
+    //             });
+    //         });
+    //     }
 }
 
 // for running test only
