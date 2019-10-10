@@ -819,10 +819,6 @@ class ManyMailerPlus_mod {
     }
 
     showPlaceholders(headers) {
-        // if (this.con_placeholder[0]) {
-        //     this.con_placeholder.detach();
-        //     this.con_placeholder.append($('<tbody/>'));
-        // } else {
         $('#stick-here').remove();
         $('<div />', {
                 id: 'stick-here',
@@ -899,7 +895,7 @@ class ManyMailerPlus_mod {
     }
 
     countEmails() {
-        var count = this.theCSV_obj.recipient_count;
+        var count = this.csvObj.emails.length;
         var label = this.csv_recipient.parent().prev().find('label');
         var origText = label.text();
         // preserve  original label just append count string
@@ -932,15 +928,14 @@ class ManyMailerPlus_mod {
     }
 
     setFormValues() {
-        let tmp = this.csvObj;
         $('#reset').show();
-        this.showPlaceholders(tmp.headers);
-        this.recipient.val(tmp.emails.join(', '));
+        this.showPlaceholders(csvObj.headers);
+        this.recipient.val(csvObj.emails.join(', '));
         this.countEmails();
         // hidden form vals set
-        $('input[name="csv_object"]').val(tmp.data_string);
-        $("input[name='recipient_count']").val(tmp.recipient_count);
-        $("input[name='mailKey']").val(tmp.mailKey);
+        $('input[name="csv_object"]').val(JSON.stringify(csvObj.data));
+        $("input[name='recipient_count']").val(csvObj.emails.length);
+        $("input[name='mailKey']").val(csvObj.mailKey);
         return this;
     }
 

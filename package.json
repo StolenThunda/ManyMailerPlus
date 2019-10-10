@@ -5,7 +5,12 @@
     "main": "javascript/compose.js",
     "scripts": {
         "build": "npx node_modules/webpack --mode development -d --progress --colors --watch",
-        "test": "mocha -r jsdom-global/register --reporter mochawesome ./spec/**/*.js",
+        "start": "webpack-dev-server --mode development --open",
+        "dev": "webpack --mode development -d --progress --colors --watch --module-bind js=babel-loader",
+        "prod": "npx node_modules/webpack --mode production -d --progress --colors --watch  --module-bind js=babel-loader",
+        "test": "mocha --opts=./spec/mocha.opts ./spec/**/*.spec.js",
+        "nyc-test": "nyc --reporter=html --reporter=text mocha spec/*.js",
+        "coverage": "nyc report --reporter=text-lcov | coveralls",
         "wdio": "wdio wdio.conf.js"
     },
     "repository": {
@@ -50,6 +55,7 @@
         "mocha": "^6.2.0",
         "mochawesome": "^4.1.0",
         "mochawesome-report-generator": "^4.0.1",
+        "qunit": "^2.9.2",
         "ts-loader": "^6.0.0",
         "wdio-chromedriver-service": "^5.0.2",
         "wdio-crossbrowsertesting-service": "^1.0.9",
