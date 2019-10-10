@@ -1,1 +1,4 @@
---reporter mochawesome
+--reporter nyan
+--recursive 
+--ui bdd
+--slow 500
