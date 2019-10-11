@@ -10,6 +10,7 @@ composer*
 *package*
 *webpack*
 
+.babelrc
 .bashrc
 .jshintrc
 View/email/csv-field.php
@@ -18,3 +19,5 @@ ext.manymailerplus.php
 libraries/ext.manymailerplus.php
 libraries/serialized_email_cache.txt
 node_modules
+allure-results
+autoload.php
