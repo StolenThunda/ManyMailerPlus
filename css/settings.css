@@ -1,3 +1,13 @@
+:root {
+    --service-list-color: #4ba508;
+    --disabled-service-list-color: #E6E6E6;
+    --btn-bg-color: #01bf75;
+    --btn-color: #17aa56;
+    --white: #ffffff;
+    --black: #000000;
+    --gray: rgb(133, 130, 130);
+}
+
 .service-list li {
     cursor: move;
     position: relative;
@@ -5,7 +15,7 @@
 
 .service-list li.enabled-service:after,
 .service-list li.disabled-service:after {
-    color: #4ba508;
+    color: var(--service-list-color);
     content: '\F00C';
     font-family: 'FontAwesome';
     font-size: 10px;
@@ -16,31 +26,32 @@
 }
 
 .service-list li.disabled-service:after {
-    color: #E6E6E6;
+    color: var(--disabled-service-list-color);
     content: '\F05E';
 }
 
 .setting-field .service-description {
-    color: gray;
+    color: var(--gray);
     margin-bottom: 10px;
 }
 
 button.btn.placeholder {
     font-size: large;
+    box-shadow: -4px 4px var(--btn-color);
+    background: var(--btn-bg-color);
+    border-radius: 15px;
 }
 
 .placeholder {
     width: 100%;
     overflow: hidden;
-    background: #17aa56;
-    color: #fff;
+    color: var(--white);
     border-radius: 7px;
-    box-shadow: -4px 2px #01bf75;
     padding: 12px 30px 12px 45px;
 }
 
 #csv_placeholder>caption {
-    color: black;
+    color: var(--black);
     font-size: x-large;
 }
 
@@ -65,7 +76,7 @@ button.btn.placeholder {
     width: 40%;
     font-size: 160%;
     line-height: 0.8;
-    color: #01bf75;
+    color: var(--btn-bg-color);
 }
 
 #placeholder>tr>td {
@@ -117,8 +128,8 @@ parsley-errors-list>ul {
 }
 
 .fixed_header thead {
-    background: black;
-    color: #fff;
+    background: var(--black);
+    color: var(--white);
 }
 
 .fixed_header th,
@@ -176,8 +187,8 @@ parsley-errors-list>ul {
     line-height: 1.5;
     font-family: "Roboto Mono", monospace;
     word-break: break-all;
-    border: 1px solid #aeaeae;
-    background-color: #fff;
+    border: 1px solid var(--gray);
+    background-color: var(--white);
     resize: none;
     overflow-wrap: normal;
     overflow-x: auto;
@@ -200,7 +211,7 @@ parsley-errors-list>ul {
     text-align: right;
     line-height: 1.5;
     font-size: 16px;
-    color: #aeaeae;
+    color: var(--gray);
 }
 
 .tln-line::before {
@@ -220,11 +231,11 @@ parsley-errors-list>ul {
     display: inherit !important;
 }
 
-.btn1 {
-    display: block !important;
-    background-color: #01bf75;
-    border: 1px solid #01bf75;
-    color: #fff;
+.btn {
+    /* display: block !important; */
+    background-color: var(--btn-bg-color);
+    border: 1px solid var(--btn-bg-color);
+    color: var(--white);
     cursor: pointer;
     display: inline-block;
     font-size: 14px;
@@ -234,10 +245,13 @@ parsley-errors-list>ul {
     white-space: nowrap;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    -webkit-appearance: none;
     border-radius: 3px;
-    -moz-box-shadow: 0 1px 0 0 rgba(255, 255, 255, .3)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
-    -webkit-box-shadow: 0 1px 0 0 rgba(255, 255, 255, .3)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
-    box-shadow: 0 1px 0 0 rgba(255, 255, 255, .3)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
+    -moz-box-shadow: 0 1px 0 0 var(--gray)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
+    -webkit-box-shadow: 0 1px 0 0 var(--gray)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
+    box-shadow: 0 1px 0 0 var(--gray)inset, 0 1px 4px 0 rgba(0, 0, 0, .1);
+    line-height: normal;
+    padding: 5px 8px 6px;
 }
 
 .btn-info,
@@ -289,7 +303,7 @@ parsley-errors-list>ul {
 /* css-loader */
 
 .loader {
-    color: #fff;
+    color: var(--white);
     position: fixed;
     box-sizing: border-box;
     left: -9999px;
@@ -369,7 +383,7 @@ parsley-errors-list>ul {
     position: fixed;
     width: 48px;
     height: 48px;
-    border: 8px solid #fff;
+    border: 8px solid var(--white);
     border-left-color: transparent;
     border-radius: 50%;
     top: calc(50% - 24px);
@@ -397,7 +411,7 @@ parsley-errors-list>ul {
 .loader-double:after {
     width: 48px;
     height: 48px;
-    border-color: #fff;
+    border-color: var(--white);
     border-left-color: transparent;
     top: calc(50% - 24px);
     left: calc(50% - 24px)
@@ -415,7 +429,7 @@ parsley-errors-list>ul {
 
 .loader-bar[data-text]:before {
     top: calc(50% - 40px);
-    color: #fff
+    color: var(--white)
 }
 
 .loader-bar:after {
@@ -530,7 +544,7 @@ parsley-errors-list>ul {
 }
 
 .loader-border[data-text]:before {
-    color: #fff
+    color: var(--white)
 }
 
 .loader-border:after {
@@ -552,7 +566,7 @@ parsley-errors-list>ul {
     top: 50%;
     left: 50%;
     margin: -25px 0 0 -25px;
-    background-color: #fff;
+    background-color: var(--white);
     border-radius: 50%;
     z-index: 1;
     animation: kickBall 1s infinite alternate ease-in both
@@ -610,7 +624,7 @@ parsley-errors-list>ul {
 
 .loader-smartphone:after {
     content: "";
-    color: #fff;
+    color: var(--white);
     font-size: 12px;
     font-family: Helvetica, Arial, sans-serif;
     text-align: center;
@@ -720,7 +734,7 @@ parsley-errors-list>ul {
 }
 
 .loader-curtain:after {
-    color: #fff;
+    color: var(--white);
     height: 0;
     animation: curtain 1s linear infinite alternate both
 }
@@ -798,7 +812,7 @@ parsley-errors-list>ul {
     border-radius: 50%;
     text-align: center;
     line-height: 240px;
-    color: #fff;
+    color: var(--white);
     font-size: 40px;
     font-family: Helvetica, Arial, sans-serif;
     text-shadow: 1px 1px 0 rgba(0, 0, 0, .5);
@@ -815,7 +829,7 @@ parsley-errors-list>ul {
 }
 
 .loader-music[data-hey-oh]:before {
-    background-color: #fff;
+    background-color: var(--white);
     color: #000;
     animation: coinBack 2.5s linear infinite, oh 5s 1.25s linear infinite both
 }
@@ -981,9 +995,9 @@ parsley-errors-list>ul {
     top: 50%;
     left: 50%;
     margin: -50px 0 0 -50px;
-    background: linear-gradient(180deg, red 42%, #000 0, #000 58%, #fff 0);
+    background: linear-gradient(180deg, red 42%, #000 0, #000 58%, var(--white) 0);
     background-repeat: no-repeat;
-    background-color: #fff;
+    background-color: var(--white);
     border-radius: 50%;
     z-index: 1;
     animation: movePokeball 1s linear infinite both
@@ -997,12 +1011,12 @@ parsley-errors-list>ul {
     top: 50%;
     left: 50%;
     margin: -12px 0 0 -12px;
-    background-color: #fff;
+    background-color: var(--white);
     border-radius: 50%;
     z-index: 2;
     animation: movePokeball 1s linear infinite both, flashPokeball .5s infinite alternate;
     border: 2px solid #000;
-    box-shadow: 0 0 0 5px #fff, 0 0 0 10px #000
+    box-shadow: 0 0 0 5px var(--white), 0 0 0 10px #000
 }
 
 @keyframes movePokeball {
@@ -1022,7 +1036,7 @@ parsley-errors-list>ul {
 
 @keyframes flashPokeball {
     0% {
-        background-color: #fff
+        background-color: var(--white)
     }
     to {
         background-color: #fd0
@@ -1038,7 +1052,7 @@ parsley-errors-list>ul {
     top: calc(50% - 10px);
     left: calc(50% - 10px);
     border-radius: 50%;
-    background-color: #fff;
+    background-color: var(--white);
     animation: kick .6s infinite alternate
 }
 

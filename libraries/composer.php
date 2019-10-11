@@ -191,26 +191,10 @@ class Composer
                     'title' => 'file_recipient',
                     'desc' => 'file_recipient_desc',
                     'fields' => array(
-                        'files' => array(
+                        'files[]' => array(
                             'type' => 'html',
-                            'content' => form_input(
-                                array(
-                                    'id' => 'files',
-                                    'name' => 'files[]',
-                                    'type' => 'hidden',
-                                    'value' => '0',
-                                )
-                            ),
+                            'content' => '<input type="file" name="file_recipient" accept=".csv" value="CHoose file"  />',
                         ),
-                        'file_recipient' => array(
-                            'type' => 'file',
-                        'content' => ee('CP/FilePicker')
-                                ->make()
-                                ->getLink('Choose File')
-                                ->withValueTarget('files')
-                                ->render(),
-                        ),
-
                         'csv_object' => array(
                             'type' => 'hidden',
                             'value' => $default['csv_object'],
