@@ -379,6 +379,13 @@ class Composer
         return $vars;
     }
 
+    function get_template_view(){
+        // $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
+        $table = $this->view_templates()['table'];
+        print_r( $table);
+        ee()->dbg->c_log($table, __METHOD__);
+        return  $table;    
+    }
     /**
      * compose.
      *

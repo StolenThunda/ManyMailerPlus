@@ -309,13 +309,15 @@ class ManyMailerPlus_mod {
                     }.bind(this),
                     false
                 );
-                $('input[name=use_templates]')[0].addEventListener(
-                    'change',
-                    function(e) {
-                        this.evt_toggle_templates(e);
-                    }.bind(this),
-                    false
-                );
+                $.each($('input[name^=use_templates]'), (idx, val) => {
+                    val.addEventListener(
+                        'change',
+                        function(e) {
+                            this.evt_toggle_templates(e);
+                        }.bind(this),
+                        false
+                    );
+                });
                 $('[name$=linenum], #reset')[0].addEventListener(
                     'click',
                     function(e) {
@@ -359,10 +361,17 @@ class ManyMailerPlus_mod {
             reader.readAsText(file);
         }
     }
-    evt_toggle_templates() {
-        var toggle = this.value === 'y' ? 'slow' : false;
-        this.con_embed_tmps.fadeToggle(toggle);
-        this.con_tmp_name.fadeToggle(toggle);
+    evt_toggle_templates(el) {
+        let current_base_url = 'http://' + window.location.hostname;
+        let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
+        $.get(url, {}, function(data, textStatus, jqXHR) {
+            console.log(url.href);
+            console.dir(jqXHR);
+            console.warn(textStatus);
+        });
+        // var toggle = el.value === 'y' ? 'slow' : false;
+        // this.con_embed_tmps.fadeToggle(toggle);
+        // this.con_tmp_name.fadeToggle(toggle);
     }
     evt_convert_csv(e) {
         this.convertCSV();

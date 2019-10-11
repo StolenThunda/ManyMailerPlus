@@ -7,7 +7,7 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $vars = array();
-    private $config =  array('debug' => FALSE);
+    private $config =  array('debug' => true);
 
     /**
      * Constructor.
@@ -119,6 +119,7 @@ class Manymailerplus_mcp
         $this->vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
         switch ($func) {
+            case 'get_template_view':
             case 'view_templates':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
                 break;
