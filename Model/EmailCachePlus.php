@@ -7,8 +7,7 @@
  * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
-namespace EXT_NAME\EmailCachePlus;
-use EllisLab\ExpressionEngine\Model\Email;
+namespace Manymailerplus\Model;
 use EllisLab\ExpressionEngine\Service\Model\Model;
 
 /**
@@ -28,15 +27,15 @@ class EmailCachePlus extends Model {
 		'csv_object'	  => 'json',
 	);
 
-	protected static $_relationships = array(
-		'MemberGroups' => array(
-			'type' => 'hasAndBelongsToMany',
-			'model' => 'MemberGroup',
-			'pivot' => array(
-				'table' => 'email_cache_mg'
-			)
-		)
-	);
+	// protected static $_relationships = array(
+	// 	'MemberGroups' => array(
+	// 		'type' => 'hasAndBelongsToMany',
+	// 		'model' => 'MemberGroup',
+	// 		'pivot' => array(
+	// 			'table' => 'email_cache_mg'
+	// 		)
+	// 	)
+	// );
 
 	protected static $_validation_rules = array(
 		'cache_date'      => 'required',

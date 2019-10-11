@@ -1,6 +1,6 @@
 <?php
 
-use ManyMailerPlus\libraries\Tx_service\Tx_service as TransactionService;
+use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
 
 class Postageapp extends TransactionService
 {
@@ -20,6 +20,7 @@ class Postageapp extends TransactionService
     public function send_email($email = null)
     {
         $sent = false;
+        $settings = ee()->mod_svc->get_settings() ;
         $missing_credentials = true;
         if ($email) {
             $this->email_out = $email;

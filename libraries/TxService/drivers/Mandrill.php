@@ -1,6 +1,7 @@
 <?php
-
-use ManyMailerPlus\libraries\Tx_service\Tx_service as TransactionService;
+namespace ManyMailerPlus\libraries\TxService\drivers;
+// require_once(dirname(__DIR__, 1).'/TxService.php');
+use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
 
 class Mandrill extends TransactionService
 {

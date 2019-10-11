@@ -8,7 +8,7 @@
             'index' => array(
             ),
             'email' => array(
-                'links' => array('compose', 'sent', 'edit_template', 'view_templates'), //, 'compose2' )
+                'links' => array('compose', 'sent', 'edit_template', 'view_templates')//, 'compose2' )
             ),
             // 'settings' => array(
             //     'links' => array('options')

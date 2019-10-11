@@ -1,8 +1,8 @@
 <?php
 
-namespace ManyMailerPlus\libraries\Tx_service;
+namespace ManyMailerPlus\libraries\TxService;
 
-interface Tx_service_interface
+interface TxService_interface
 {
     function get_templates();
     function get_api_key();

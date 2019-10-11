@@ -6,11 +6,8 @@ if (!defined('BASEPATH')) {
 
 class Manymailerplus_mcp
 {
-    private $version = EXT_VERSION;
     private $vars = array();
-    private $config = array();
-    // private $debug = true;
-    private $debug = false;
+    private $config =  array('debug' => FALSE);
 
     /**
      * Constructor.
@@ -18,30 +15,14 @@ class Manymailerplus_mcp
     public function __construct()
     {
         $CI = ee();
-        $this->config = array('debug' => $this->debug);
-        ee()->load->library('debughelper', $this->config, 'dbg');
         ee()->extensions->end_script = true;
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
         }
-        ee()->config->load('compose_js');
-
-        $internal_js = ee()->config->item('internal_js');
-        foreach ($internal_js as $js) {
-            ee()->cp->load_package_js($js);
-        }
-        $external_js = ee()->config->item('external_js');
-        foreach ($external_js as $script) {
-            ee()->cp->add_to_foot($script);
-        }
-        ee()->load->helper('html');
-
-        ee()->load->library('services_module', $this->config, 'mail_svc');
-        ee()->load->library('composer', $this->config, 'mail_funcs');
-        // ee()->load->library('settings', $this->config, 'mail_opts');
-        $this->services = ee()->config->item('services', 'services');
-        $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
-        $this->sidebar_options = ee()->config->item('options', 'sidebar');
+        
+        $this->_load_libs();
+        $this->_load_configs();
+        $this->_js_config_autoload();        
         $this->_update_service_options(array_keys($this->services));
 
         if (!$this->sidebar_loaded) {
@@ -65,6 +46,34 @@ class Manymailerplus_mcp
         $this->makeSidebar();
     }
 
+    public function _load_libs(){
+        ee()->load->helper('html');
+        ee()->load->library('debughelper', $this->config, 'dbg');
+        ee()->load->library('services_module', $this->config, 'mail_svc');
+        ee()->load->library('composer', $this->config, 'mail_funcs');
+    }
+    public function _load_configs(){
+        $this->services = ee()->config->item('services', 'services');
+        $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
+        $this->sidebar_options = ee()->config->item('options', 'sidebar');
+    }
+    public function _js_config_autoload(){
+        ee()->config->load('compose_js');
+
+        $internal_js = ee()->config->item('internal_js');
+        foreach ($internal_js as $js) {
+            ee()->cp->load_package_js($js);
+            // $path = ee('CP/URL', EXT_SETTINGS_PATH.'/javascript/'.$js.'.js');           
+            // $script = "<script src='".$path."' type='module'></script>";
+            // ee()->dbg->c_log($script, __METHOD__, true);
+            // ee()->cp->add_to_foot($script);
+        }
+        $external_js = ee()->config->item('external_js');
+        foreach ($external_js as $script) {
+            ee()->cp->add_to_foot($script);
+        }
+
+    }
     public function makeSidebar()
     {
         if (!isset($this->sidebar)) {

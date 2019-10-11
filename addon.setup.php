@@ -22,7 +22,6 @@ return array(
       'namespace' => EXT_NAME,
       'settings_exist' => TRUE,
       'version' => EXT_VERSION,
-
       'models' => array(
             'EmailCachePlus' => 'Model\EmailCachePlus'
       )

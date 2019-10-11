@@ -1,8 +1,10 @@
 <?php
 
-namespace ManyMailerPlus\libraries\Tx_service;
+namespace ManyMailerPlus\libraries\TxService;
+require_once('TxService_interface.php');
 
-abstract class Tx_service implements Tx_service_interface
+
+abstract class TxService implements TxService_interface 
 {
     private $debug = false;
     protected $headers = array();

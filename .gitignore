@@ -1,7 +1,9 @@
 vendor/
+.vscode/
+.nyc_output/
+coverage/
 src/
 tests/
-.vscode/
 
 *phpunit*
 *phar*
@@ -13,6 +15,7 @@ composer*
 .babelrc
 .bashrc
 .jshintrc
+node_modules/
 View/email/csv-field.php
 manymailerplus/View/sidebar_view.php
 ext.manymailerplus.php
