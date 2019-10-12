@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-undef */
 // import style from "./main.css";
 class ManyMailerPlus_mod {
     constructor(apiAvailable) {
@@ -136,12 +138,12 @@ class ManyMailerPlus_mod {
     useApi() {
         this.file_recipient.change((evt) => {
             this.resetRecipients();
-            var fileType = /csv.*/;
+            var fileType = /csv.*/; 
             var file = evt.target.files[0];
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function() {
                         this.val_with_linenum(reader.result);
                         this.con_csv_recipient.show();
                     }.bind(this);
@@ -293,14 +295,14 @@ class ManyMailerPlus_mod {
                 );
                 this.recipient[0].addEventListener(
                     'change',
-                    function(e) {
+                    function() {
                         this.countEmails();
                     }.bind(this),
                     false
                 );
                 this.recipient[0].addEventListener(
                     'click',
-                    function(e) {
+                    function() {
                         this.show_message({
                             title: 'Invalid!',
                             html: 'Please enter emails using csv entry (file upload/paste).',
@@ -318,7 +320,7 @@ class ManyMailerPlus_mod {
                 );
                 $('[name$=linenum], #reset')[0].addEventListener(
                     'click',
-                    function(e) {
+                    function() {
                         this.resetRecipients(true);
                     }.bind(this),
                     false
@@ -351,7 +353,7 @@ class ManyMailerPlus_mod {
         var file = evt.target.files[0];
         if (file) {
             var reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function() {
                 TLN.remove_line_numbers('csv_recipient');
                 this.val_with_linenum(reader.result);
                 this.show_csv_recipient_fieldset(true);
@@ -364,7 +366,7 @@ class ManyMailerPlus_mod {
         this.con_embed_tmps.fadeToggle(toggle);
         this.con_tmp_name.fadeToggle(toggle);
     }
-    evt_convert_csv(e) {
+    evt_convert_csv() {
         this.convertCSV();
         this.sel_csv_entry.val('file_recipient').trigger('change');
     }
@@ -471,11 +473,11 @@ class ManyMailerPlus_mod {
             header: true,
             quoteChar: '',
             skipEmptyLines: 'greedy',
-            error: (e, file) => {
+            error: () => {
                 this.showPapaErrors(data.errors);
                 return;
             },
-            complete: (results, file) => {
+            complete: (results) => {
                 this._parsed = results;
             }
         });
@@ -624,7 +626,7 @@ class ManyMailerPlus_mod {
 
             $('input[name^="mc-check"').change(function() {
                 var chk = this.checked;
-                $('input[name^="mc-check"').not(this).each(function(el) {
+                $('input[name^="mc-check"').not(this).each(function() {
                     if (chk) {
                         $(this).attr('checked', false).hide();
                         $(`label[for=${this.name}]`).hide();
@@ -652,7 +654,7 @@ class ManyMailerPlus_mod {
         });
     }
 
-    showPlaceholders(headers) {
+    showPlaceholders() {
         $('#stick-here').remove();
         $('<div />', {
                 id: 'stick-here',
@@ -793,7 +795,6 @@ class ManyMailerPlus_mod {
             console.log(`${this.name}: ${this.value}`);
             msg.append(`<tr><td>${this.name}</td><td>${val}</td></tr>`);
         });
-        var frmStr = JSON.stringify($('form').serialize());
         this.show_message({
             title: 'Form VALS',
             type: 'info',
