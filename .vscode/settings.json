@@ -1,0 +1,12 @@
+{
+    "sync.gist": " c534bb36fd0a650f120d828ac49e05c9b90b3566",
+    "sync.autoUpload": true,
+    "sync.autoDownload": true,
+    "sync.askGistName": true,
+    "git.rebaseWhenSync": true,
+    "sync.forceDownload": true,
+    "scm.alwaysShowProviders": true,
+    "scm.alwaysShowActions": true,
+    "eslint.autoFixOnSave": true,
+    "eslint.lintTask.enable": true
+}

@@ -1,5 +1,5 @@
 vendor/
-.vscode/
+# .vscode/
 .nyc_output/
 coverage/
 src/
@@ -17,3 +17,4 @@ dist/bundle.js
 *webpack*
 .bashrc
 *.phar 
+*.code-workspace
