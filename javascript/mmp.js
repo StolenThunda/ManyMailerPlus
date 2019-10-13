@@ -968,7 +968,7 @@ class ManyMailerPlus_mod {
 
 $(document).ready(function () {
     'use strict';
-
+    window.LogRocket && window.LogRocket.init('jj0vrm/manymailerplus');
     function isAPIAvailable() {
         // Check for the various File API support.
         if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -995,6 +995,8 @@ $(document).ready(function () {
         }
     }
 
+    
     var MMP = new ManyMailerPlus_mod(isAPIAvailable());
     MMP.init();
+    
 });
