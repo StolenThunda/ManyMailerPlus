@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"sftp.debug": true,
+		"sftp.printDebugLog": true,
+		"editor.wordWrap": "on",
+		"editor.minimap.side": "left",
+		"editor.suggestFontSize": 14,
+		"editor.suggestLineHeight": 5,
+		"workbench.colorTheme": "Outrun Night",
+		"workbench.iconTheme": "material-icon-theme",
+		"eslint.alwaysShowStatus": true,
+		"eslint.autoFixOnSave": true,
+		"eslint.lintTask.enable": true,
+		"expressionengine.thirdPartyAddonPath": "${rootPath}/engine/user/addons/"
+	}
+}
