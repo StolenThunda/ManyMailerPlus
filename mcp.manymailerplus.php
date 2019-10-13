@@ -7,7 +7,7 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $vars = array();
-    private $config =  array('debug' => true);
+    private $config =  array('debug' => false);
 
     /**
      * Constructor.
@@ -120,6 +120,10 @@ class Manymailerplus_mcp
         $id = ee()->uri->segment(7, '');
         switch ($func) {
             case 'get_template_view':
+                ob_start();
+                echo ee()->mail_funcs->{$func}();
+                $value = ob_get_contents();
+                exit;
             case 'view_templates':
                 $this->vars = array_merge($this->vars, ee()->mail_funcs->{$func}());
                 break;
@@ -146,7 +150,6 @@ class Manymailerplus_mcp
                 array_pop($breadcrumbs);
         }
         ee()->dbg->c_log($this->vars, __METHOD__);
-
         return $this->view_page($breadcrumbs);
     }
 

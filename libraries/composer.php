@@ -331,8 +331,8 @@ class Composer
         //         ),
         //     );
         // }
-        $temp_vars = $this->view_templates();
-        if (count($temp_vars['table']['data']) > 0) {
+        // $temp_vars = $this->view_templates();
+        // if (count($temp_vars['table']['data']) > 0) {
             array_unshift($vars['sections']['compose_email_detail'], array(
                 'title' => 'use_templates',
                 'desc' => 'use_templates_desc',
@@ -343,7 +343,7 @@ class Composer
                     ),
                     'template_list' => array(
                         'type' => 'html',
-                        'content' => $template_view->render($this->view_templates()),
+                        'content' => ''//$template_view->render($this->view_templates()),
                     ),
                 ),
             ),
@@ -360,7 +360,7 @@ class Composer
                     ),
                 ),
             ));
-        }
+        // }
         $vars['cp_page_title'] = lang('compose_heading');
         // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
@@ -382,9 +382,11 @@ class Composer
     function get_template_view(){
         // $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
         $table = $this->view_templates()['table'];
-        print_r( $table);
+        // print_r( $table);
         ee()->dbg->c_log($table, __METHOD__);
-        return  $table;    
+        
+        return  ee('View')->make('ee:_shared/table')->render( $table);//json_encode($table['data']);
+          
     }
     /**
      * compose.
