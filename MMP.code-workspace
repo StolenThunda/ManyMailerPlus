@@ -11,7 +11,7 @@
 		"editor.minimap.side": "left",
 		"editor.suggestFontSize": 14,
 		"editor.suggestLineHeight": 5,
-		"workbench.colorTheme": "Outrun Night",
+		"workbench.colorTheme": "Default Dark+",
 		"workbench.iconTheme": "material-icon-theme",
 		"eslint.alwaysShowStatus": true,
 		"eslint.autoFixOnSave": true,

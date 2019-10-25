@@ -371,7 +371,7 @@ class ManyMailerPlus_mod {
                 debugger
                 console.log(url.href);
                 console.log(data);
-                $("input[name^='use_template] ~ div").append(data);
+                $("input[name='use_template] ~ div").append(data);
                 $.each($('input[name="selection[]"'), (idx, val) => {
                     val.addEventListener(
                         'change',
