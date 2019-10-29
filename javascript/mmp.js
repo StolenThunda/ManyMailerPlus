@@ -368,7 +368,9 @@ class ManyMailerPlus_mod {
     }
     evt_convert_csv() {
         this.convertCSV();
-        this.sel_csv_entry.val('file_recipient').trigger('change');
+        this.sel_csv_entry
+            .val('file_recipient')
+            .trigger('change');
     }
     evt_change_mail_type() {
         this.plaintext.toggle(this.val() === 'html');

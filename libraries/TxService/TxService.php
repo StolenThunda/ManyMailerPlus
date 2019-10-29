@@ -31,7 +31,7 @@ abstract class TxService implements TxServiceInterface
     public function curl_request($server, $headers = array(), $content, $return_data = false, $htpw = null)
     {
         $content = (is_array($content) ? json_encode($content) : $content);
-        ee()->dbg->c_log($server.$content, __METHOD__);
+       ee()->dbg->c_log($server.$content, __METHOD__);
         $ch = curl_init($server);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POST, 1);
@@ -62,9 +62,9 @@ abstract class TxService implements TxServiceInterface
         $curl_error = curl_error($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        ee()->dbg->c_log($http_code.' '.json_encode($status), __METHOD__);
+       ee()->dbg->c_log($http_code.' '.json_encode($status), __METHOD__);
         $result = ($return_data) ? json_decode($status) : true;
-        // ee()->dbg->c_log($result, __METHOD__);
+        ee()->dbg->c_log($result, __METHOD__);
         // ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
         return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
     }

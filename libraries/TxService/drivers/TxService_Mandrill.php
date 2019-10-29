@@ -1,9 +1,11 @@
 <?php
 namespace ManyMailerPlus\libraries\TxService\drivers;
-// require_once(dirname(__DIR__, 1).'/TxService.php');
 use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
+require_once(APPPATH . '/libraries/Driver.php');
+use EE_Driver;
 
-class Mandrill extends TransactionService
+
+class TxService_Mandrill extends EE_Driver
 {
     public function __construct($settings = array())
     {

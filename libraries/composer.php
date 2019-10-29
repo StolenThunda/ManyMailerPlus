@@ -56,7 +56,7 @@ class Composer
      */
     private function extractBracketedEmail($str = NULL){
         $emails = explode(',', $str);
-        ee()->dbg->c_log($str, __METHOD__);
+       ee()->dbg->c_log($str, __METHOD__);
         $matches = null;
         foreach($emails as $email){
             preg_match_all($this->email_regex, $email, $matches, PREG_SET_ORDER, 0);
@@ -66,7 +66,7 @@ class Composer
         }
        
         $email_str = empty($emails) ? $str : join(", ", $emails);
-        ee()->dbg->c_log($matches, __METHOD__);
+       ee()->dbg->c_log($matches, __METHOD__);
         return $email_str;
     }
 
@@ -149,7 +149,7 @@ class Composer
         }
 
         $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
-        ee()->dbg->c_log($this->debug, __METHOD__);
+       ee()->dbg->c_log($this->debug, __METHOD__);
       
         $vars['sections'] = array(
             'sender_info' => array(
@@ -374,7 +374,7 @@ class Composer
             'rel' => 'stylesheet',
             'type' => 'text/css',
         )));
-        ee()->dbg->c_log($vars, __METHOD__);
+       ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -386,7 +386,7 @@ class Composer
      */
     public function compose2(EmailCache $email = null)
     {
-        ee()->dbg->c_log(__FUNCTION__, __METHOD__);
+       ee()->dbg->c_log(__FUNCTION__, __METHOD__);
         $default = array(
             'from' => ee()->session->userdata('email'),
             'from_name' => ee()->session->userdata('screen_name'),
@@ -488,8 +488,8 @@ class Composer
                 'bcc_recipients' => form_input('bcc', $default['bcc'])//.form_hidden('member_groups[]'),
             ),
         );
-        // ee()->dbg->c_log($member_groups, __METHOD__);
-        // ee()->dbg->c_log($disabled_groups, __METHOD__);
+        ee()->dbg->c_log($member_groups, __METHOD__);
+        ee()->dbg->c_log($disabled_groups, __METHOD__);
         // if (ee()->cp->allowed_group('can_email_member_groups')) {
         //     $vars['sections']['other_recipient_options'][] = array(
         //         'add_member_groups' => ee('View')->make('ee:_shared/form/fields/select')->render([
@@ -513,7 +513,7 @@ class Composer
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
         $vars['save_btn_text'] = lang('compose_send_email');
         $vars['save_btn_text_working'] = lang('compose_sending_email');
-        ee()->dbg->c_log($vars, __METHOD__);
+       ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -523,7 +523,7 @@ class Composer
         $message = ee()->session->flashdata('result');
         if ($message) {
             $message = explode(':', ee()->session->flashdata('result'));
-            ee()->dbg->c_log('Msg: '.implode(':', $message), __METHOD__);
+           ee()->dbg->c_log('Msg: '.implode(':', $message), __METHOD__);
             ee('CP/Alert')->makeInline('result')
                         ->asIssue()
                         ->withTitle(lang('template_'.$message[0]))
@@ -550,12 +550,12 @@ class Composer
             'created_at' => '',
             'labels' => array(),
         );
-        ee()->dbg->c_log('TEMP NAME: '.$template_name, __METHOD__);
+       ee()->dbg->c_log('TEMP NAME: '.$template_name, __METHOD__);
 
         if ($template_name !== '') {
             $template_name = str_replace('_', ' ', $template_name);
             $template = $this->_get_service_templates($template_name, 'info');
-            ee()->dbg->c_log($template, __METHOD__);
+           ee()->dbg->c_log($template, __METHOD__);
             if (isset($template['status'])) {
                 ee()->session->set_flashdata('result', $template['status'].':'.$template['message']);
                 ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template'));
@@ -680,7 +680,7 @@ class Composer
         $vars['save_btn_text'] = lang('save_template');
         $vars['save_btn_text_working'] = lang('saving_template');
 
-        ee()->dbg->c_log($vars, __METHOD__);
+       ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -713,7 +713,7 @@ class Composer
             'recipient' => $member->email,
             'from_email' => ee()->session->userdata('email'),
         );
-        ee()->dbg->c_log(EXT_SHORT_NAME.':EmailCachePlus', __METHOD__);
+       ee()->dbg->c_log(EXT_SHORT_NAME.':EmailCachePlus', __METHOD__);
         $email = ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
 
         $email->removeMemberGroups();
@@ -728,7 +728,7 @@ class Composer
         $tmp = explode('/', $_SERVER['HTTP_REFERER']);
         $last = end($tmp);
         $sender = is_numeric($last) ? $tmp[count($tmp) - 2] . '/' . $last : $last;
-        // ee()->dbg->c_log($sender, __METHOD__, true);
+        ee()->dbg->c_log($sender, __METHOD__, true);
         ee()->load->library('email');
 
         $groups = array();
@@ -772,12 +772,12 @@ class Composer
             $rows = json_decode($csv_object, true);
     
             foreach ($rows as $row) {  
-                // ee()->dbg->c_log(in_array($this->csv_email_column, array_keys($row)), __METHOD__ . ":".$this->csv_email_column);
+                ee()->dbg->c_log(in_array($this->csv_email_column, array_keys($row)), __METHOD__ . ":".$this->csv_email_column);
                 $this->csv_lookup[trim($row[$this->csv_email_column])] = $row;
             }
             
         }
-        ee()->dbg->c_log($this->csv_lookup, __METHOD__);
+       ee()->dbg->c_log($this->csv_lookup, __METHOD__);
         //  Verify privileges
         if (count($groups) > 0 && !ee()->cp->allowed_group('can_email_member_groups')) {
             show_error(lang('not_allowed_to_email_member_groups'));
@@ -785,13 +785,13 @@ class Composer
 
         ee()->load->helper('email');
 
-        ee()->dbg->c_log($recipient, __METHOD__);
+       ee()->dbg->c_log($recipient, __METHOD__);
 
         // $recipient = $this->extractBracketedEmail($recipient);
 
         $recipient = $this->_recipient_str($recipient_array);
 
-        // ee()->dbg->c_log((bool) valid_email($recipient), __METHOD__);
+        ee()->dbg->c_log((bool) valid_email($recipient), __METHOD__);
         // Set to allow a check for at least one recipient
         $_POST['total_gl_recipients'] = count($groups);
 
@@ -805,8 +805,8 @@ class Composer
         ee()->form_validation->set_rules('attachment', 'lang:attachment', 'callback__attachment_handler');
 
         if (ee()->form_validation->run() === false) {
-            // ee()->dbg->c_log($sender, __METHOD__, true);
-            ee()->dbg->c_log(ee()->form_validation, __METHOD__, true);
+            ee()->dbg->c_log($sender, __METHOD__, true);
+           ee()->dbg->c_log(ee()->form_validation, __METHOD__, true);
             ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));
             ee('CP/Alert')->makeInline('issue')
                 ->asIssue()
@@ -866,7 +866,7 @@ class Composer
             'mailKey' => !empty($this->csv_email_column) ? $this->csv_email_column : "error", 
             'csv_object' => !empty($csv_object) ? json_decode($csv_object, true) : array()
         );
-        ee()->dbg->c_log($cache_data, __METHOD__);
+       ee()->dbg->c_log($cache_data, __METHOD__);
         $email = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
         $email->save();
 
@@ -912,7 +912,7 @@ class Composer
                 }
             }
         }
-        ee()->dbg->c_log($email_addresses, __METHOD__);
+       ee()->dbg->c_log($email_addresses, __METHOD__);
         //  Store email cache
         $email->recipient_array = $email_addresses;
         // $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
@@ -939,7 +939,7 @@ class Composer
 
             $this->deleteAttachments($email); // Remove attachments now
             $service = $this->get_service();
-            // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
+            ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
             if ($debug_msg != "") {
                 if (!is_null($service)) $debug_msg .= sprintf(lang('missing_service_credentials'),  $service);
             }else{
@@ -1044,7 +1044,7 @@ class Composer
             show_error(lang('cache_data_missing'));
         }
 
-        ee()->dbg->c_log($email->subject, __METHOD__);
+       ee()->dbg->c_log($email->subject, __METHOD__);
 
         return $this->compose($email);
     }
@@ -1100,7 +1100,7 @@ class Composer
      */
     private function deliverManyEmails(EmailCache $email)
     {
-        ee()->dbg->c_log($email->recipient_array, __METHOD__);
+       ee()->dbg->c_log($email->recipient_array, __METHOD__);
         $recipient_array = array_slice($email->recipient_array, $email->total_sent);
         $number_to_send = count($recipient_array);
         $csv_lookup_loaded = (count($this->csv_lookup) > 0);
@@ -1120,12 +1120,12 @@ class Composer
         $formatted_message = $email->message = $this->formatMessage($email, true);
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
-            ee()->dbg->c_log($this->csv_lookup, __METHOD__);
-            ee()->dbg->c_log($email_address, __METHOD__);
+           ee()->dbg->c_log($this->csv_lookup, __METHOD__);
+           ee()->dbg->c_log($email_address, __METHOD__);
             if ( $csv_lookup_loaded) {
                 $tmp_plaintext = $email->plaintext_alt;
                 $record = $this->csv_lookup[$email_address];
-                ee()->dbg->c_log(isset($record['{{first_name}}']) && isset($record['{{last_name}}']), __METHOD__);
+               ee()->dbg->c_log(isset($record['{{first_name}}']) && isset($record['{{last_name}}']), __METHOD__);
                 // standard 'First Last <email address> format
                 if (isset($record['{{first_name}}']) && isset($record['{{last_name}}'])) {
                     $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record[$this->csv_email_column]}>"; //TODO: https://trello.com/c/1lffhlXm
@@ -1153,17 +1153,17 @@ class Composer
                     'csv_object' => array($record),
                     'mailKey' => $this->csv_email_column
                 );
-                ee()->dbg->c_log($cache_data, __METHOD__);   
+               ee()->dbg->c_log($cache_data, __METHOD__);   
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
-                ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
+               ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
                 if (!$this->email_send($cache_data)) {
                     $email->message = $cache_data['message'] =  $this->_mergeEmail($email, $formatted_message, $record);
                     $email->save();
                     $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
                     $singleEmail->save();
-                    // ee()->dbg->c_log($email->message, __METHOD__, true);
+                    ee()->dbg->c_log($email->message, __METHOD__, true);
                     // if the services are not used, email must fill in placeholders
                     if (!$this->deliverEmail($email, $email_address)) {
                         $this->_removeMail($email);
@@ -1181,7 +1181,7 @@ class Composer
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
             }
-            // ee()->dbg->c_log($id, __METHOD__.': Cache ID',true);
+            ee()->dbg->c_log($id, __METHOD__.': Cache ID',true);
             ++$email->total_sent;
         }
         $email->save();
@@ -1195,7 +1195,7 @@ class Composer
 
         $debug_msg = ee()->email->print_debugger(array());
         $err_msg = lang('compose_error').BR.BR.$debug_msg;
-        ee()->dbg->c_log($debug_msg, __METHOD__);
+       ee()->dbg->c_log($debug_msg, __METHOD__);
         ee()->logger->developer($err_msg);
         //show_error($err_msg);
         return false;
@@ -1212,7 +1212,7 @@ class Composer
         $merge_message = strtr($message, $record);
         
         $email->message = $merge_message;
-        // ee()->dbg->c_log($email->message, __METHOD__, true);
+        ee()->dbg->c_log($email->message, __METHOD__, true);
         return $email->message;
     }
     
@@ -1248,7 +1248,7 @@ class Composer
         foreach ($email->attachments as $attachment) {
             ee()->email->attach($attachment);
         }
-        ee()->dbg->c_log(ee()->email->print_debugger(), __METHOD__);
+       ee()->dbg->c_log(ee()->email->print_debugger(), __METHOD__);
 
         return ee()->email->send(false);
     }
@@ -1297,7 +1297,7 @@ class Composer
      */
     private function censorSubject(EmailCache $email)
     {
-        ee()->dbg->c_log($email, __METHOD__);
+       ee()->dbg->c_log($email, __METHOD__);
         $subject = $email->subject;
 
         if (bool_config_item('enable_censoring')) {
@@ -1389,7 +1389,7 @@ class Composer
         foreach ($settings['service_order'] as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
-                // ee()->dbg->c_log($service, __METHOD__);
+                ee()->dbg->c_log($service, __METHOD__);
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('Tx_service/drivers/'.$service, array_merge($settings, array('debug' => $this->debug)));
                 }
@@ -1403,7 +1403,7 @@ class Composer
                     ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
                 }
             }
-            // ee()->dbg->c_log($sent, __METHOD__);
+            ee()->dbg->c_log($sent, __METHOD__);
             if ($sent == true) {
                 ee()->extensions->end_script = true;
 
@@ -1426,18 +1426,18 @@ class Composer
             $this->service = strtolower($service);
            
             if (!ee()->load->is_loaded($service)) {
-                ee()->dbg->c_log(ee()->load->is_loaded(strtolower($service)), __METHOD__. ": ${service}");
+               ee()->dbg->c_log(ee()->load->is_loaded(strtolower($service)), __METHOD__. ": ${service}");
                 if (file_exists($file_path)) {
                     ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
                     $this->service = ucfirst($service);
                 } else {
-                    ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
+                   ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
 
                     return null;
                 }
             }
         }
-        ee()->dbg->c_log($settings, __METHOD__ . ": SERVICE");
+       ee()->dbg->c_log($settings, __METHOD__ . ": SERVICE");
         return $this->service;
     }
 
@@ -1456,12 +1456,12 @@ class Composer
         $templates = array();
         $req_settings = $args[0];
 
-        ee()->dbg->c_log($req_settings, __METHOD__);
+       ee()->dbg->c_log($req_settings, __METHOD__);
         $service = (array_key_exists('service', $req_settings)) ? $req_settings['service'] : $this->get_service();
         if (!is_null($service)) {
             $templates = ee()->{$service}->get_templates($req_settings);
         }
-        ee()->dbg->c_log($templates, __METHOD__);
+       ee()->dbg->c_log($templates, __METHOD__);
 
         return $templates;
     }
@@ -1492,7 +1492,7 @@ class Composer
      **/
     public function _body_and_attachments()
     {
-        ee()->dbg->c_log($this->protocol, __METHOD__);
+       ee()->dbg->c_log($this->protocol, __METHOD__);
         if ($this->protocol == 'mail') {
             // The 'mail' protocol sets Content-Type in the headers
             if (strpos($this->email_in['header_str'], 'Content-Type: text/plain') !== false) {
@@ -1731,7 +1731,7 @@ class Composer
 
         $count = $emails->count();
 
-        ee()->dbg->c_log($count, __METHOD__);
+       ee()->dbg->c_log($count, __METHOD__);
         $sort_map = array(
             'date' => 'cache_date',
             'subject' => 'subject',
@@ -1795,7 +1795,7 @@ class Composer
             $vars['emails'][] = $email;
         }
 
-        ee()->dbg->c_log($vars, __METHOD__);
+       ee()->dbg->c_log($vars, __METHOD__);
         $table->setData($data);
 
         $base_url = ee('CP/URL', EXT_SETTINGS_PATH.'/email/sent');
@@ -1826,7 +1826,7 @@ class Composer
         $vars['save_btn_text_working'] = '';
         $vars['sections'] = array();
 
-        ee()->dbg->c_log($vars, __METHOD__);
+       ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -1933,7 +1933,7 @@ class Composer
         $vars['save_btn_text_working'] = '';
         $vars['sections'] = array();
 
-        //ee()->dbg->c_log($vars, __METHOD__);
+        ee()->dbg->c_log($vars, __METHOD__);
         return $vars;
     }
 
@@ -1948,7 +1948,7 @@ class Composer
      */
     public function _check_for_recipients($str)
     {
-        ee()->dbg->c_log($str, __METHOD__, true);
+       ee()->dbg->c_log($str, __METHOD__, true);
         if (!$str && ee()->input->post('total_gl_recipients') < 1) {
             ee()->form_validation->set_message('_check_for_recipients', lang('required'));
 
@@ -1997,7 +1997,7 @@ class Composer
      */
     private function deleteAttachments($email)
     {
-        ee()->dbg->c_log($email, __METHOD__);
+       ee()->dbg->c_log($email, __METHOD__);
         foreach ($email->attachments as $file) {
             if (file_exists($file)) {
                 unlink($file);

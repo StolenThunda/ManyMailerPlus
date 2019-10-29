@@ -2,7 +2,7 @@
 
 use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
 
-class Postageapp extends TransactionService
+class TxService_Postageapp extends TransactionService
 {
     public function __construct($settings = array())
     {
