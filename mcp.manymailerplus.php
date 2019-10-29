@@ -17,7 +17,7 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $_vars = array();
-    private $_config =  array('debug' => false);
+    private $_config =  array('debug' => true);
 
     /**
      * Constructor.

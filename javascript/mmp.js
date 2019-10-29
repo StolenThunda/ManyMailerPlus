@@ -264,7 +264,7 @@ class ManyMailerPlus_mod {
                 this.mail_type[0].addEventListener(
                     'change',
                     function(e) {
-                        this.change_mail_type(e);
+                        this.evt_change_mail_type(e);
                     }.bind(this),
                     false
                 );
@@ -311,13 +311,16 @@ class ManyMailerPlus_mod {
                     }.bind(this),
                     false
                 );
-                $('input[name=use_templates]')[0].addEventListener(
+                var useTemp = $('input[name=use_templates]')
+                if (useTemp.length > 0){
+                    useTemp[0].addEventListener(
                     'change',
                     function(e) {
                         this.evt_toggle_templates(e);
                     }.bind(this),
                     false
-                );
+                );}
+                
                 $('[name$=linenum], #reset')[0].addEventListener(
                     'click',
                     function() {
@@ -337,13 +340,18 @@ class ManyMailerPlus_mod {
                     this.evt_select_template(e);
                 });
 
-                this.tmp_selections[0].addEventListener(
+                var tmps = this.tmp_selections;
+                if (tmps.length > 0)
+                {
+                    tmps[0].addEventListener(
                     'change',
                     function(e) {
                         this.evt_select_template(e);
                     }.bind(this),
                     false
                 );
+                }
+           
             }
             return this;
         }
@@ -372,8 +380,8 @@ class ManyMailerPlus_mod {
             .val('file_recipient')
             .trigger('change');
     }
-    evt_change_mail_type() {
-        this.plaintext.toggle(this.val() === 'html');
+    evt_change_mail_type(e) {
+        this.plaintext.toggle(e.currentTarget.value === 'html');
     }
     evt_toggle_csv_entry(e) {
         let showTextEntry = e.target.value === 'csv_recipient';

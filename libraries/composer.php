@@ -728,7 +728,7 @@ class Composer
         $tmp = explode('/', $_SERVER['HTTP_REFERER']);
         $last = end($tmp);
         $sender = is_numeric($last) ? $tmp[count($tmp) - 2] . '/' . $last : $last;
-        ee()->dbg->c_log($sender, __METHOD__, true);
+        ee()->dbg->c_log(`Sender: $sender`, __METHOD__);
         ee()->load->library('email');
 
         $groups = array();
@@ -1153,30 +1153,28 @@ class Composer
                     'csv_object' => array($record),
                     'mailKey' => $this->csv_email_column
                 );
-               ee()->dbg->c_log($cache_data, __METHOD__);   
+                ee()->dbg->c_log($cache_data, __METHOD__);   
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
-               ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
-                if (!$this->email_send($cache_data)) {
-                    $email->message = $cache_data['message'] =  $this->_mergeEmail($email, $formatted_message, $record);
+                ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
+                $email->message = $cache_data['message'] =  $this->_mergeEmail($email, $formatted_message, $record);
+                if ($this->email_send($cache_data)) {
                     $email->save();
                     $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
                     $singleEmail->save();
                     ee()->dbg->c_log($email->message, __METHOD__, true);
+                    
+                }else{
                     // if the services are not used, email must fill in placeholders
                     if (!$this->deliverEmail($email, $email_address)) {
                         $this->_removeMail($email);
                     } else{
+                        $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
                         ++$singleEmail->total_sent;
                         $singleEmail->save();
                         $id = $singleEmail->cache_id;
-                    } 
-                }else{
-                    $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
-                    ++$singleEmail->total_sent;
-                    $singleEmail->save();
-                    $id = $singleEmail->cache_id;
+                    }
                 } 
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
@@ -1195,7 +1193,7 @@ class Composer
 
         $debug_msg = ee()->email->print_debugger(array());
         $err_msg = lang('compose_error').BR.BR.$debug_msg;
-       ee()->dbg->c_log($debug_msg, __METHOD__);
+        ee()->dbg->c_log($debug_msg, __METHOD__);
         ee()->logger->developer($err_msg);
         //show_error($err_msg);
         return false;
@@ -1212,7 +1210,7 @@ class Composer
         $merge_message = strtr($message, $record);
         
         $email->message = $merge_message;
-        ee()->dbg->c_log($email->message, __METHOD__, true);
+        ee()->dbg->c_log($email->message, __METHOD__);
         return $email->message;
     }
     
@@ -1391,7 +1389,16 @@ class Composer
                 $missing_credentials = true;
                 ee()->dbg->c_log($service, __METHOD__);
                 if (!ee()->load->is_loaded($service)) {
-                    ee()->load->library('Tx_service/drivers/'.$service, array_merge($settings, array('debug' => $this->debug)));
+                    try {
+                        //code...
+                        $_settings = array_merge($settings, array('debug' => $this->debug));
+                        ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), $_settings, $service);
+                    } catch (\Throwable $th) {
+                        //throw $th;
+                        ee()->dbg->c_log($th, __METHOD__);
+                        return false;
+                    }
+                    
                 }
                 $result = ee()->{$service}->send_email($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
@@ -1406,7 +1413,6 @@ class Composer
             ee()->dbg->c_log($sent, __METHOD__);
             if ($sent == true) {
                 ee()->extensions->end_script = true;
-
                 return true;
             }
         }
