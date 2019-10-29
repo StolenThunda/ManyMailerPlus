@@ -64,9 +64,7 @@ class Manymailerplus_mcp
     private function _loadLibs()
     {
         ee()->load->helper('html');
-        if ($this->_config['debug']) {
-            ee()->load->library('debughelper', $this->_config, 'dbg');
-        }
+        ee()->load->library('debughelper', $this->_config, 'dbg');
         ee()->load->library('services_module', $this->_config, 'mail_svc');
         ee()->load->library('composer', $this->_config, 'mail_funcs');
     }
