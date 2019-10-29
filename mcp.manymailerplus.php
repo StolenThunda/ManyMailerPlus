@@ -17,7 +17,7 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $_vars = array();
-    private $_config =  array('debug' => true);
+    private $_config =  array('debug' => false);
 
     /**
      * Constructor.
@@ -124,7 +124,7 @@ class Manymailerplus_mcp
      * Url construction for sidebar links
      *
      * @param array $additional_links List array of names for sidebar links
-     * 
+     *
      * @return void
      */
     private function _updateServiceOptions($additional_links = array())
@@ -154,7 +154,7 @@ class Manymailerplus_mcp
      * All Email Related pages
      *
      * @param string $func action from url
-     * 
+     *
      * @return void
      */
     public function email($func = '')
@@ -202,7 +202,7 @@ class Manymailerplus_mcp
      * All services related functions
      *
      * @param string $func Url fragment
-     * 
+     *
      * @return void
      */
     public function services($func = '')
@@ -241,7 +241,7 @@ class Manymailerplus_mcp
      * Handle all settings functionality
      *
      * @param string $func Url Frag
-     * 
+     *
      * @return void
      */
     public function settings($func = '')
@@ -253,7 +253,7 @@ class Manymailerplus_mcp
         $this->_vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
         $this->_vars['cp_page_title'] = lang(__FUNCTION__.'_title');
         $this->_vars['current_action'] = __FUNCTION__;
-        switch ($func) {            
+        switch ($func) {
         default:
             // if the current = the service detail page
             $this->_vars = array_merge($this->_vars, ee()->mail_opts->{$func}());
