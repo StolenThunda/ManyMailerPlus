@@ -2,10 +2,10 @@
 <div class="box table-list-wrap" id='embed_templates'>
     <?php $this->embed('ee:_shared/table', $table); ?>
 </div>
-<?php if ( ! empty($templates)): ?>
-	<?php foreach($templates as $template):
-		$template = json_decode(json_encode($template), TRUE);
-		?>
+<?php if (! empty($templates)): ?>
+	<?php foreach ($templates as $template):
+        $template = json_decode(json_encode($template), true);
+        ?>
 		<?php ee('CP/Modal')->startModal('template-' . $template['slug']); ?>
 		<div class="modal-wrap modal-template-<?=$template['slug']?> hidden">
 			<div class="modal">

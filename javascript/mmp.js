@@ -336,6 +336,14 @@ class ManyMailerPlus_mod {
                     }.bind(this),
                     false
                 );
+                var dumpBtns = $('button[name^=btnDump]');
+                if (dumpBtns.length > 0){
+                    $.each(dumpBtns, (idx, element) => {
+                        element.addEventListener('click',function(e) {
+                            this.toggle_loading(this.evt_dump_data.bind(this), e);
+                        }.bind(this), false);
+                    });
+                }
                 this.tmp_selections.bind('interact', (e) => {
                     this.evt_select_template(e);
                 });
@@ -367,6 +375,14 @@ class ManyMailerPlus_mod {
                 this.show_csv_recipient_fieldset(true);
             }.bind(this);
             reader.readAsText(file);
+        }
+    }
+    evt_dump_data(evt){
+        var dump_val = evt.currentTarget.name === 'btnDump';
+        if (dump_val){
+            this.dumpHiddenVals();
+        }else{
+            this.dumpFormVals();
         }
     }
     evt_toggle_templates() {

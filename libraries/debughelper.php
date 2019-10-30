@@ -225,7 +225,7 @@ class Debughelper
         // backtrace info
         $unknown_error_offset = (int) preg_match('/^\[\d?\]/', $value);   // check for []'d errnum; if found, increases offset by 1 to remove the genericErrorHandler from the stack
         if ($unknown_error_offset) {
-            $line_num = explode('::', $value)[1] ?: null;
+            $line_num = count(explode('::', $value)) > 1 ? explode('::', $value)[1] : null;
             $value = rtrim($value, '::'.$line_num);
         }
         $bt = debug_backtrace();

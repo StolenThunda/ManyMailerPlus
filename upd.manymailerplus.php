@@ -1,34 +1,37 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php  if (! defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
 
 require_once(PATH_THIRD.EXT_SHORT_NAME.'/config.php');
 
-class Manymailerplus_upd {
-    var $version = EXT_VERSION;
+class Manymailerplus_upd
+{
+    public $version = EXT_VERSION;
 
-	// function __construct(){
-	// 	if (!ee()->load->is_loaded('dbg')) ee()->load->library('debughelper', array('debug'=>true), 'dbg');
-	// }
-	function ee_version()
-	{
-		return substr(APP_VER, 0, 1);
-	}
-	
+    // function __construct(){
+    // 	if (!ee()->load->is_loaded('dbg')) ee()->load->library('debughelper', array('debug'=>true), 'dbg');
+    // }
+    public function ee_version()
+    {
+        return substr(APP_VER, 0, 1);
+    }
+    
 
-	function install()
-	{
-		$this->settings = array();
-		
-		// ADD EXTENSION FOR SERVICES INTEGRATION
-		$ext_data = array(
-			'class'		=> ucfirst(EXT_SHORT_NAME).'_ext',
-			'method'	=> 'email_send',
-			'hook'		=> 'email_send',
-			'settings'	=> serialize($this->settings),
-			'version'	=> $this->version,
-			'priority'  => 1,
-			'enabled'	=> 'y'
-		);
-        ee()->db->insert('extensions', $ext_data);			
+    public function install()
+    {
+        $this->settings = array();
+        
+        // ADD EXTENSION FOR SERVICES INTEGRATION
+        $ext_data = array(
+            'class'		=> ucfirst(EXT_SHORT_NAME).'_ext',
+            'method'	=> 'email_send',
+            'hook'		=> 'email_send',
+            'settings'	=> serialize($this->settings),
+            'version'	=> $this->version,
+            'priority'  => 1,
+            'enabled'	=> 'y'
+        );
+        ee()->db->insert('extensions', $ext_data);
 
         $mod_data = array(
             'module_name' => EXT_NAME,
@@ -37,51 +40,50 @@ class Manymailerplus_upd {
             'has_publish_fields' => 'n'
         );
 
-		$previousInstall = ee()->db->get_where('modules', $mod_data);
-		if ($previousInstall->num_rows() == 0) ee()->db->insert('modules', $mod_data);			
-		return $this->createCache();
-	}	
-	
+        $previousInstall = ee()->db->get_where('modules', $mod_data);
+        if ($previousInstall->num_rows() == 0) {
+            ee()->db->insert('modules', $mod_data);
+        }
+        return $this->createCache();
+    }
+    
 
-	function uninstall()
-	{
-		// ADD EXTENSION FOR SERVICES INTEGRATION
-		ee()->db->where('class',ucfirst(EXT_SHORT_NAME).'_ext');
-		ee()->db->delete('extensions');
+    public function uninstall()
+    {
+        // ADD EXTENSION FOR SERVICES INTEGRATION
+        ee()->db->where('class', ucfirst(EXT_SHORT_NAME).'_ext');
+        ee()->db->delete('extensions');
 
-		ee()->db->where('module_name', EXT_NAME);
-		ee()->db->delete('modules');
+        ee()->db->where('module_name', EXT_NAME);
+        ee()->db->delete('modules');
 
-		ee()->db->delete('modules', array( 'module_name' => EXT_NAME));
+        ee()->db->delete('modules', array( 'module_name' => EXT_NAME));
 
-		ee()->load->dbforge();
-		$sql[] = "DROP TABLE IF EXISTS exp_email_cache_plus";
+        ee()->load->dbforge();
+        $sql[] = "DROP TABLE IF EXISTS exp_email_cache_plus";
 
-		foreach ($sql as $query)
-		{
-			ee()->db->query($query);
-		}
-		return TRUE;
-	}
+        foreach ($sql as $query) {
+            ee()->db->query($query);
+        }
+        return true;
+    }
 
 
-	function update($version = '') 
-	{
-		
-		if(version_compare($version, '0.1.4', '>='))
-		{
-			return $this->createCache();
-		}
-		if(version_compare($version, $this->version) === 0)
-		{
-			return FALSE;
-		}
-		return TRUE;		
-	}	
+    public function update($version = '')
+    {
+        if (version_compare($version, '0.1.4', '>=')) {
+            return $this->createCache();
+        }
+        if (version_compare($version, $this->version) === 0) {
+            return false;
+        }
+        return true;
+    }
 
-	function createCache(){
-		ee()->load->dbforge();
-		$sql[] = "CREATE TABLE IF NOT EXISTS `exp_email_cache_plus`(
+    public function createCache()
+    {
+        ee()->load->dbforge();
+        $sql[] = "CREATE TABLE IF NOT EXISTS `exp_email_cache_plus`(
 			`cache_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
   			`cache_date` int(10) unsigned NOT NULL DEFAULT '0',
 			`total_sent` int(6) unsigned NOT NULL,
@@ -103,11 +105,9 @@ class Manymailerplus_upd {
 			PRIMARY KEY (`cache_id`)
 			) ENGINE=InnoDB AUTO_INCREMENT=2570 DEFAULT CHARACTER SET ".ee()->db->escape_str(ee()->db->char_set)." COLLATE ".ee()->db->escape_str(ee()->db->dbcollat);
 
-		foreach ($sql as $query)
-		{
-			ee()->db->query($query);
-		}
-		return true;
-	}
+        foreach ($sql as $query) {
+            ee()->db->query($query);
+        }
+        return true;
+    }
 }
-

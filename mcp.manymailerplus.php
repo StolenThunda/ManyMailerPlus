@@ -67,6 +67,7 @@ class Manymailerplus_mcp
         ee()->load->library('debughelper', $this->_config, 'dbg');
         ee()->load->library('services_module', $this->_config, 'mail_svc');
         ee()->load->library('composer', $this->_config, 'mail_funcs');
+        // ee()->load->driver('txservice/txservice');
     }
     /**
      * Loads configs
@@ -130,7 +131,7 @@ class Manymailerplus_mcp
         if (!empty($additional_links)) {
             $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], ee()->mail_svc->get_service_order()));
         }
-        ee()->dbg->c_log($this->sidebar_options['services']['links'], __METHOD__);
+        // ee()->dbg->c_log($this->sidebar_options['services']['links'], __METHOD__);
     }
 
     /**

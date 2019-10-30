@@ -73,7 +73,7 @@ class Services_module
                 $all_settings[$this->site_id]['service_order'] = explode(',', $services);
                 $this->model->settings = $all_settings;
                 $this->model->save();
-               ee()->dbg->c_log($all_settings, __METHOD__, true);
+                ee()->dbg->c_log($all_settings, __METHOD__, true);
                 exit;
             }
         }
@@ -119,8 +119,6 @@ class Services_module
     public function get_settings($all_sites = false)
     {
         $all_settings = $this->model->settings;
-
-        ee()->dbg->c_log($all_settings, __METHOD__);
         $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
         // Check for config settings - they will override database settings
         if ($all_sites == false) {
@@ -145,13 +143,13 @@ class Services_module
     {
         $settings = $this->get_settings(true);
         $current_service = '';
-       ee()->dbg->c_log($settings, __METHOD__);
+        ee()->dbg->c_log($settings, __METHOD__);
         foreach ($this->services as $service => $service_settings) {
             ee()->dbg->c_log($service, __METHOD__);
             $v = ee('Request')->post($service.'_active');
             if (! is_null($v)) {
                 $current_service = $service;
-                $settings[$this->site_id][$service.'_active'] = $v; 
+                $settings[$this->site_id][$service.'_active'] = $v;
 
                 foreach ($service_settings as $setting) {
                     $settings[$this->site_id][$setting] = ee('Request')->post($setting);
@@ -159,10 +157,10 @@ class Services_module
             }
         }
 
-       ee()->dbg->c_log($settings, __METHOD__);
+        ee()->dbg->c_log($settings, __METHOD__);
         $this->model->settings = $settings;
         $this->model->save();
-       ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
+        ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
         ee('CP/Alert')->makeInline()
             ->asSuccess()
             ->withTitle(lang('settings_saved'))
@@ -198,12 +196,11 @@ class Services_module
         $active_services = $this->get_active_services();
                
 
-        if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) ) {
-            return array_keys($this->services); 
-        
+        if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
+            return array_keys($this->services);
         } else {
-            $other_services = array_diff(array_keys($this->services), $active_services); 
-           ee()->dbg->c_log($other_services, __METHOD__);
+            $other_services = array_diff(array_keys($this->services), $active_services);
+            ee()->dbg->c_log($other_services, __METHOD__);
             foreach ($other_services as $service) {
                 $active_services[] = $service;
             }
@@ -320,7 +317,7 @@ class Services_module
         if ($is_multi_choice) {
             $choice_options = $field_name;
             $field_name = array_keys($field_name)[0];
-           ee()->dbg->c_log($choice_options, __METHOD__);
+            ee()->dbg->c_log($choice_options, __METHOD__);
         }
 
         $is_control = strpos($field_name, '__');

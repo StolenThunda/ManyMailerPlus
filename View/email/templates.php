@@ -15,7 +15,7 @@
 
 		<?=$pagination?>
 
-		<?php if ( ! empty($table['columns']) && ! empty($table['data'])): ?>
+		<?php if (! empty($table['columns']) && ! empty($table['data'])): ?>
 			<?php if ($this->enabled('remove')): ?>
 				<fieldset class="tbl-bulk-act hidden">				
 					<select name="bulk_action">
@@ -29,10 +29,10 @@
 	<?=form_close()?>
 	</div>
 </div>
-<?php if ( ! empty($templates)): ?>
-	<?php foreach($templates as $template):
-		$template = json_decode(json_encode($template), TRUE);
-		?>
+<?php if (! empty($templates)): ?>
+	<?php foreach ($templates as $template):
+        $template = json_decode(json_encode($template), true);
+        ?>
 		<?php ee('CP/Modal')->startModal('template-' . $template['slug']); ?>
 		<div class="modal-wrap modal-template-<?=$template['slug']?> hidden">
 			<div class="modal">
@@ -69,11 +69,11 @@
 <?php endif; ?>
 <?php
 $modal_vars = array(
-	'name'      => 'modal-confirm-remove',
-	'form_url'	=> $table['base_url'],
-	'hidden'	=> array(
-		'bulk_action'	=> 'remove'
-	)
+    'name'      => 'modal-confirm-remove',
+    'form_url'	=> $table['base_url'],
+    'hidden'	=> array(
+        'bulk_action'	=> 'remove'
+    )
 );
 
 $modal = $this->make('ee:_shared/modal_confirm_remove')->render($modal_vars);

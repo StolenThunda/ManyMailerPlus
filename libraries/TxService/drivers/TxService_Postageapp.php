@@ -9,7 +9,7 @@ class TxService_Postageapp extends TransactionService
         parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
-       ee()->dbg->c_log($this, __METHOD__);
+        ee()->dbg->c_log($this, __METHOD__);
     }
 
     public function get_api_key()
@@ -37,7 +37,7 @@ class TxService_Postageapp extends TransactionService
     private function _get_api($settings = array())
     {
         $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
-       ee()->dbg->c_log($settings, __METHOD__);
+        ee()->dbg->c_log($settings, __METHOD__);
 
         return (!empty($settings['postageapp_api_key']) || !isset($settings['postageapp_api_key'])) ? null : $settings['postageapp_api_key'];
     }
@@ -107,7 +107,8 @@ class TxService_Postageapp extends TransactionService
         return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
     }
 
-    public function save_template(){
+    public function save_template()
+    {
         return true;
     }
     public function lookup_to_merger($lookup)
