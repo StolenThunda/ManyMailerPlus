@@ -1,23 +1,25 @@
 <?php
-class MessageArray extends stdClass implements Iterator{
-		var $data = array();
+class MessageArray extends stdClass implements Iterator
+{
+    public $data = array();
 
-		public function addMsg($str){
-			$msgObj = new stdClass();
-			$info = explode(':', $str);
-			if (count($info) > 1){
-				$msgObj->title = $info[0];
-				$msgObj->msg = $info[1];
-				$msgObj->misc = array_slice($info, 1);
-			}else{
-				$msgObj->title = '';
-				$msgObj->msg = $info[0];
-				$msgObj->misc = null;
-			}
-			$this->data[] = $msgObj;
-		}
+    public function addMsg($str)
+    {
+        $msgObj = new stdClass();
+        $info = explode(':', $str);
+        if (count($info) > 1) {
+            $msgObj->title = $info[0];
+            $msgObj->msg = $info[1];
+            $msgObj->misc = array_slice($info, 1);
+        } else {
+            $msgObj->title = '';
+            $msgObj->msg = $info[0];
+            $msgObj->misc = null;
+        }
+        $this->data[] = $msgObj;
+    }
 
-	public function rewind()
+    public function rewind()
     {
         reset($this->data);
     }
@@ -27,12 +29,12 @@ class MessageArray extends stdClass implements Iterator{
         return current($this->data);
     }
   
-    public function key() 
+    public function key()
     {
         return key($this->data);
     }
   
-    public function next() 
+    public function next()
     {
         return next($this->data);
     }
@@ -40,15 +42,17 @@ class MessageArray extends stdClass implements Iterator{
     public function valid()
     {
         $key = key($this->data);
-        $var = ($key !== NULL && $key !== FALSE);
+        $var = ($key !== null && $key !== false);
         return $var;
     }
 
-	public function emptyData(){
-		$this->data = [];
-	}	
+    public function emptyData()
+    {
+        $this->data = [];
+    }
 
-	public function __toString(){
-		return json_encode(array(print_r($this->data, True) . PHP_EOL, 'Current Debug Messages'));
-	}
+    public function __toString()
+    {
+        return json_encode(array(print_r($this->data, true) . PHP_EOL, 'Current Debug Messages'));
+    }
 }

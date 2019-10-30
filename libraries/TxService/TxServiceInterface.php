@@ -4,7 +4,9 @@ namespace ManyMailerPlus\libraries\TxService;
 
 interface TxServiceInterface
 {
-    function get_templates();
-    function get_api_key();
-    function send_email();
+    
+    public function get_templates();
+    public function get_api_key();
+    public function send_email();
+    
 }

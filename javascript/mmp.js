@@ -1,4 +1,3 @@
-// import style from "./main.css";
 class ManyMailerPlus_mod {
     constructor(apiAvailable) {
         'use strict';
@@ -135,12 +134,12 @@ class ManyMailerPlus_mod {
     useApi() {
         this.file_recipient.change((evt) => {
             this.resetRecipients();
-            var fileType = /csv.*/;
+            var fileType = /csv.*/; 
             var file = evt.target.files[0];
             if (file) {
                 if (file.type.match(fileType) || file.name.slice(-3) === 'csv') {
                     var reader = new FileReader();
-                    reader.onload = function (e) {
+                    reader.onload = function() {
                         this.val_with_linenum(reader.result);
                         this.con_csv_recipient.show();
                     }.bind(this);
@@ -257,14 +256,14 @@ class ManyMailerPlus_mod {
             })
             .bind(this);
 
-        if (this.on_compose_page) {
-            this.mail_type[0].addEventListener(
-                'change',
-                function (e) {
-                    this.change_mail_type(e);
-                }.bind(this),
-                false
-            );
+            if (this.on_compose_page) {
+                this.mail_type[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_change_mail_type(e);
+                    }.bind(this),
+                    false
+                );
 
             this.sel_csv_entry[0].addEventListener(
                 'change',
@@ -274,85 +273,98 @@ class ManyMailerPlus_mod {
                 false
             );
 
-            this.csv_recipient
-                .bind('interact', (e) => {
-                    if (e.currentTarget.value === '') {
-                        TLN.remove_line_numbers('csv_recipient');
-                    } else {
-                        TLN.append_line_numbers('csv_recipient');
-                    }
-                })
-                .wrap('<div id="csv_recipient_wrapper" ></div>');
-            this.file_recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.toggle_loading(this.evt_load_csv_file.bind(this), e);
-                }.bind(this),
-                false
-            );
-            this.recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.countEmails();
-                }.bind(this),
-                false
-            );
-            this.recipient[0].addEventListener(
-                'click',
-                function (e) {
-                    this.show_message({
-                        title: 'Invalid!',
-                        html: 'Please enter emails using csv entry (file upload/paste).',
-                        type: 'error'
-                    });
-                }.bind(this),
-                false
-            );
-            $.each($('input[name^=use_templates]'), (idx, val) => {
-                val.addEventListener(
+                this.csv_recipient
+                    .bind('interact', (e) => {
+                        if (e.currentTarget.value === '') {
+                            TLN.remove_line_numbers('csv_recipient');
+                        } else {
+                            TLN.append_line_numbers('csv_recipient');
+                        }
+                    })
+                    .wrap('<div id="csv_recipient_wrapper" ></div>');
+                this.file_recipient[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.toggle_loading(this.evt_load_csv_file.bind(this), e);
+                    }.bind(this),
+                    false
+                );
+                this.recipient[0].addEventListener(
+                    'change',
+                    function() {
+                        this.countEmails();
+                    }.bind(this),
+                    false
+                );
+                this.recipient[0].addEventListener(
+                    'click',
+                    function() {
+                        this.show_message({
+                            title: 'Invalid!',
+                            html: 'Please enter emails using csv entry (file upload/paste).',
+                            type: 'error'
+                        });
+                    }.bind(this),
+                    false
+                );
+                var useTemp = $('input[name=use_templates]');
+                if (useTemp.length > 0){
+                    useTemp[0].addEventListener(
                     'change',
                     function (e) {
                         this.evt_toggle_templates(e);
                     }.bind(this),
                     false
+                );}
+                
+                $('[name$=linenum], #reset')[0].addEventListener(
+                    'click',
+                    function() {
+                        this.resetRecipients(true);
+                    }.bind(this),
+                    false
                 );
-            });
-            $('[name$=linenum], #reset')[0].addEventListener(
-                'click',
-                function (e) {
-                    this.resetRecipients(true);
-                }.bind(this),
-                false
-            );
 
-            $('button[name=convert_csv]')[0].addEventListener(
-                'click',
-                function (e) {
-                    this.toggle_loading(this.evt_convert_csv.bind(this), e);
-                }.bind(this),
-                false
-            );
-            // this.tmp_selections.bind('interact', (e) => {
-            //     this.evt_select_template(e);
-            // });
+                $('button[name=convert_csv]')[0].addEventListener(
+                    'click',
+                    function(e) {
+                        this.toggle_loading(this.evt_convert_csv.bind(this), e);
+                    }.bind(this),
+                    false
+                );
+                var dumpBtns = $('button[name^=btnDump]');
+                if (dumpBtns.length > 0){
+                    $.each(dumpBtns, (idx, element) => {
+                        element.addEventListener('click',function(e) {
+                            this.toggle_loading(this.evt_dump_data.bind(this), e);
+                        }.bind(this), false);
+                    });
+                }
+                this.tmp_selections.bind('interact', (e) => {
+                    this.evt_select_template(e);
+                });
 
-            // this.tmp_selections[0].addEventListener(
-            //     'change',
-            //     function (e) {
-            //         this.evt_select_template(e);
-            //     }.bind(this),
-            //     false
-            // );
+                var tmps = this.tmp_selections;
+                if (tmps.length > 0)
+                {
+                    tmps[0].addEventListener(
+                    'change',
+                    function(e) {
+                        this.evt_select_template(e);
+                    }.bind(this),
+                    false
+                );
+                }
+           
+            }
         }
-        return this;
-    }
     // BEGIN EVENT FUNCTIONS
     evt_load_csv_file(evt) {
         this.resetRecipients();
         var file = evt.target.files[0];
         if (file) {
             var reader = new FileReader();
-            reader.onload = function (e) {
+            reader.onload = function() {
                 TLN.remove_line_numbers('csv_recipient');
                 this.val_with_linenum(reader.result);
                 this.show_csv_recipient_fieldset(true);
@@ -360,47 +372,27 @@ class ManyMailerPlus_mod {
             reader.readAsText(file);
         }
     }
-    evt_toggle_templates(el) {
-        var val = el.currentTarget.value;
-        var toggle = val === 'y' ? 'slow' : false;
-        let current_base_url = 'http://' + window.location.hostname;
-        let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
-        this.con_templates = $("input[name^='use_template] ~ div");
-        if (val === 'y') {
-            $.get(url, {}, function (data, textStatus, jqXHR) {
-                debugger
-                console.log(url.href);
-                console.log(data);
-                $("input[name^='use_template] ~ div").append(data);
-                $.each($('input[name="selection[]"'), (idx, val) => {
-                    val.addEventListener(
-                        'change',
-                        function (e) {
-                            this.evt_select_template(e);
-                        }.bind(this),
-                        false
-                    );
-                });
-
-                this.con_templates.empty();
-                this.con_embed_tmps.fadeToggle(toggle);
-                this.con_tmp_name.fadeToggle(toggle);
-
-                return;
-            }.bind(this));
-        } else {
-            this.con_embed_tmps.empty();
-            this.con_embed_tmps.fadeToggle(toggle);
-            this.con_tmp_name.fadeToggle(toggle);
+    evt_dump_data(evt){
+        var dump_val = evt.currentTarget.name === 'btnDump';
+        if (dump_val){
+            this.dumpHiddenVals();
+        }else{
+            this.dumpFormVals();
         }
-
     }
-    evt_convert_csv(e) {
+    evt_toggle_templates() {
+        var toggle = this.value === 'y' ? 'slow' : false;
+        this.con_embed_tmps.fadeToggle(toggle);
+        this.con_tmp_name.fadeToggle(toggle);
+    }
+    evt_convert_csv() {
         this.convertCSV();
-        this.sel_csv_entry.val('file_recipient').trigger('change');
+        this.sel_csv_entry
+            .val('file_recipient')
+            .trigger('change');
     }
-    evt_change_mail_type() {
-        this.plaintext.toggle(this.val() === 'html');
+    evt_change_mail_type(e) {
+        this.plaintext.toggle(e.currentTarget.value === 'html');
     }
     evt_toggle_csv_entry(e) {
         let showTextEntry = e.target.value === 'csv_recipient';
@@ -502,11 +494,11 @@ class ManyMailerPlus_mod {
             header: true,
             quoteChar: '',
             skipEmptyLines: 'greedy',
-            error: (e, file) => {
+            error: () => {
                 this.showPapaErrors(data.errors);
                 return;
             },
-            complete: (results, file) => {
+            complete: (results) => {
                 this._parsed = results;
             }
         });
@@ -655,7 +647,7 @@ class ManyMailerPlus_mod {
 
             $('input[name^="mc-check"').change(function () {
                 var chk = this.checked;
-                $('input[name^="mc-check"').not(this).each(function (el) {
+                $('input[name^="mc-check"').not(this).each(function() {
                     if (chk) {
                         $(this).attr('checked', false).hide();
                         $(`label[for=${this.name}]`).hide();
@@ -683,7 +675,7 @@ class ManyMailerPlus_mod {
         });
     }
 
-    showPlaceholders(headers) {
+    showPlaceholders() {
         $('#stick-here').remove();
         $('<div />', {
             id: 'stick-here',
@@ -824,7 +816,6 @@ class ManyMailerPlus_mod {
             console.log(`${this.name}: ${this.value}`);
             msg.append(`<tr><td>${this.name}</td><td>${val}</td></tr>`);
         });
-        var frmStr = JSON.stringify($('form').serialize());
         this.show_message({
             title: 'Form VALS',
             type: 'info',
@@ -968,7 +959,7 @@ class ManyMailerPlus_mod {
 
 $(document).ready(function () {
     'use strict';
-    window.LogRocket && window.LogRocket.init('jj0vrm/manymailerplus');
+    // window.LogRocket && window.LogRocket.init('jj0vrm/manymailerplus');
     function isAPIAvailable() {
         // Check for the various File API support.
         if (window.File && window.FileReader && window.FileList && window.Blob) {

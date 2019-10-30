@@ -1,0 +1,9 @@
+# Read more about SSH config files: https://linux.die.net/man/5/ssh_config
+Host Dev2
+    HostName 104.248.32.41
+    User root
+
+#Host *
+#    ControlMaster auto
+#    ControlPath  ~/.ssh/sockets/%r@%h-%p
+#    ControlPersist  600

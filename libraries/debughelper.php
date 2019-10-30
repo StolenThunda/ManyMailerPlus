@@ -31,9 +31,9 @@ class Debughelper
         error_reporting(E_ALL);
         ini_set('display_errors', null);
         foreach ($config as $key => $value) {
-            if (in_array($key, array('debug'))){
-                 $this->{$key} = $value;
-            }           
+            if (in_array($key, array('debug'))) {
+                $this->{$key} = $value;
+            }
         }
     }
 
@@ -185,7 +185,9 @@ class Debughelper
             $value = ob_get_contents();
         }
 
-        if ($exit) exit();
+        if ($exit) {
+            exit();
+        }
     }
 
     public function lastClass($bt = array(), $offset = 0)
@@ -223,7 +225,7 @@ class Debughelper
         // backtrace info
         $unknown_error_offset = (int) preg_match('/^\[\d?\]/', $value);   // check for []'d errnum; if found, increases offset by 1 to remove the genericErrorHandler from the stack
         if ($unknown_error_offset) {
-            $line_num = explode('::', $value)[1] ?: null;
+            $line_num = count(explode('::', $value)) > 1 ? explode('::', $value)[1] : null;
             $value = rtrim($value, '::'.$line_num);
         }
         $bt = debug_backtrace();
@@ -264,73 +266,75 @@ class Debughelper
         );
         $header = ((!$encodable and is_null($title)) ? $plainHeader : $titleHeader);
         $content = (($encodable) ? $obj_msg : $str_msg);
-        array_push($dbg_messages, $header,
-                array(
+        array_push(
+            $dbg_messages,
+            $header,
+            array(
                     'str' => "%cCalling File: {$caller_file}",
                     'type' => 'content',
                     'method' => 'log',
                     'style' => self::STYLES[$detailLogLevel],
                 ),
-                array(
+            array(
                     'str' => "%cClass: {$caller_class}->{$caller_function} (Line: {$caller_line})",
                     'type' => 'content',
                     'method' => 'log',
                     'style' => self::STYLES[$detailLogLevel],
-                ), $content,
-                array(
+                ),
+            $content,
+            array(
                     'str' => '%cObject As String',
                     'type' => 'content',
                     'method' => $collapsed,
                     'style' => self::STYLES['info'],
                 ),
-                array(
+            array(
                     'str' => '%c'.json_encode($value),
                     'type' => 'content',
                     'method' => 'log',
                     'style' => self::STYLES[$detailLogLevel],
                 ),
-                array(
+            array(
                     'method' => 'groupEnd',
                     'type' => 'content',
                 ),
-
-                array(
+            array(
                     'str' => '%cTruncated Stack Trace (table/obj)',
                     'type' => 'backtrace',
                     'method' => $collapsed,
                     'style' => self::STYLES['info'],
                 ),
-                array(
+            array(
                     'str' => $caller,
                     'type' => 'backtrace',
                     'method' => 'table',
                     'style' => self::STYLES['info'],
                 ),
-                array(
+            array(
                     'method' => 'groupEnd',
                     'type' => 'backtrace',
                 ),
-                array(
+            array(
                     'str' => '%cFull Stack Trace',
                     'type' => 'backtrace',
                     'method' => $collapsed,
                     'style' => self::STYLES['info'],
                 ),
-                array(
+            array(
                     'str' => json_encode($bt),
                     'method' => 'table',
                     'type' => 'backtrace',
                     'style' => self::STYLES['info'],
                 ),
-                array(
+            array(
                     'method' => 'groupEnd',
                     'type' => 'backtrace',
                 ),
-                array(
+            array(
                     'method' => 'groupEnd',
                     'type' => 'footer',
                 )
-            );
+        );
 
         return $dbg_messages;
     }

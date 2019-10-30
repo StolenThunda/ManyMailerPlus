@@ -40,7 +40,7 @@ class Services_module
     public $is_func = null;
     public $service_order = array();
 
-    public function __construct($settings = '')
+    public function __construct($settings)
     {
         ee()->load->helper('MessageArray');
         ee()->load->helper('html');
@@ -119,7 +119,7 @@ class Services_module
     {
         $all_settings = $this->model->settings;
 
-        // ee()->dbg->c_log($all_settings, __METHOD__);
+        ee()->dbg->c_log($all_settings, __METHOD__);
         $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
         // Check for config settings - they will override database settings
         if ($all_sites == false) {
@@ -146,11 +146,11 @@ class Services_module
         $current_service = '';
         ee()->dbg->c_log($settings, __METHOD__);
         foreach ($this->services as $service => $service_settings) {
-            // ee()->dbg->c_log($service, __METHOD__);
+            ee()->dbg->c_log($service, __METHOD__);
             $v = ee('Request')->post($service.'_active');
             if (! is_null($v)) {
                 $current_service = $service;
-                $settings[$this->site_id][$service.'_active'] = $v; 
+                $settings[$this->site_id][$service.'_active'] = $v;
 
                 foreach ($service_settings as $setting) {
                     $settings[$this->site_id][$setting] = ee('Request')->post($setting);
@@ -161,7 +161,7 @@ class Services_module
         ee()->dbg->c_log($settings, __METHOD__);
         $this->model->settings = $settings;
         $this->model->save();
-        // ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__, true);
+        ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__, true);
         ee('CP/Alert')->makeInline()
             ->asSuccess()
             ->withTitle(lang('settings_saved'))
@@ -173,7 +173,6 @@ class Services_module
 
     public function update_service_order($settings = null)
     {
-        
         $settings = (!is_null($settings)) ? $settings : $this->get_settings();
         ee()->dbg->c_log($settings, __METHOD__);
         if ($services = ee('Request')->post('service_order')) {
@@ -208,12 +207,12 @@ class Services_module
 
             return $active_services;
         }
-        // ee()->dbg->c_log($settings, __METHOD__);
+        ee()->dbg->c_log($settings, __METHOD__);
         // foreach ($settings as $k => $v) {
         //     $service = strstr($k, '_active', true);
 
         //     if ($service !== false && $v === 'y') {
-        //         ee()->dbg->c_log($k, __METHOD__." $v");
+        //        ee()->dbg->c_log($k, __METHOD__." $v");
         //         if (!in_array($service, $active_services)) {
         //             $active_services[] = $service;
         //         }
@@ -228,7 +227,7 @@ class Services_module
         //     }
         // }
 
-        // // ee()->dbg->c_log($active_services, __METHOD__.':sort');
+        // ee()->dbg->c_log($active_services, __METHOD__.':sort');
 
         // return $active_services;
 
@@ -241,7 +240,7 @@ class Services_module
         //     $this->model->save();
         // }else{
         //     $services_sorted = $this->get_active_services();
-        //     ee()->dbg->c_log($services_sorted, __METHOD__);
+        //    ee()->dbg->c_log($services_sorted, __METHOD__);
         //     if (empty($services_sorted)) {
         //         $services_sorted =  array_keys($this->services);
         //     }
@@ -257,7 +256,7 @@ class Services_module
         //         $this->model->save();
         //     }
         // }
-        // ee()->dbg->c_log( $settings['service_order'], __METHOD__);
+        ee()->dbg->c_log($settings['service_order'], __METHOD__);
 
         // return (isset($settings['service_order'])) ? $settings['service_order'] : array();
     }
@@ -305,10 +304,10 @@ class Services_module
         );
 
         if (array_key_exists($this->current_service, $this->services)) {
-            // ee()->dbg->c_log($this->services, __METHOD__);
+            ee()->dbg->c_log($this->services, __METHOD__);
             foreach ($this->services[$this->current_service] as $field_name) {
                 $i = $this->_getServiceFields($field_name);
-                // ee()->dbg->c_log($i);
+                ee()->dbg->c_log($i);
                 extract($i, EXTR_OVERWRITE);
                 $field = array('type' => $control_type);
                 switch ($control_type) {
@@ -353,7 +352,7 @@ class Services_module
                     );
             }
         }
-        // ee()->dbg->c_log($sections, __METHOD__);
+        ee()->dbg->c_log($sections, __METHOD__);
         return array($sections);
     }
 
@@ -372,7 +371,7 @@ class Services_module
 
         if ($is_control !== false) {
             $type = substr($field_name, ($is_control + 2));
-            // ee()->dbg->c_log("$field_name ( $is_control ) :  $type", __METHOD__);
+            ee()->dbg->c_log("$field_name ( $is_control ) :  $type", __METHOD__);
         }
 
         return array(

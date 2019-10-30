@@ -12,11 +12,11 @@
 	<?php endif; ?>
 	<?php
         if (isset($current_settings) && $debug) {
-			echo '<div class="app-notice-wrap">'. ee("CP/Alert")->getAllInlines() .'</div>';
-			// ee()->dbg->c_log($current_settings,"Current Settings");
-			echo "<script>console.groupCollapsed('Current Services Settings');</script>";
-			echo "<script>console.dir(". json_encode($current_settings).");</script>";
-			echo "<script>console.groupEnd();</script>";
+            echo '<div class="app-notice-wrap">'. ee("CP/Alert")->getAllInlines() .'</div>';
+            ee()->dbg->c_log($current_settings, "Current Settings");
+            echo "<script>console.groupCollapsed('Current Services Settings');</script>";
+            echo "<script>console.dir(". json_encode($current_settings).");</script>";
+            echo "<script>console.groupEnd();</script>";
             echo '<input type="button" id="btnData" class="btn" value="Show Data" />';
         }
     ?>
