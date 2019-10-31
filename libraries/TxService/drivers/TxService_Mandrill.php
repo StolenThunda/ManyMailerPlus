@@ -27,24 +27,26 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
 
     private function _parseKey($settings = array())
     {
-        try {
-            if (!ee()->load->is_loaded('mod_services')) {
-                ee()->load->library('services_module', null, 'mod_svc');
-            }
-            $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
-            $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-            $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-            $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
-            $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-            ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
-            $this->set_api_key($active_key);
-            return $active_key;
-        } catch (\Throwable $th) {
-            //throw $th;
-            ee()->dbg->c_log($th, __METHOD__);
+        if ($this->get_api_key() === "") {
+            try {
+                if (!ee()->load->is_loaded('mod_services')) {
+                    ee()->load->library('services_module', null, 'mod_svc');
+                }
+                $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
+                $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
+                $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
+                $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
+                $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
+                ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
+                $this->set_api_key($active_key);
+                return $active_key;
+            } catch (\Throwable $th) {
+                //throw $th;
+                ee()->dbg->c_log($th, __METHOD__);
 
-            return $th;
-        }
+                return $th;
+            }
+        }else{ return $this->get_api_key();}        
     }
     public function ident(){
         ee()->dbg->c_log('Loaded: '.__CLASS__.' k:'.$this->api_key, __METHOD__);
@@ -191,13 +193,22 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
         return $merge_vars;
     }
 
+    
+    public function get_template($obj = array('template_name' => '', 'func' => 'list'))
+    {
+        $obj[0]['template_name'] = str_replace(' ', '-', strtolower($obj[0]['template_name']));
+        $req = $obj[0];
+        ee()->dbg->c_log($req, __METHOD__);
+        return $this->get_templates($req);
+    }
     public function get_templates($obj = array('template_name' => '', 'func' => 'list'))
     {
+        ee()->dbg->c_log($obj, __METHOD__);
         $templates = array();
         $func = (isset($obj['func'])) ? $obj['func'] : 'list';
         $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-        $key = $this->_parseKey();
+        $key = $this->get_api_key();
         if ($key !== '') {
             $data = array(
                 'key' => $key,

@@ -568,7 +568,9 @@ class Composer
 
         if ($template_name !== '') {
             $template_name = str_replace('_', ' ', $template_name);
-            $template = $this->_get_service_templates($template_name, 'info');
+            $template_request = array('template_name' => $template_name, 'func' => 'info');
+            ee()->dbg->c_log($template_request, __METHOD__);
+            $template = $this->_get_service_template($template_request);
             ee()->dbg->c_log($template, __METHOD__);
             if (isset($template['status'])) {
                 ee()->session->set_flashdata('result', $template['status'].':'.$template['message']);
@@ -657,8 +659,6 @@ class Composer
                         'code' => array(
                             'type' => 'html',
                             'content' => form_textarea(array('name' => 'code', 'rows' => 15), $default['code']),
-                            // 'type' => 'textarea',
-                            // 'value' => $default['code'],
                         ),
                     ),
                 ),
@@ -1437,7 +1437,7 @@ class Composer
         $settings = null;
         if ($this->service === "") {
             $settings = ee()->mail_svc->get_settings();
-            $service = ucfirst(ee()->mail_svc->get_initial_service());
+            $service = ee()->mail_svc->get_initial_service();
            
             $service_settings = array('debug' => $this->debug, 'settings' => $settings);
             $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/TxService/drivers/TxService_%s.php', ucfirst($service));
@@ -1453,7 +1453,7 @@ class Composer
                 }
             }
         }
-        ee()->dbg->c_log($settings, __METHOD__ . ": SERVICE");
+        ee()->dbg->c_log($service, __METHOD__ . ": SERVICE");
         return $this->service;
     }
 
@@ -1461,23 +1461,35 @@ class Composer
     {
         $service = $this->get_service();
         if (!is_null($service)) {
-            return ee()->{$service}->delete_template(array('template_name' => $template_name));
+            return ee()->{$service}->delete_template(array('template_name' => $template_name)[0]);
         }
 
         return false;
     }
 
+    public function _get_service_template(...$args)
+    {
+        $service = ($this->service !== "") ? $this->service : $this->get_service();
+        ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__);
+        $template = ee()->{$service}->get_template($args);        
+        ee()->dbg->c_log($template, __METHOD__);
+        return $template;
+    }
+
+  
     public function _get_service_templates(...$args)
     {
         $templates = array();
         $req_settings = $args[0];
 
         ee()->dbg->c_log($req_settings, __METHOD__);
-        print_r(get_declared_classes());
-        $service = (array_key_exists('service', $req_settings)) ? $req_settings['service'] : $this->get_service();
-        if (!is_null($service)) {
-            $templates = ee()->{$service}->get_templates($req_settings);
-        }
+        $service = (is_array($req_settings) && array_key_exists('service', $req_settings)) ? $req_settings['service'] : $this->get_service();
+        ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__);
+        if (!ee()->load->is_loaded($service)) {
+            ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array("debug" => $this->debug), $service);
+        }        
+        $templates = ee()->{$service}->get_templates($req_settings);
+        
         
         ee()->dbg->c_log($templates, __METHOD__);
 
