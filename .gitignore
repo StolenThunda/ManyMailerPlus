@@ -1,9 +1,10 @@
 vendor/
-.vscode/
+# .vscode/
 .nyc_output/
 coverage/
 src/
 tests/
+node_modules/
 
 *phpunit*
 *phar*
@@ -11,16 +12,21 @@ composer*
 *.diff
 *package*
 *webpack*
+*.code-workspace
 
 .babelrc
 .bashrc
 .jshintrc
-node_modules/
+
+
 View/email/csv-field.php
 manymailerplus/View/sidebar_view.php
 ext.manymailerplus.php
 libraries/ext.manymailerplus.php
 libraries/serialized_email_cache.txt
-node_modules
 allure-results
 autoload.php
+dist/bundle.js
+ 
+
+

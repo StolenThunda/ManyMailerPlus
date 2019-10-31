@@ -20,10 +20,6 @@ class Composer
     private $attachments = array();
     private $csv_lookup = array();
     private $csv_email_column = '{{email}}';
-    private $headers = array(
-        'Accept: application/json',
-        'Content-Type: application/json',
-    );
     private $email_regex = '/<([^>]+)>/';//'/(?:[a-z0-9!#$%&\'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/m';
 
     /**
@@ -663,8 +659,6 @@ class Composer
                         'code' => array(
                             'type' => 'html',
                             'content' => form_textarea(array('name' => 'code', 'rows' => 15), $default['code']),
-                            // 'type' => 'textarea',
-                            // 'value' => $default['code'],
                         ),
                     ),
                 ),
@@ -1180,42 +1174,34 @@ class Composer
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
+                $cache_data['message'] =  $this->_mergeEmail($formatted_message, $record);
                 ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
-                if (!$this->email_send($cache_data)) {
-                    $email->message = $cache_data['message'] =  $this->_mergeEmail($email, $formatted_message, $record);
-                    $email->save();
-                    $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
-                    $singleEmail->save();
-                    // ee()->dbg->c_log($email->message, __METHOD__, true);
-                    // if the services are not used, email must fill in placeholders
-                    if (!$this->deliverEmail($email, $email_address)) {
-                        $this->_removeMail($email);
-                    } else {
-                        ++$singleEmail->total_sent;
-                        $singleEmail->save();
-                        $id = $singleEmail->cache_id;
-                    }
+                if ($this->email_send($cache_data) or $this->deliverEmail($email, $email_address)) {
+                    $this->_saveSingleEmail($cache_data);
                 } else {
-                    $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
-                    ++$singleEmail->total_sent;
-                    $singleEmail->save();
-                    $id = $singleEmail->cache_id;
+                    $this->_removeMail($email);
                 }
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
             }
-            // ee()->dbg->c_log($id, __METHOD__.': Cache ID',true);
             ++$email->total_sent;
         }
         $email->save();
 
         return $email->total_sent;
     }
+    
+    private function _saveSingleEmail($data)
+    {
+        $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $data);                   
+        ++$singleEmail->total_sent;
+        $singleEmail->save();
+        return $singleEmail->cache_id;
+    }
 
     private function _removeMail(EmailCache $email)
     {
         $email->delete();
-
         $debug_msg = ee()->email->print_debugger(array());
         $err_msg = lang('compose_error').BR.BR.$debug_msg;
         ee()->dbg->c_log($debug_msg, __METHOD__);
@@ -1226,18 +1212,13 @@ class Composer
 
     /**
      * Merges placeholders with data into the email object
-     * @param Model $email
      * @param string $message
      * @param array $record
      * @return bool True on success; False on failure
      */
-    private function _mergeEmail(EmailCache $email, $message, $record = array())
+    private function _mergeEmail($message, $record = array())
     {
-        $merge_message = strtr($message, $record);
-        
-        $email->message = $merge_message;
-        // ee()->dbg->c_log($email->message, __METHOD__, true);
-        return $email->message;
+        return strtr($message, $record);
     }
     
     /**
