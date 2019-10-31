@@ -112,6 +112,7 @@ class Services_module
             $vars['current_action'] = 'services';
             unset($vars['current_service']);
         }
+        ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
@@ -331,7 +332,7 @@ class Services_module
             'field_name' => $field_name,
             'choice_options' => $choice_options,
             'control_type' => $type,
-            'enabled_disabled' => $enabled_disabled = array(
+            'enabled_disabled' =>  array(
                 'y' => lang('enabled'),
                 'n' => lang('disabled'),
             ),
