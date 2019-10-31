@@ -365,13 +365,17 @@ class ManyMailerPlus_mod {
         var toggle = val === 'y' ? 'slow' : false;
         let current_base_url = 'http://' + window.location.hostname;
         let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
-        this.con_templates = $("input[name^='use_template] ~ div");
+        this.con_templates = $("input[name^='use_template'] ~ div");
         if (val === 'y') {
             $.get(url, {}, function (data, textStatus, jqXHR) {
-                debugger
                 console.log(url.href);
                 console.log(data);
-                $("input[name='use_template] ~ div").append(data);
+                var parser = new DOMParser();
+                var htmlDoc = parser.parseFromString(data, 'text/html');
+                this.con_templates
+                    .attr('id', 'embed_templates')
+                    .addClass('box table-list-wrap')
+                    .append(htmlDoc.getElementsByTagName('table'));
                 $.each($('input[name="selection[]"'), (idx, val) => {
                     val.addEventListener(
                         'change',
@@ -381,16 +385,11 @@ class ManyMailerPlus_mod {
                         false
                     );
                 });
-
-                this.con_templates.empty();
-                this.con_embed_tmps.fadeToggle(toggle);
                 this.con_tmp_name.fadeToggle(toggle);
-
                 return;
             }.bind(this));
         } else {
-            this.con_embed_tmps.empty();
-            this.con_embed_tmps.fadeToggle(toggle);
+            this.con_templates.empty().fadeToggle(toggle);
             this.con_tmp_name.fadeToggle(toggle);
         }
 

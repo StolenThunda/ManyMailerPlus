@@ -7,7 +7,7 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $vars = array();
-    private $config =  array('debug' => false);
+    private $config =  array('debug' => true);
 
     /**
      * Constructor.
@@ -110,14 +110,15 @@ class Manymailerplus_mcp
 
     public function email($func = '')
     {
-        ee()->dbg->c_log($this->vars, __METHOD__);
+       
         $breadcrumbs = array(
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/email')->compile() => lang('email_title'),
         );
         $this->vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email');
         $this->vars['cp_page_title'] = lang('email_title');
-        $id = ee()->uri->segment(7, '');
+        $id = ee()->uri->segment(7, ''); 
+        ee()->dbg->c_log($func, __METHOD__);
         switch ($func) {
             case 'get_template_view':
                 // ob_start();
