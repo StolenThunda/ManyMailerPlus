@@ -10,7 +10,7 @@
             '<script src="https://unpkg.com/papaparse@4.6.3/papaparse.min.js"></script>',
             '<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>',
             '<script src="http://parsleyjs.org/dist/parsley.min.js"></script>',
-            '<script src="https://cdn.lr-ingest.io/LogRocket.min.js" crossorigin="anonymous"></script>'
+            // '<script src="https://cdn.lr-ingest.io/LogRocket.min.js" crossorigin="anonymous"></script>'
         ),
     );
 //EOF

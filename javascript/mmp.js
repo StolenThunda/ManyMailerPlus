@@ -41,7 +41,9 @@ class ManyMailerPlus_mod {
     }
 
     init() {
-        this.toggle_loading(this.initializePage.bind(this));
+        this.toggle_loading();
+        this.initializePage();
+        this.toggle_loading();
     }
 
     set tableData(info) {
@@ -79,25 +81,39 @@ class ManyMailerPlus_mod {
     get csvObj() {
         return this.theCSV_obj;
     }
+
     get tableData() {
         return {
             columns: this._dtCols,
             data: this._dtData
         };
     }
+
     get on_compose_page() {
         return window.location.href.split('/').slice(-1)[0].indexOf('compose') > -1;
     }
+
     get linenum_offset() {
         var data = this.get_csv_recip(true);
         var errLines = data.filter((val) => val === val.toUpperCase()).length;
         return errLines > 0 ? ++errLines : 1;
     }
-    toggle_loading(fn, ...args) {
-        // this.loader.addClass('is-active');
-        fn(...args);
-        // this.loader.removeClass('is-active');
+
+    toggle_loading(fn, ...args) {      
+        if (typeof fn !== 'undefined'){
+            args = (args.hasOwnProperty('originalEvent')) ? args[0] : $.isArray(args) ? args : Array();
+            this.loader
+            .fadeToggle("fast",fn(args))  
+            .toggleClass('is-active');
+        }else{
+            this.loader
+            .fadeToggle("fast","linear")  
+            .toggleClass('is-active');
+        }
+        
+        return this;
     }
+
     // SweetAlert2 messenger
     show_message(config) {
         if (Swal !== undefined) {
@@ -123,7 +139,7 @@ class ManyMailerPlus_mod {
             this.useApi().init_placeholder_funcs();
         }
         // for debugging purposes only
-        // this.test_funcs();
+        this.test_funcs();
     }
 
     val_with_linenum(str) {
@@ -265,13 +281,13 @@ class ManyMailerPlus_mod {
                     false
                 );
 
-            this.sel_csv_entry[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_toggle_csv_entry(e);
-                }.bind(this),
-                false
-            );
+                this.sel_csv_entry[0].addEventListener(
+                    'change',
+                    function (e) {
+                        this.evt_toggle_csv_entry(e);
+                    }.bind(this),
+                    false
+                );
 
                 this.csv_recipient
                     .bind('interact', (e) => {
@@ -308,14 +324,18 @@ class ManyMailerPlus_mod {
                     false
                 );
                 var useTemp = $('input[name=use_templates]');
-                if (useTemp.length > 0){
-                    useTemp[0].addEventListener(
-                    'change',
-                    function (e) {
-                        this.evt_toggle_templates(e);
-                    }.bind(this),
-                    false
-                );}
+                if (useTemp.length > 0)
+                {
+                    $.each(useTemp, (idx, val) => {
+                        val.addEventListener(
+                            'change',
+                            function (e) {
+                                this.evt_toggle_templates(e);
+                            }.bind(this),
+                            false
+                        );
+                    });
+                }
                 
                 $('[name$=linenum], #reset')[0].addEventListener(
                     'click',
@@ -332,32 +352,17 @@ class ManyMailerPlus_mod {
                     }.bind(this),
                     false
                 );
-                var dumpBtns = $('button[name^=btnDump]');
+                var dumpBtns = $('button[name^=btnDump]')
                 if (dumpBtns.length > 0){
                     $.each(dumpBtns, (idx, element) => {
                         element.addEventListener('click',function(e) {
-                            this.toggle_loading(this.evt_dump_data.bind(this), e);
+                            this.evt_dump_data(e);
                         }.bind(this), false);
                     });
                 }
-                this.tmp_selections.bind('interact', (e) => {
-                    this.evt_select_template(e);
-                });
-
-                var tmps = this.tmp_selections;
-                if (tmps.length > 0)
-                {
-                    tmps[0].addEventListener(
-                    'change',
-                    function(e) {
-                        this.evt_select_template(e);
-                    }.bind(this),
-                    false
-                );
-                }
-           
             }
-        }
+        return this;
+    }
     // BEGIN EVENT FUNCTIONS
     evt_load_csv_file(evt) {
         this.resetRecipients();
@@ -372,22 +377,24 @@ class ManyMailerPlus_mod {
             reader.readAsText(file);
         }
     }
-    evt_toggle_templates(el) {
-        var val = el.currentTarget.value;
-        var toggle = val === 'y' ? 'slow' : false;
-        let current_base_url = 'http://' + window.location.hostname;
-        let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
-        this.con_templates = $("input[name^='use_template'] ~ div");
-        if (val === 'y') {
+    evt_toggle_templates(e) {
+        this.con_templates = $("input[name^='use_template'] ~ div"); 
+        var toggle = e.currentTarget.value === 'y' ? 'slow' : false;
+        if (toggle) {
+            debugger;
+            let current_base_url = 'http://' + window.location.hostname;
+            let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
+
             $.get(url, {}, function (data, textStatus, jqXHR) {
                 console.log(url.href);
                 console.log(data);
                 var parser = new DOMParser();
                 var htmlDoc = parser.parseFromString(data, 'text/html');
-                this.con_templates
+                $("input[name^='use_template'] ~ div")
                     .attr('id', 'embed_templates')
                     .addClass('box table-list-wrap')
                     .append(htmlDoc.getElementsByTagName('table'));
+                   
                 $.each($('input[name="selection[]"'), (idx, val) => {
                     val.addEventListener(
                         'change',
@@ -401,21 +408,20 @@ class ManyMailerPlus_mod {
                 return;
             }.bind(this));
         } else {
+            console.log("Hiding Templates");
             this.con_templates.empty().fadeToggle(toggle);
             this.con_tmp_name.fadeToggle(toggle);
+        }
+        return this;
+    }
     evt_dump_data(evt){
-        var dump_val = evt.currentTarget.name === 'btnDump';
-        if (dump_val){
+        if (evt.currentTarget.name === 'btnDump'){
             this.dumpHiddenVals();
         }else{
             this.dumpFormVals();
         }
     }
-    evt_toggle_templates() {
-        var toggle = this.value === 'y' ? 'slow' : false;
-        this.con_embed_tmps.fadeToggle(toggle);
-        this.con_tmp_name.fadeToggle(toggle);
-    }
+    
     evt_convert_csv() {
         this.convertCSV();
         this.sel_csv_entry
@@ -491,7 +497,6 @@ class ManyMailerPlus_mod {
         message.val(textBefore + insertedText + textAfter);
         $('textarea[name=message]').caretTo(insertedText, true);
     }
-
     /// End EVENT FUNCTIONS
 
     prep_data_for_parse() {
@@ -937,48 +942,48 @@ class ManyMailerPlus_mod {
     //         // console.log(data);
     //         return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : isJson(data) ? JSON.parse(data) : data;
     //     }
-    //     test_funcs() {
-    //         $('#btnData').on('click', function (e) {
-    //             var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-    //             Swal.fire({
-    //                 title: 'Select Fuction',
-    //                 input: 'select',
-    //                 inputOptions: {
-    //                     update_service_order: 'Update SO',
-    //                     get_settings: 'Get Settings',
-    //                     get_service_order: 'Get SO',
-    //                     get_active_services: 'Active',
-    //                     get_initial_service: 'Priority Service'
-    //                 },
-    //                 inputPlaceholder: 'Select Function',
-    //                 showCancelButton: true,
-    //                 allowOutsideClick: () => !Swal.isLoading(),
-    //                 preConfirm: (value) => {
-    //                     return $.post(url + value).always(function (jqXHR) {
-    //                         // debugger
-    //                         var data;
-    //                         if (jqXHR.hasOwnProperty('responseText')) {
-    //                             data = jqXHR.responseText;
-    //                         } else {
-    //                             data = jqXHR;
-    //                         }
-    //                         if (isJson(data)) {
-    //                             data = jqXHR;
-    //                         } else {
-    //                             data = procReq(data);
-    //                         }
-    //                         console.dir(data);
-    //                         data = JSON.stringify(data, null, 4);
+        test_funcs() {
+            $('#btnData').on('click', function (e) {
+                var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+                Swal.fire({
+                    title: 'Select Fuction',
+                    input: 'select',
+                    inputOptions: {
+                        update_service_order: 'Update SO',
+                        get_settings: 'Get Settings',
+                        get_service_order: 'Get SO',
+                        get_active_services: 'Active',
+                        get_initial_service: 'Priority Service'
+                    },
+                    inputPlaceholder: 'Select Function',
+                    showCancelButton: true,
+                    allowOutsideClick: () => !Swal.isLoading(),
+                    preConfirm: (value) => {
+                        return $.post(url + value).always(function (jqXHR) {
+                            // debugger
+                            var data;
+                            if (jqXHR.hasOwnProperty('responseText')) {
+                                data = jqXHR.responseText;
+                            } else {
+                                data = jqXHR;
+                            }
+                            if (isJson(data)) {
+                                data = jqXHR;
+                            } else {
+                                data = procReq(data);
+                            }
+                            console.dir(data);
+                            data = JSON.stringify(data, null, 4);
 
-    //                         Swal.fire({
-    //                             type: 'question',
-    //                             html: data
-    //                         });
-    //                     });
-    //                 }
-    //             });
-    //         });
-    //     }
+                            Swal.fire({
+                                type: 'question',
+                                html: data
+                            });
+                        });
+                    }
+                });
+            });
+        }
 }
 
 // for running test only
@@ -1017,7 +1022,6 @@ $(document).ready(function () {
         }
     }
 
-    
     var MMP = new ManyMailerPlus_mod(isAPIAvailable());
     MMP.init();
     

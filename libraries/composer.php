@@ -243,11 +243,11 @@ class Composer
                     'fields' => array(
                         'btn' => array(
                             'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump', 'Dump Hidden Values', 'class="btn" onClick="ManyMailerPlus_mod.dumpHiddenVals()"'),
+                            'content' => form_button('btnDump', 'Dump Hidden Values', 'class="btn"'),
                         ),
                         'btn2' => array(
                             'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn" onClick="ManyMailerPlus_mod.dumpFormVals()"'),
+                            'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn"'),
                         ),
                     ),
                 ),
@@ -393,7 +393,7 @@ class Composer
     {
         $vars = $this->view_templates();
         ee()->dbg->c_log($vars, __METHOD__);
-        return  ee('View')->make(EXT_SHORT_NAME.':email/embed_templates')->render($vars);//json_encode($table['data']);
+        return  ee('View')->make(EXT_SHORT_NAME.':email/embed_templates')->render($vars);
     }
     /**
      * compose.
@@ -570,7 +570,7 @@ class Composer
 
         if ($template_name !== '') {
             $template_name = str_replace('_', ' ', $template_name);
-            $template = $this->_get_service_templates($template_name, 'info');
+            $template = $this->_get_service_templates(array('template_name'=>$template_name, 'func' => 'info'));
             ee()->dbg->c_log($template, __METHOD__);
             if (isset($template['status'])) {
                 ee()->session->set_flashdata('result', $template['status'].':'.$template['message']);
@@ -1212,8 +1212,10 @@ class Composer
 
     /**
      * Merges placeholders with data into the email object
-     * @param string $message
-     * @param array $record
+     * 
+     * @param string $message message with placeholders
+     * @param array  $record  values for placeholders
+     * 
      * @return bool True on success; False on failure
      */
     private function _mergeEmail($message, $record = array())
@@ -1421,10 +1423,8 @@ class Composer
 
     public function get_service()
     {
-        $settings = null;
         if (!isset($this->service)) {
-            $service = ee()->mail_svc->get_initial_service();
-           
+            $service = ee()->mail_svc->get_initial_service();           
             $service_settings = array('debug' => $this->debug, 'settings' => ee()->mail_svc->get_settings());
             $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/TxService/drivers/TxService_%s.php', ucfirst($service));
             $this->service = strtolower($service);
@@ -1452,7 +1452,7 @@ class Composer
 
         return false;
     }
-
+   
     public function _get_service_templates(...$args)
     {
         $templates = array();
