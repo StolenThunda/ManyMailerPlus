@@ -99,18 +99,8 @@ class ManyMailerPlus_mod {
         return errLines > 0 ? ++errLines : 1;
     }
 
-    toggle_loading(fn, ...args) {      
-        if (typeof fn !== 'undefined'){
-            args = (args.hasOwnProperty('originalEvent')) ? args[0] : $.isArray(args) ? args : Array();
-            this.loader
-            .fadeToggle("fast",fn(args))  
-            .toggleClass('is-active');
-        }else{
-            this.loader
-            .fadeToggle("fast","linear")  
-            .toggleClass('is-active');
-        }
-        
+    toggle_loading() {   
+        this.loader.toggleClass('is-active');
         return this;
     }
 
@@ -301,7 +291,7 @@ class ManyMailerPlus_mod {
                 this.file_recipient[0].addEventListener(
                     'change',
                     function(e) {
-                        this.toggle_loading(this.evt_load_csv_file.bind(this), e);
+                        this.evt_load_csv_file(e);
                     }.bind(this),
                     false
                 );
@@ -348,7 +338,7 @@ class ManyMailerPlus_mod {
                 $('button[name=convert_csv]')[0].addEventListener(
                     'click',
                     function(e) {
-                        this.toggle_loading(this.evt_convert_csv.bind(this), e);
+                        this.evt_convert_csv(e);
                     }.bind(this),
                     false
                 );
@@ -381,21 +371,20 @@ class ManyMailerPlus_mod {
         this.con_templates = $("input[name^='use_template'] ~ div"); 
         var toggle = e.currentTarget.value === 'y' ? 'slow' : false;
         if (toggle) {
-            debugger;
+            // debugger;
             let current_base_url = 'http://' + window.location.hostname;
             let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
-
+            this.toggle_loading();
             $.get(url, {}, function (data, textStatus, jqXHR) {
                 console.log(url.href);
                 console.log(data);
                 var parser = new DOMParser();
                 var htmlDoc = parser.parseFromString(data, 'text/html');
-                $("input[name^='use_template'] ~ div")
-                    .attr('id', 'embed_templates')
-                    .addClass('box table-list-wrap')
-                    .append(htmlDoc.getElementsByTagName('table'));
-                   
-                $.each($('input[name="selection[]"'), (idx, val) => {
+                this.con_templates
+                    .append(htmlDoc.getElementById('embed_templates'))
+                    .append(htmlDoc.getElementsByClassName('modal-wrap'));
+                this.tmp_selections = $('input[name="selection[]"');
+                $.each(this.tmp_selections, (idx, val) => {
                     val.addEventListener(
                         'change',
                         function (e) {
@@ -404,13 +393,13 @@ class ManyMailerPlus_mod {
                         false
                     );
                 });
-                this.con_tmp_name.fadeToggle(toggle);
-                return;
+                this.toggle_loading();
+                return this;
             }.bind(this));
         } else {
             console.log("Hiding Templates");
-            this.con_templates.empty().fadeToggle(toggle);
-            this.con_tmp_name.fadeToggle(toggle);
+            this.con_templates.empty().toggle(toggle);
+            this.con_tmp_name.toggle(toggle);
         }
         return this;
     }
@@ -451,6 +440,7 @@ class ManyMailerPlus_mod {
             subject = e.target.dataset.confirm;
             var choice = document.getElementById(name + '-code');
             if (choice !== null) {
+                this.con_tmp_name.fadeToggle('slow');
                 this.tmp_selections.not(this).attr('checked', false).parents('tr').removeClass('selected');
                 message = choice.innerHTML;
                 var test_element = document.createElement('div');
@@ -678,7 +668,7 @@ class ManyMailerPlus_mod {
                     ),
                 $('<div>')
                     .addClass('field-control')
-                    .append($(`<textarea value="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+                    .append($(`<textarea id="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
             );
 
             $('input[name^="mc-check"').change(function () {
@@ -693,6 +683,9 @@ class ManyMailerPlus_mod {
                     }
                 });
                 var name = this.name.substr('mc-check_'.length);
+                $('#'+name).bind('interact', () =>{
+                    $('[name=message').val($(this).val());
+                });
                 console.log(name);
             });
         });

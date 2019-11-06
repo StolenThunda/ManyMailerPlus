@@ -2,7 +2,7 @@
     ee()->cp->load_package_css('settings');
 ?>
  <!-- CSS Loader -->
-    <div class="loader loader-default"></div>
+    <div class="loader loader-bar" data-text data-rounded></div>
    <?php
     if (isset($current_settings) && $debug) {
         echo '<div class="app-notice-wrap">'. ee("CP/Alert")->getAllInlines() .'</div>';

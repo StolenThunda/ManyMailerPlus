@@ -1193,7 +1193,7 @@ class Composer
     
     private function _saveSingleEmail($data)
     {
-        $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $data);                   
+        $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $data);
         ++$singleEmail->total_sent;
         $singleEmail->save();
         return $singleEmail->cache_id;
@@ -1212,10 +1212,10 @@ class Composer
 
     /**
      * Merges placeholders with data into the email object
-     * 
+     *
      * @param string $message message with placeholders
      * @param array  $record  values for placeholders
-     * 
+     *
      * @return bool True on success; False on failure
      */
     private function _mergeEmail($message, $record = array())
@@ -1396,9 +1396,9 @@ class Composer
         foreach ($settings['service_order'] as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
-                // ee()->dbg->c_log($service, __METHOD__);
+                ee()->dbg->c_log($service, __METHOD__);
                 if (!ee()->load->is_loaded($service)) {
-                    ee()->load->library('Tx_service/drivers/'.$service, array_merge($settings, array('debug' => $this->debug)));
+                    ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
                 }
                 $result = ee()->{$service}->send_email($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
@@ -1424,7 +1424,7 @@ class Composer
     public function get_service()
     {
         if (!isset($this->service)) {
-            $service = ee()->mail_svc->get_initial_service();           
+            $service = ee()->mail_svc->get_initial_service();
             $service_settings = array('debug' => $this->debug, 'settings' => ee()->mail_svc->get_settings());
             $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/TxService/drivers/TxService_%s.php', ucfirst($service));
             $this->service = strtolower($service);
@@ -2009,12 +2009,6 @@ class Composer
         $email->attachments = array();
         $email->save();
     }
-    /* Sends multiple emails handling errors
 
-
-    /**
-       Sending methods for each of our services follow.
-    **/
 }
-// END CLASS
 // EOF
