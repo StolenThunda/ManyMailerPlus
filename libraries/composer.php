@@ -332,44 +332,43 @@ class Composer
         //     );
         // }
         
-        $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
-        // $temp_vars = $this->view_templates();
-        // if (count($temp_vars['table']['data']) > 0) {
-        array_unshift(
-            $vars['sections']['compose_email_detail'],
-            array(
-                'title' => 'use_templates',
-                'desc' => 'use_templates_desc',
-                'fields' => array(
-                    'use_template' => array(
-                        'type' => 'html',
-                        'content' => form_yes_no_toggle('use_templates', false),
-                    ),
-                    'template_list' => array(
-                        'type' => 'html',
-                        'content' => "" //$template_view->render($this->view_templates()),
-                    ),
-                ),
-                    ),
-            array(
-                'title' => 'template_name',
-                'desc' => '_template_name',
-                'fields' => array(
-                    'template_name' => array(
-                        'type' => 'html',
-                        'content' => form_input(
-                            array(
-                            'id' => 'template_name',
-                            'name' => 'template_name',
-                            )
-                        ),
-                    ),
-                ),
-                )
-        );
+        // $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
+        // // $temp_vars = $this->view_templates();
+        // // if (count($temp_vars['table']['data']) > 0) {
+        // array_unshift(
+        //     $vars['sections']['compose_email_detail'],
+        //     array(
+        //         'title' => 'use_templates',
+        //         'desc' => 'use_templates_desc',
+        //         'fields' => array(
+        //             'use_template' => array(
+        //                 'type' => 'html',
+        //                 'content' => form_yes_no_toggle('use_templates', false),
+        //             ),
+        //             'template_list' => array(
+        //                 'type' => 'html',
+        //                 'content' => "" //$template_view->render($this->view_templates()),
+        //             ),
+        //         ),
+        //             ),
+        //     array(
+        //         'title' => 'template_name',
+        //         'desc' => '_template_name',
+        //         'fields' => array(
+        //             'template_name' => array(
+        //                 'type' => 'html',
+        //                 'content' => form_input(
+        //                     array(
+        //                     'id' => 'template_name',
+        //                     'name' => 'template_name',
+        //                     )
+        //                 ),
+        //             ),
+        //         ),
+        //         )
+        // );
         // }
         $vars['cp_page_title'] = lang('compose_heading');
-        // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
         $vars['save_btn_text'] = lang('compose_send_email');
         $vars['save_btn_text_working'] = lang('compose_sending_email');
