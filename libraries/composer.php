@@ -240,20 +240,8 @@ class Composer
             ),
             'compose_email_detail' => array(
                   array(
-                    'fields' => array(
-                        'btn' => array(
-                            'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump', 'Dump Hidden Values', 'class="btn"'),
-                        ),
-                        'btn2' => array(
-                            'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn"'),
-                        ),
-                    ),
-                ),
-                array(
                     'title' => 'email_subject',
-                    'fields' => array(
+                    'fields' => array(                        
                         'subject' => array(
                             'type' => 'text',
                             'required' => true,
@@ -330,21 +318,35 @@ class Composer
         //         ),
         //     );
         // }
-        // $temp_vars = $this->view_templates();
-        // if (count($temp_vars['table']['data']) > 0) {
+        
         array_unshift(
             $vars['sections']['compose_email_detail'],
+            array(
+                'title' => '',
+                'fields' => array(
+                    'btn' => array(
+                        'type' => ($this->debug) ? 'html' : 'hidden',
+                        'content' => '<div class="form-btns">'.form_button('btnDump', 'Dump Hidden Values', "class='btn'").BR.form_button('btnDump2', 'Dump Form Values', 'class="btn dbg"').'</div>',
+                    ),
+                )
+            ),
             array(
                 'title' => 'use_templates',
                 'desc' => 'use_templates_desc',
                 'fields' => array(
                     'use_template' => array(
                         'type' => 'html',
-                        'content' => form_yes_no_toggle('use_templates', false),
+                        'content' => form_yes_no_toggle('use_templates', false).form_input(
+                            array(
+                            'id' => 'chosen_template_html',
+                            'name' => 'chosen_template_html',
+                            'type' => 'hidden'
+                            )
+                        ),
                     ),
                     'template_list' => array(
                         'type' => 'html',
-                        'content' => ''//$template_view->render($this->view_templates()),
+                        'content' => ''
                     ),
                 ),
             ),
@@ -366,7 +368,6 @@ class Composer
         );
         // }
         $vars['cp_page_title'] = lang('compose_heading');
-        // $vars['categories'] = array_keys($this->sidebar_options);
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
         $vars['save_btn_text'] = lang('compose_send_email');
         $vars['save_btn_text_working'] = lang('compose_sending_email');
@@ -742,7 +743,8 @@ class Composer
         $tmp = explode('/', $_SERVER['HTTP_REFERER']);
         $last = end($tmp);
         $sender = is_numeric($last) ? $tmp[count($tmp) - 2] . '/' . $last : $last;
-        // ee()->dbg->c_log($sender, __METHOD__, true);
+        
+        ee()->dbg->c_log($_POST, __METHOD__);
         ee()->load->library('email');
 
         $groups = array();
@@ -776,9 +778,14 @@ class Composer
                 $this->extras[$key] = ee()->input->post($key);
             }
         }
-        $recipient_array = array_map(function ($a) {
-            return filter_var($a, FILTER_SANITIZE_EMAIL);
-        }, $this->_recipient_array($recipient));
+        if ($this->extras['chosen_template_html'] !== "" && array_key_exists('mc-edit', $this->extras)) {
+            $message = $this->_merge_template($this->extras);
+        };
+        $recipient_array = array_map(
+            function ($a) {
+                return filter_var($a, FILTER_SANITIZE_EMAIL);
+            }, $this->_recipient_array($recipient)
+        );
      
         if (isset($mailKey)) {
             $this->csv_email_column = preg_replace('/^(\'(.*)\'|"(.*)")$/', '$2$3', $mailKey);
@@ -986,6 +993,19 @@ class Composer
         ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
     }
 
+    private function _merge_template($vars)
+    {
+        $return_html = $vars['chosen_template_html'];
+        foreach (array_keys($vars['mc-edit']) as $value) {
+            $regex = '/<div mc:edit="'.$value.'">(.*?)</div>/';
+            ee()->dbg->c_log($regex, __METHOD__);
+            $new_html = preg_replace($regex, $vars['mc-edit'][$value], $return_html);             
+            echo $new_html;
+            exit;
+           
+        }
+        
+    }
     /**
      * Batch Email Send.
      *

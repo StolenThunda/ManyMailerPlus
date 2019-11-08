@@ -174,7 +174,7 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
         $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
         $content = json_encode($content);
 
-        ee()->dbg->c_log($content, __METHOD__);
+        ee()->dbg->c_log($content, __METHOD__, true);
         //TODO: save email data to table
         // ee()->logger->developer($content);
         return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', array(), $content, true);
