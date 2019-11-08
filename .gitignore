@@ -9,8 +9,6 @@ composer*
 node_modules/
 View/email/csv-field.php
 manymailerplus/View/sidebar_view.php
-ext.manymailerplus.php
-libraries/ext.manymailerplus.php
 libraries/serialized_email_cache.txt
 dist/bundle.js
 *.diff
