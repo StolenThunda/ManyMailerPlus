@@ -9,7 +9,8 @@
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
-use EllisLab\ExpressionEngine\Model\Email\EmailCache;
+// use EllisLab\ExpressionEngine\Model\Email\EmailCache;
+use ManymailerPlus\Model\EmailCachePlus as EmailCache;
 
 /**
  * Copy of Communicate Controller.
@@ -19,10 +20,7 @@ class Composer
     private $attachments = array();
     private $csv_lookup = array();
     private $csv_email_column = '{{email}}';
-    private $headers = array(
-        'Accept: application/json',
-        'Content-Type: application/json',
-    );
+    private $email_regex = '/<([^>]+)>/';//'/(?:[a-z0-9!#$%&\'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/m';
 
     /**
      * Constructor.
@@ -48,6 +46,30 @@ class Composer
     }
 
     /**
+     *  Removes <>'ed email addresses from a string
+     *  (Tony Moses \<tonymoses@texasbluesalley.com\>, Antonio Moses \<tonym415@gmail.com\>, test \<test@test.com\>)
+     * @param String $str String of email address. May or may not have <> in the string
+     */
+    private function extractBracketedEmail($str = null)
+    {
+        $emails = explode(',', $str);
+        ee()->dbg->c_log($str, __METHOD__);
+        $matches = null;
+        foreach ($emails as $email) {
+            preg_match_all($this->email_regex, $email, $matches, PREG_SET_ORDER, 0);
+            foreach ($matches as $key=>$match) {
+                if (!in_array($match[0][0], $emails)) {
+                    $emails[] = $match[0][0];
+                }
+            }
+        }
+       
+        $email_str = empty($emails) ? $str : join(", ", $emails);
+        ee()->dbg->c_log($matches, __METHOD__);
+        return $email_str;
+    }
+
+    /**
      * compose.
      *
      * @param obj $email An EmailCache object for use in re-populating the form (see: resend())
@@ -65,6 +87,8 @@ class Composer
             'plaintext_alt' => '',
             'mailtype' => ee()->config->item('mail_format'),
             'wordwrap' => ee()->config->item('word_wrap'),
+            'csv_object' => null,
+            'mailKey' => null
         );
 
         $vars['mailtype_options'] = array(
@@ -77,14 +101,16 @@ class Composer
 
         if (!is_null($email)) {
             $default['from'] = $email->from_email;
-            $default['recipient'] = $email->recipient;
+            $default['recipient'] = $this->extractBracketedEmail($email->recipient);
             $default['cc'] = $email->cc;
             $default['bcc'] = $email->bcc;
-            $default['subject'] = str_replace('', '(TEMPLATE) ', $email->subject);
+            $default['subject'] = str_replace('(TEMPLATE) ', '', $email->subject);
             $default['message'] = $email->message;
             $default['plaintext_alt'] = $email->plaintext_alt;
             $default['mailtype'] = $email->mailtype;
             $default['wordwrap'] = $email->wordwrap;
+            $default['csv_object'] = json_encode($email->csv_object);
+            $default['mailKey'] = $email->mailKey;
         }
         // Set up member group emailing options
         if (ee()->cp->allowed_group('can_email_member_groups')) {
@@ -123,6 +149,7 @@ class Composer
 
         $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
         ee()->dbg->c_log($this->debug, __METHOD__);
+       
         $vars['sections'] = array(
             'sender_info' => array(
                 array(
@@ -163,33 +190,17 @@ class Composer
                     'title' => 'file_recipient',
                     'desc' => 'file_recipient_desc',
                     'fields' => array(
-                        'files' => array(
+                        'files[]' => array(
                             'type' => 'html',
-                            'content' => form_input(
-                                array(
-                                    'id' => 'files',
-                                    'name' => 'files[]',
-                                    'type' => 'hidden',
-                                    'value' => '0',
-                                )
-                            ),
+                            'content' => '<input type="file" name="file_recipient" accept=".csv" value="CHoose file"  />',
                         ),
-                        'file_recipient' => array(
-                            'type' => 'file',
-                        'content' => ee('CP/FilePicker')
-                                ->make()
-                                ->getLink('Choose File')
-                                ->withValueTarget('files')
-                                ->render(),
-                        ),
-
                         'csv_object' => array(
                             'type' => 'hidden',
-                            'value' => '',
+                            'value' => $default['csv_object'],
                         ),
                         'mailKey' => array(
                             'type' => 'hidden',
-                            'value' => '',
+                            'value' => $default['mailKey'],
                         ),
                     ),
                 ),
@@ -199,7 +210,7 @@ class Composer
                     'fields' => array(
                         'csv_errors' => array(
                             'type' => 'html',
-                            'content' => '<span id="csv_errors"></span>',
+                            'content' => '<details id="csv_errors" class="validation_error"></details>',
                         ),
                         'csv_recipient' => array(
                             'type' => 'html',
@@ -211,14 +222,14 @@ class Composer
                     'title' => 'primary_recipients',
                     'desc' => 'primary_recipients_desc',
                     'fields' => array(
+                        'csv_reset' => array(
+                            'type' => 'html',
+                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
+                        ),
                         'recipient' => array(
                             'type' => 'text',
                             'value' => $default['recipient'],
                             'required' => true,
-                        ),
-                        'csv_reset' => array(
-                            'type' => 'html',
-                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
                         ),
                         'csv_content' => array(
                             'type' => 'html',
@@ -228,46 +239,7 @@ class Composer
                 ),
             ),
             'compose_email_detail' => array(
-                array(
-                    'fields' => array(
-                        'btn' => array(
-                            'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump', 'Dump Hidden Values', 'class="btn" onClick="dumpHiddenVals()"'),
-                        ),
-                        'btn2' => array(
-                            'type' => ($this->debug) ? 'html' : 'hidden',
-                            'content' => form_button('btnDump2', 'Dump Form Values', 'class="btn" onClick="dumpFormVals()"'),
-                        ),
-                    ),
-                        ),
-                array(
-                    'title' => 'use_templates',
-                    'desc' => 'use_templates_desc',
-                    'fields' => array(
-                        'use_template' => array(
-                            'type' => 'html',
-                            'content' => form_yes_no_toggle('use_templates', false), //.BR.BR. $template_view->render($this->view_templates()),
-                        ),
-                        'template_list' => array(
-                            'type' => 'html',
-                            'content' => $template_view->render($this->view_templates()),
-                        ),
-                    ),
-                ),
-                array(
-                    'title' => 'template_name',
-                    'desc' => '_template_name',
-                    'fields' => array(
-                        'template_name' => array(
-                            'type' => 'html',
-                            'content' => form_input(array(
-                                'id' => 'template_name',
-                                'name' => 'template_name',
-                            )),
-                        ),
-                    ),
-                ),
-                array(
+                  array(
                     'title' => 'email_subject',
                     'fields' => array(
                         'subject' => array(
@@ -333,36 +305,97 @@ class Composer
             ),
         );
 
-        if (ee()->cp->allowed_group('can_email_member_groups')) {
-            $vars['sections']['other_recipient_options'][] = array(
-                'title' => 'add_member_groups',
-                'desc' => 'add_member_groups_desc',
+        // if (ee()->cp->allowed_group('can_email_member_groups')) {
+        //     $vars['sections']['other_recipient_options'][] = array(
+        //         'title' => 'add_member_groups',
+        //         'desc' => 'add_member_groups_desc',
+        //         'fields' => array(
+        //             'member_groups' => array(
+        //                 'type' => 'checkbox',
+        //                 'choices' => $member_groups,
+        //                 'disabled_choices' => $disabled_groups,
+        //             ),
+        //         ),
+        //     );
+        // }
+        
+        array_unshift(
+            $vars['sections']['compose_email_detail'],
+            array(
+                'title' => '',
                 'fields' => array(
-                    'member_groups' => array(
-                        'type' => 'checkbox',
-                        'choices' => $member_groups,
-                        'disabled_choices' => $disabled_groups,
+                    'btn' => array(
+                        'type' => ($this->debug) ? 'html' : 'hidden',
+                        'content' => '<div class="form-btns">'.form_button('btnDump', 'Dump Hidden Values', "class='btn'").BR.form_button('btnDump2', 'Dump Form Values', 'class="btn dbg"').'</div>',
+                    ),
+                )
+            ),
+            array(
+                'title' => 'use_templates',
+                'desc' => 'use_templates_desc',
+                'fields' => array(
+                    'use_template' => array(
+                        'type' => 'html',
+                        'content' => form_yes_no_toggle('use_templates', false).form_input(
+                            array(
+                            'id' => 'chosen_template_html',
+                            'name' => 'chosen_template_html',
+                            'type' => 'hidden'
+                            )
+                        ),
+                    ),
+                    'template_list' => array(
+                        'type' => 'html',
+                        'content' => ''
                     ),
                 ),
-            );
-        }
+            ),
+            array(
+                'title' => 'template_name',
+                'desc' => '_template_name',
+                'fields' => array(
+                    'template_name' => array(
+                        'type' => 'html',
+                        'content' => form_input(
+                            array(
+                                'id' => 'template_name',
+                                'name' => 'template_name',
+                            )
+                        ),
+                    ),
+                ),
+            )
+        );
+        // }
         $vars['cp_page_title'] = lang('compose_heading');
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
         $vars['save_btn_text'] = lang('compose_send_email');
         $vars['save_btn_text_working'] = lang('compose_sending_email');
-        ee()->cp->add_js_script(array(
+        ee()->cp->add_js_script(
+            array(
             'file' => array('cp/form_group'),
-          ));
-        ee()->cp->add_to_foot(link_tag(array(
-            'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
-            'rel' => 'stylesheet',
-            'type' => 'text/css',
-        )));
+            )
+        );
+        ee()->cp->add_to_foot(
+            link_tag(
+                array(
+                    'href' => 'http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css',
+                    'rel' => 'stylesheet',
+                    'type' => 'text/css',
+                )
+            )
+        );
         ee()->dbg->c_log($vars, __METHOD__);
 
         return $vars;
     }
 
+    public function get_template_view()
+    {
+        $vars = $this->view_templates();
+        ee()->dbg->c_log($vars, __METHOD__);
+        return  ee('View')->make(EXT_SHORT_NAME.':email/embed_templates')->render($vars);
+    }
     /**
      * compose.
      *
@@ -370,6 +403,7 @@ class Composer
      */
     public function compose2(EmailCache $email = null)
     {
+        ee()->dbg->c_log(__FUNCTION__, __METHOD__);
         $default = array(
             'from' => ee()->session->userdata('email'),
             'from_name' => ee()->session->userdata('screen_name'),
@@ -381,6 +415,8 @@ class Composer
             'plaintext_alt' => '',
             'mailtype' => ee()->config->item('mail_format'),
             'wordwrap' => ee()->config->item('word_wrap'),
+            'csv_object' => null,
+            'mailKey' => null
         );
 
         $vars['mailtype_options'] = array(
@@ -393,7 +429,7 @@ class Composer
 
         if (!is_null($email)) {
             $default['from'] = $email->from_email;
-            $default['recipient'] = $email->recipient;
+            $default['recipient'] = $this->extractBracketedEmail($email->recipient);
             $default['cc'] = $email->cc;
             $default['bcc'] = $email->bcc;
             $default['subject'] = str_replace('', '(TEMPLATE) ', $email->subject);
@@ -401,6 +437,8 @@ class Composer
             $default['plaintext_alt'] = $email->plaintext_alt;
             $default['mailtype'] = $email->mailtype;
             $default['wordwrap'] = $email->wordwrap;
+            $default['csv_object'] = json_encode($email->csv_object);
+            $default['mailKey'] = $email->mailKey;
         }
         // Set up member group emailing options
         if (ee()->cp->allowed_group('can_email_member_groups')) {
@@ -428,24 +466,19 @@ class Composer
         $form_cls = ' class="form-control"';
 
         $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
-        // $template_view->disable(array('remove', 'data-attribute'));
 
         $vars['sections'] = array(
             'sender_info' => array(
-                // '' => form_hidden('csrf_token'),
-                'from_email' => '*'.form_input('from_email', $default['from'], 'required=true', $form_cls),
+                'from_email' => '*'.form_input('from', $default['from'], 'required=true', $form_cls),
                 'from_name' => form_input('from_name', $default['from_name']),
             ),
             'recipient_options' => array(
                 'recipient_entry' => form_dropdown('recipient_entry', array(
                     'file_recipient' => lang('upload'),
                     'csv_recipient' => lang('manual'),
-                ), 'upload'),
-                '' => form_hidden('files[]', 0, 'id="files"'),
-                'file_recipient' => form_upload('file_recipient'),
-                ' ' => form_hidden('csv_object'),
-                ' ' => form_hidden('mailKey'),
-                ' ' => '<span id="csv_errors"></span><hr/>',
+                ), 'upload').form_hidden('files[]', 0, 'id="files"'),
+                'file_recipient' => form_upload('file_recipient').form_hidden('csv_object', json_decode($default['csv_object']), true).form_hidden('mailKey', $default['mailKey']),
+                '' => '<span id="csv_errors"></span><hr/>',
                 'csv_recipient' => form_textarea(
                     array(
                         'name' => 'csv_recipient',
@@ -468,25 +501,30 @@ class Composer
                 'attachment' => form_upload('attachment'),
             ),
             'other_recipient_options' => array(
-                'cc_recipients' => form_input('cc_recipients', $default['cc']),
-                'bcc_recipients' => form_input('bcc_recipients', $default['bcc']),
+                'cc_recipients' => form_input('cc', $default['cc']),
+                'bcc_recipients' => form_input('bcc', $default['bcc'])//.form_hidden('member_groups[]'),
             ),
         );
-
-        // if (ee()->cp->allowed_group('can_email_member_groups'))
-        // {
-        // 	$vars['sections']['other_recipient_options'][] = array(
-        // 		'add_member_groups' => form_checkbox('add_member_groups', )
-        // 		// 'title' => 'add_member_groups',
-        // 		// 'desc' => 'add_member_groups_desc',
-        // 		// 'fields' => array(
-        // 		// 	'member_groups' => array(
-        // 		// 		'type' => 'checkbox',
-        // 		// 		'choices' => $member_groups,
-        // 		// 		'disabled_choices' => $disabled_groups,
-        // 		// 	)
-        // 		// )
-        // 	);
+        // ee()->dbg->c_log($member_groups, __METHOD__);
+        // ee()->dbg->c_log($disabled_groups, __METHOD__);
+        // if (ee()->cp->allowed_group('can_email_member_groups')) {
+        //     $vars['sections']['other_recipient_options'][] = array(
+        //         'add_member_groups' => ee('View')->make('ee:_shared/form/fields/select')->render([
+        //             'type' => 'checkbox',
+        //             'field_name' => 'add_group[]',
+        //             'choices' => $member_groups,
+        //             'disabled_choices' => $disabled_groups,
+        //         ]),
+        //         // 'title' => 'add_member_groups',
+        //         // 'desc' => 'add_member_groups_desc',
+        //         // 'fields' => array(
+        //         // 	'member_groups' => array(
+        //         // 		'type' => 'checkbox',
+        //         // 		'choices' => $member_groups,
+        //         // 		'disabled_choices' => $disabled_groups,
+        //         // 	)
+        //         // )
+        //     );
         // }
         $vars['cp_page_title'] = lang('compose_heading');
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/send');
@@ -533,7 +571,7 @@ class Composer
 
         if ($template_name !== '') {
             $template_name = str_replace('_', ' ', $template_name);
-            $template = $this->_get_service_templates($template_name, 'info');
+            $template = $this->_get_service_templates(array('template_name'=>$template_name, 'func' => 'info'));
             ee()->dbg->c_log($template, __METHOD__);
             if (isset($template['status'])) {
                 ee()->session->set_flashdata('result', $template['status'].':'.$template['message']);
@@ -622,8 +660,6 @@ class Composer
                         'code' => array(
                             'type' => 'html',
                             'content' => form_textarea(array('name' => 'code', 'rows' => 15), $default['code']),
-                            // 'type' => 'textarea',
-                            // 'value' => $default['code'],
                         ),
                     ),
                 ),
@@ -692,9 +728,9 @@ class Composer
             'recipient' => $member->email,
             'from_email' => ee()->session->userdata('email'),
         );
+        ee()->dbg->c_log(EXT_SHORT_NAME.':EmailCachePlus', __METHOD__);
+        $email = ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
 
-        // $email = ee('Model')->get(EXT_SHORT_NAME.':', $cache_data);
-        $email = ee('Model')->get('EmailCache', $cache_data);
         $email->removeMemberGroups();
         $this->compose($email);
     }
@@ -705,12 +741,11 @@ class Composer
     public function send()
     {
         $tmp = explode('/', $_SERVER['HTTP_REFERER']);
-        $sender = end($tmp);
-        ee()->dbg->c_log($sender, __METHOD__);
+        $last = end($tmp);
+        $sender = is_numeric($last) ? $tmp[count($tmp) - 2] . '/' . $last : $last;
+        
+        ee()->dbg->c_log($_POST, __METHOD__);
         ee()->load->library('email');
-
-        // Fetch $_POST data
-        // We'll turn the $_POST data into variables for simplicity
 
         $groups = array();
 
@@ -725,38 +760,63 @@ class Composer
             'recipient',
             'cc',
             'bcc',
+            'mailKey',
+            'csv_object'
         );
 
         $wordwrap = 'n';
 
+        // Fetch $_POST data
+        // We'll turn the $_POST data into variables for simplicity
         foreach ($_POST as $key => $val) {
             if ($key == 'member_groups') {
                 // filter empty inputs, like a hidden no-value input from React
                 $groups = array_filter(ee()->input->post($key));
             } elseif (in_array($key, $form_fields)) {
                 $$key = ee()->input->post($key);
-            // ee()->dbg->c_log($key, __METHOD__);
             } else {
                 $this->extras[$key] = ee()->input->post($key);
             }
         }
-
-        if (isset($this->extras['mailKey'])) {
-            $this->csv_email_column = $this->extras['mailKey'];
+        // if ($this->extras['chosen_template_html'] !== "" && array_key_exists('mc-edit', $this->extras)) {
+        //     $message =  "\"" . $this->extras['chosen_template_html'] ."\"";
+        //     unset($this->extras['chosen_template_html']);
+        // };
+        // ee()->dbg->c_log($message, __METHOD__, true);
+        $recipient_array = array_map(
+            function ($a) {
+                return filter_var($a, FILTER_SANITIZE_EMAIL);
+            },
+            $this->_recipient_array($recipient)
+        );
+       
+        if (isset($mailKey)) {
+            $this->csv_email_column = preg_replace('/^(\'(.*)\'|"(.*)")$/', '$2$3', $mailKey);
         }
         // create lookup array for easy email lookup
-        if (isset($this->extras['csv_object']) and $this->extras['csv_object'] !== '' and isset($this->extras['mailKey'])) {
-            $rows = json_decode($this->extras['csv_object'], true);
+        if (isset($csv_object) and $csv_object !== '' and isset($mailKey)) {
+            $rows = json_decode($csv_object, true);
+    
             foreach ($rows as $row) {
-                $this->csv_lookup[trim($row[$this->extras['mailKey']])] = $row;
+                // ee()->dbg->c_log(in_array($this->csv_email_column, array_keys($row)), __METHOD__ . ":".$this->csv_email_column);
+                $this->csv_lookup[trim($row[$this->csv_email_column])] = $row;
             }
         }
-
+        ee()->dbg->c_log($this->csv_lookup, __METHOD__);
         //  Verify privileges
         if (count($groups) > 0 && !ee()->cp->allowed_group('can_email_member_groups')) {
             show_error(lang('not_allowed_to_email_member_groups'));
         }
 
+        ee()->load->helper('email');
+
+        ee()->dbg->c_log($recipient, __METHOD__);
+
+        // $recipient = $this->extractBracketedEmail($recipient);
+
+        $recipient = $this->_recipient_str($recipient_array);
+
+        // ee()->dbg->c_log((bool) valid_email($recipient), __METHOD__);
         // Set to allow a check for at least one recipient
         $_POST['total_gl_recipients'] = count($groups);
 
@@ -770,13 +830,19 @@ class Composer
         ee()->form_validation->set_rules('attachment', 'lang:attachment', 'callback__attachment_handler');
 
         if (ee()->form_validation->run() === false) {
+            // ee()->dbg->c_log($sender, __METHOD__, true);
+            ee()->dbg->c_log(ee()->form_validation, __METHOD__, true);
             ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));
-
-            return $this->{$sender}();
+            ee('CP/Alert')->makeInline('issue')
+                ->asIssue()
+                ->withTitle(lang('compose_error'))
+                ->addToBody(ee()->form_validation->error_string())
+                ->canClose()
+                ->now();
+            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
         }
-
         $name = ee()->session->userdata('screen_name');
-
+        
         $debug_msg = '';
 
         switch ($mailtype) {
@@ -813,7 +879,7 @@ class Composer
             'recipient' => $recipient,
             'cc' => $cc,
             'bcc' => $bcc,
-            'recipient_array' => array(),
+            'recipient_array' => $this->_recipient_array($recipient),
             'subject' => $subject,
             'message' => $message,
             'mailtype' => $mailtype,
@@ -822,9 +888,11 @@ class Composer
             'total_sent' => 0,
             'plaintext_alt' => $plaintext_alt,
             'attachments' => $this->attachments,
+            'mailKey' => !empty($this->csv_email_column) ? $this->csv_email_column : "error",
+            'csv_object' => !empty($csv_object) ? json_decode($csv_object, true) : array()
         );
         ee()->dbg->c_log($cache_data, __METHOD__);
-        $email = ee('Model')->make('EmailCache', $cache_data);
+        $email = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
         $email->save();
 
         // Get member group emails
@@ -843,8 +911,8 @@ class Composer
             show_error(lang('no_email_matching_criteria'));
         }
 
-        /** ----------------------------------------
-        /**  Do we have any CCs or BCCs?
+        //** ----------------------------------------
+        //**  Do we have any CCs or BCCs?
         /** ----------------------------------------*/
 
         //  If so, we'll send those separately first
@@ -869,10 +937,10 @@ class Composer
                 }
             }
         }
-
+        ee()->dbg->c_log($email_addresses, __METHOD__);
         //  Store email cache
         $email->recipient_array = $email_addresses;
-        $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
+        // $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
         $email->save();
         $id = $email->cache_id;
 
@@ -888,16 +956,24 @@ class Composer
         //** ----------------------------------------
         //  If batch-mode is not set, send emails
         // ----------------------------------------*/
-
+        
         if ($batch_mode == false) {
             $total_sent = $this->deliverManyEmails($email);
-
+           
             $debug_msg = ee()->email->print_debugger(array());
 
             $this->deleteAttachments($email); // Remove attachments now
-
+            $service = $this->get_service();            
+            // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
+            if ($debug_msg != "") {
+                if (!is_null($service)) {
+                    $debug_msg .= sprintf(lang('missing_service_credentials'), $service);
+                }
+            } else {
+                $debug_msg = sprintf(lang('sent_service'), $service);
+            }
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
-            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/compose'));
+            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
         }
 
         if ($batch_size === 0) {
@@ -917,9 +993,24 @@ class Composer
             ->addToBody(lang('batchmode_warning'))
             ->defer();
         consol_message($cache_data, __METHOD__, true);
-        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/compose'));
+        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
     }
 
+    private function _merge_template($vars)
+    {
+        // TODO: move functionality to service specific
+        $return_html = $vars['chosen_template_html'];
+        foreach (array_keys($vars['mc-edit']) as $value) {
+            $regex = '/<div mc:edit="'.$value.'">(.*?)<\/div>/';
+            ee()->dbg->c_log($regex, __METHOD__);
+            ee()->dbg->c_log($vars['mc-edit'][$value], __METHOD__);
+            ee()->dbg->c_log($return_html, __METHOD__);
+            $return_html = preg_replace($regex, $vars['mc-edit'][$value], $return_html);
+            echo $return_html[1];
+            exit;
+        }
+        return $return_html;
+    }
     /**
      * Batch Email Send.
      *
@@ -955,14 +1046,14 @@ class Composer
             $this->deleteAttachments($email); // Remove attachments now
 
             ee()->view->set_message('success', lang('total_emails_sent').' '.$email->total_sent, $debug_msg, true);
-            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email:compose'));
+            ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/'.EXT_SHORT_NAME.'/email:compose'));
         } else {
             $stats = str_replace('%x', ($start + 1), lang('currently_sending_batch'));
             $stats = str_replace('%y', ($email->total_sent), $stats);
 
             $message = $stats.BR.BR.lang('emails_remaining').NBS.NBS.(count($email->recipient_array) - $email->total_sent);
 
-            ee()->view->set_refresh(ee('CP/URL', EXT_SETTINGS_PATH.'/email:batch/'.$email->cache_id)->compile(), 6, true);
+            ee()->view->set_refresh(ee('CP/URL', EXT_SETTINGS_PATH.'/'.EXT_SHORT_NAME.'/email:batch/'.$email->cache_id)->compile(), 6, true);
 
             ee('CP/Alert')->makeStandard('batchmode')
                 ->asWarning()
@@ -985,8 +1076,7 @@ class Composer
             show_error(lang('problem_with_id'));
         }
 
-        // $caches = ee('Model')->get(EXT_SHORT_NAME.'EmailCachePlus', $id)
-        $caches = ee('Model')->get('EmailCache', $id)
+        $caches = ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus', $id)
             ->with('MemberGroups')
             ->all();
 
@@ -1052,6 +1142,7 @@ class Composer
      */
     private function deliverManyEmails(EmailCache $email)
     {
+        ee()->dbg->c_log($email->recipient_array, __METHOD__);
         $recipient_array = array_slice($email->recipient_array, $email->total_sent);
         $number_to_send = count($recipient_array);
         $csv_lookup_loaded = (count($this->csv_lookup) > 0);
@@ -1067,18 +1158,19 @@ class Composer
                 $number_to_send = $batch_size;
             }
         }
-
-        $formatted_message = $this->formatMessage($email, true);
+        
+        $formatted_message = $email->message = $this->formatMessage($email, true);
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
+            ee()->dbg->c_log($this->csv_lookup, __METHOD__);
             ee()->dbg->c_log($email_address, __METHOD__);
             if ($csv_lookup_loaded) {
                 $tmp_plaintext = $email->plaintext_alt;
                 $record = $this->csv_lookup[$email_address];
-                ee()->dbg->c_log($record, __METHOD__);
+                ee()->dbg->c_log(isset($record['{{first_name}}']) && isset($record['{{last_name}}']), __METHOD__);
                 // standard 'First Last <email address> format
                 if (isset($record['{{first_name}}']) && isset($record['{{last_name}}'])) {
-                    $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record['{{email}}']}>"; //TODO: https://trello.com/c/1lffhlXm
+                    $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record[$this->csv_email_column]}>"; //TODO: https://trello.com/c/1lffhlXm
                 } else {
                     $to = $record[$this->csv_email_column];
                 }
@@ -1091,7 +1183,7 @@ class Composer
                     'recipient' => $to,
                     'cc' => $email->cc,
                     'bcc' => $email->bcc,
-                    'recipient_array' => array(),
+                    'recipient_array' => $this->_recipient_array($email_address),
                     'subject' => str_replace('(TEMPLATE) ', '', $email->subject),
                     'message' => $formatted_message,
                     'mailtype' => $email->mailtype,
@@ -1100,20 +1192,24 @@ class Composer
                     'total_sent' => 0,
                     'plaintext_alt' => $email->message,
                     'attachments' => $this->attachments,
+                    'csv_object' => array($record),
+                    'mailKey' => $this->csv_email_column
                 );
-
-                $singleEmail = ee('Model')->make('EmailCache', $cache_data);
-                $singleEmail->save();
-
+                ee()->dbg->c_log($cache_data, __METHOD__);                
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
-                ee()->dbg->c_log($cache_data, __METHOD__);
+                ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
+                
                 if ($this->email_send($cache_data)) {
-                    ++$singleEmail->total_sent;
-                    $singleEmail->save();
+                    
+                    $this->_saveSingleEmail($cache_data);
                 } else {
-                    $this->_removeMail($email);
+                    $cache_data['message'] =  strtr($formatted_message, $record);
+                    if (!$this->deliverEmail($email, $email_address)) {
+                        $this->_removeMail($email);
+                    }
+                    $this->_saveSingleEmail($cache_data);
                 }
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
@@ -1124,18 +1220,27 @@ class Composer
 
         return $email->total_sent;
     }
+    
+    private function _saveSingleEmail($data)
+    {
+        $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $data);
+        ++$singleEmail->total_sent;
+        $singleEmail->save();
+        return $singleEmail->cache_id;
+    }
 
     private function _removeMail(EmailCache $email)
     {
         $email->delete();
-
         $debug_msg = ee()->email->print_debugger(array());
         $err_msg = lang('compose_error').BR.BR.$debug_msg;
         ee()->dbg->c_log($debug_msg, __METHOD__);
         ee()->logger->developer($err_msg);
-        show_error($err_msg);
+        //show_error($err_msg);
+        return false;
     }
 
+    
     /**
      * Delivers an email.
      *
@@ -1309,21 +1414,21 @@ class Composer
         foreach ($settings['service_order'] as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
-                // ee()->dbg->c_log($service, __METHOD__);
+                ee()->dbg->c_log($service, __METHOD__);
                 if (!ee()->load->is_loaded($service)) {
-                    ee()->load->library('Tx_service/drivers/'.$service, array_merge($settings, array('debug' => $this->debug)));
+                    ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
                 }
-                $result = ee()->{$service}->send_email($this->email_out);
+                $result = ee()->{$service}->send_email($this->email_out);                
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
 
                 if ($missing_credentials == true) {
-                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
+                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), ucfirst($service)));
                 } elseif ($sent == false) {
-                    ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
+                    ee()->logger->developer(sprintf(lang('could_not_deliver'), ucfirst($service)));
                 }
             }
-            ee()->dbg->c_log($sent, __METHOD__);
+            // ee()->dbg->c_log($sent, __METHOD__);
             if ($sent == true) {
                 ee()->extensions->end_script = true;
 
@@ -1337,44 +1442,47 @@ class Composer
     public function get_service()
     {
         if (!isset($this->service)) {
-            $settings = ee()->mail_svc->get_settings();
             $service = ee()->mail_svc->get_initial_service();
-            $service_settings = array('debug' => $this->debug, 'settings' => $settings);
-            $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/Tx_service/drivers/%s.php', ucfirst($service));
-
+            $service_settings = array('debug' => $this->debug, 'settings' => ee()->mail_svc->get_settings());
+            $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/TxService/drivers/TxService_%s.php', ucfirst($service));
+            $this->service = strtolower($service);
+            ee()->dbg->c_log($file_path, __METHOD__ . ": Path");
             if (!ee()->load->is_loaded($service)) {
+                ee()->dbg->c_log(ee()->load->is_loaded(strtolower($service)), __METHOD__. ": ${service}");
                 if (file_exists($file_path)) {
-                    ee()->load->library('Tx_service/drivers/'.$service, $service_settings);
+                    ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), $service_settings, $this->service);
                 } else {
                     ee()->dbg->c_log("Missing Class file for $service", __METHOD__);
-
                     return null;
                 }
             }
-        } else {
-            $service = $this->service;
         }
-
-        return $service;
+        
+        return $this->service;
     }
 
-    public function delete_template($template_name){
+    public function delete_template($template_name)
+    {
         $service = $this->get_service();
         if (!is_null($service)) {
-            return ee()->{$service}->delete_template(array('template_name'=>$template_name));
+            return ee()->{$service}->delete_template(array('template_name' => $template_name));
         }
+
         return false;
     }
-
-    public function _get_service_templates($template_name = '', $func = 'list')
+   
+    public function _get_service_templates(...$args)
     {
         $templates = array();
-        $req_settings = array('template_name' => $template_name, 'func' => $func);
-        $service = $this->get_service();
+        $req_settings = $args[0];
+
+        ee()->dbg->c_log($req_settings, __METHOD__);
+        $service = (array_key_exists('service', $req_settings)) ? $req_settings['service'] : $this->get_service();
         if (!is_null($service)) {
             $templates = ee()->{$service}->get_templates($req_settings);
         }
         ee()->dbg->c_log($templates, __METHOD__);
+
         return $templates;
     }
 
@@ -1494,9 +1602,9 @@ class Composer
         );
 
         $str = str_replace('"', '', $str);
-        if (preg_match('/<([^>]+)>/', $str, $email_matches)) {
+        if (preg_match($this->email_regex, $str, $email_matches)) {
             $r['email'] = trim($email_matches[1]);
-            $str = trim(preg_replace('/<([^>]+)>/', '', $str));
+            $str = trim(preg_replace($this->email_regex, '', $str));
             if (!empty($str) && $str != $r['email']) {
                 $r['name'] = utf8_encode($str);
             }
@@ -1598,7 +1706,7 @@ class Composer
         }
 
         if (ee()->input->post('bulk_action') == 'remove') {
-            ee('Model')->get('EmailCache', ee()->input->get_post('selection'))->all()->delete();
+            ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus', ee()->input->get_post('selection'))->all()->delete();
             ee()->view->set_message('success', lang('emails_removed'), '');
         }
 
@@ -1627,8 +1735,7 @@ class Composer
         $count = 0;
 
         // $emails =ee('Model')->get(EXT_SHORT_NAME.':');
-        $emails = ee('Model')->get('EmailCache');
-
+        $emails = ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus');
         $search = $table->search;
         if (!empty($search)) {
             $emails = $emails->filterGroup()
@@ -1747,7 +1854,7 @@ class Composer
     /**
      * View templates.
      */
-    public function view_templates($service_name = '')
+    public function view_templates()
     {
         if (ee()->input->post('bulk_action') == 'remove') {
             foreach (ee()->input->get_post('selection') as $slug) {
@@ -1779,8 +1886,8 @@ class Composer
         $page = ($page > 0) ? $page : 1;
 
         $offset = ($page - 1) * 50; // Offset is 0 indexed
-
-        $templates = $this->_get_service_templates($service_name);
+        $service_name = $this->get_service();
+        $templates = (!$service_name) ? array() : $this->_get_service_templates(array('service' => strtolower($service_name)));
         $data = array();
         if (!empty($templates)) {
             foreach ($templates as $template) {
@@ -1816,7 +1923,6 @@ class Composer
             }
         }
 
-        ee()->dbg->c_log($vars, __METHOD__);
         $table->setData($data);
         $count = 1;
         $base_url = ee('CP/URL', EXT_SETTINGS_PATH.'/email/view_templates');
@@ -1922,5 +2028,4 @@ class Composer
         $email->save();
     }
 }
-// END CLASS
 // EOF

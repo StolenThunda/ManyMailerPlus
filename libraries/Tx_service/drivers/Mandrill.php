@@ -62,12 +62,19 @@ class Mandrill extends TransactionService
      **/
     public function _send_email($subaccount)
     {
+        
         $content = array(
             'key' => $this->key,
             'async' => true,
             'message' => $this->email_out,
         );
+<<<<<<< HEAD:libraries/Tx_service/drivers/Mandrill.php
         // ee()->dbg->c_log($content, __METHOD__);
+=======
+        //ee()->dbg->c_log($content, __METHOD__);
+        // print_r($content);
+        
+>>>>>>> 8319acf... Mandrill Templates sending successfully:libraries/TxService/drivers/TxService_Mandrill.php
         if (isset($content['message']['extras'])) {
             if (isset($content['message']['extras']['from_name'])) {
                 $content['message']['from_name'] = $content['message']['extras']['from_name'];
@@ -83,22 +90,31 @@ class Mandrill extends TransactionService
                 $t_content = array();
                 $edits = $content['message']['extras']['mc-edit'];
                 foreach ($edits as $k => $v) {
-                    $default = in_array($k, array('main', 'content', 'bod_content'));
-                    $chosen = ($k === $body_field);
-                    if ($chosen || $default) {
-                        $message = $content['message']['html'];
-                        $v = ($message !== '') ? $message : $v;
-                        ee()->dbg->c_log($v, __METHOD__);
-                    }
+                    // $default = in_array($k, array('main', 'content', 'bod_content'));
+                    // $chosen = ($k === $body_field);
+                    // if ($chosen || $default) {
+                    //     $message = $content['message']['html'];
+                    //     $v = ($message !== '') ? $message : $v;
+                    //     ee()->dbg->c_log($v, __METHOD__);
+                    // }
                     array_push($t_content, array('name' => $k, 'content' => $v));
                 }
                 $content['template_content'] = $t_content;
             }
         }
+<<<<<<< HEAD:libraries/Tx_service/drivers/Mandrill.php
         ee()->dbg->c_log($content, __METHOD__);
         if (!empty($subaccount)) {
             $content['message']['subaccount'] = $subaccount;
         }
+=======
+        
+        
+        // ee()->dbg->c_log($content, __METHOD__);
+        // if (!empty($subaccount)) {
+        //     $content['message']['subaccount'] = $subaccount;
+        // }
+>>>>>>> 8319acf... Mandrill Templates sending successfully:libraries/TxService/drivers/TxService_Mandrill.php
 
         $content['message']['from_email'] = $content['message']['from']['email'];
         if (!empty($content['message']['from']['name'])) {
@@ -155,9 +171,16 @@ class Mandrill extends TransactionService
 
         // Did someone set a template? Then we need a different API method.
         $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
+        
         $content = json_encode($content);
+<<<<<<< HEAD:libraries/Tx_service/drivers/Mandrill.php
 
         ee()->dbg->c_log($content, __METHOD__);
+=======
+        
+        
+        // ee()->dbg->c_log($content, __METHOD__, true);
+>>>>>>> 8319acf... Mandrill Templates sending successfully:libraries/TxService/drivers/TxService_Mandrill.php
         //TODO: save email data to table
         // ee()->logger->developer($content);
         return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);

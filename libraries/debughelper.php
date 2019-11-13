@@ -271,7 +271,8 @@ class Debughelper
             'style' => self::STYLES[$detailLogLevel],
         );
         $str_msg = array(
-            'str' => "%cString Val: {$value}",
+            'str' => '%cString Val: '.preg_replace('/[\x00-\x1F]/u', '', $value),
+            // 'str' => '%cString Val: '.$value,
             'type' => 'content',
             'method' => 'log',
             'style' => self::STYLES[$detailLogLevel],

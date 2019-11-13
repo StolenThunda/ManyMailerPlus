@@ -65,7 +65,11 @@
     align-items: flex-start !important;
 }
 
-span>ul,
+#mc-edits {
+    border: thick !important;
+    border-style: ridge double !important;
+}
+/* span>ul,
 parsley-errors-list>ul {
     color: red !important;
     padding: 0 20px !important;
