@@ -24,11 +24,13 @@ class ManyMailerPlus_mod {
         this.csv_recipient = $('#csv_recipient'); // textarea for the content of the csv file
         this.file_recipient = $("input[name='file_recipient']"); // file input
         this.btn_reset = $('#reset'); // reset button for csv data
+        this.chosen_tmp = $('[name=chosen_template_html]'); // the HTML of the chosen template
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         this.con_errors = $('#csv_errors'); // container for error messages
         this.loader = $('.loader'); // css loading visuals
 
         // modules
+        this.DOMParser = new DOMParser();
         this.Stepper = new Stepper($('.form-section'));
         $.fn.extend({
             val_with_linenum: function (v) {
@@ -81,6 +83,18 @@ class ManyMailerPlus_mod {
         this.theCSV_obj = results;
     }
 
+    set template_editables(editObj) {
+        this._tmp_edits = (!editObj) ? null : {
+            template_body: $(`#${editObj.name}`).bind('change input blur', () => {
+                this.mirror_body_content();
+            }),
+            regions: editObj.regions
+        };
+    }
+
+    get template_editables() {
+        return this._tmp_edits;
+    }
     get csvObj() {
         return this.theCSV_obj;
     }
@@ -384,11 +398,11 @@ class ManyMailerPlus_mod {
             $.get(url, {}, function (data, textStatus, jqXHR) {
                 console.log(url.href);
                 console.log(data);
-                var parser = new DOMParser();
-                var htmlDoc = parser.parseFromString(data, 'text/html');
+                var htmlDoc = this.DOMParser.parseFromString(data, 'text/html');
                 this.con_templates
                     .append(htmlDoc.getElementById('embed_templates'))
-                    .append(htmlDoc.getElementsByClassName('modal-wrap'));
+                    .append(htmlDoc.getElementsByClassName('modal-wrap'))
+                    .show();
                 this.tmp_selections = $('input[name="selection[]"');
                 $.each(this.tmp_selections, (idx, val) => {
                     val.addEventListener(
@@ -446,9 +460,11 @@ class ManyMailerPlus_mod {
             subject = e.target.dataset.confirm;
             var choice = document.getElementById(name + '-code');
             if (choice !== null) {
+                this.chosen_tmp.val(choice);
                 this.con_tmp_name.fadeToggle('slow');
-                this.tmp_selections.not(this).attr('checked', false).parents('tr').removeClass('selected');
+                this.tmp_selections.not(e.currentTarget).attr('checked', false).parents('tr').removeClass('selected');
                 message = choice.innerHTML;
+                this.chosen_tmp.val(message);
                 var test_element = document.createElement('div');
                 test_element.innerHTML = message;
                 var list = test_element.getElementsByTagName('*');
@@ -461,7 +477,7 @@ class ManyMailerPlus_mod {
                             if (attribute.name.startsWith('mc:')) {
                                 if (attribute.value !== '') {
                                     sections.push({
-                                        edit_section: attribute.value,
+                                        region: attribute.value,
                                         content: element.innerHTML
                                     });
                                 }
@@ -470,10 +486,10 @@ class ManyMailerPlus_mod {
                         }
                     }
                 }
-                this.create_editable_content(sections);
-                $('[name=chosen_template_html]').val(message);
+                console.log(sections);
+                this.create_editable_content(name, sections);
             }
-            $('legend').trigger('click');
+            // $('legend').trigger('click');
         }
         this.tmp_name.val(name);
         $('input[name=subject]').val(subject);
@@ -482,7 +498,7 @@ class ManyMailerPlus_mod {
     evt_placeholder_btn(btn) {
         var plain = $("textarea[name='plaintext_alt']");
         var msg = $("textarea[name='message']");
-        var message = (this.template_body) ? this.template_body : $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
+        var message = (this.template_editables && this.template_editables.template_body) ? this.template_editables.template_body : $("textarea[name='plaintext_alt']").is(':visible') ? plain : msg;
 
         // Insert text into textarea at cursor position and replace selected text
         var cursorPosStart = message.prop('selectionStart');
@@ -499,6 +515,115 @@ class ManyMailerPlus_mod {
 
     }
     /// End EVENT FUNCTIONS
+
+    create_editable_content(name, sections) {
+        var email_body = [
+            'main',
+            'content'
+        ];
+        var found = sections.find(function (el) {
+            return $.inArray(el.region, email_body) !== -1;
+        });
+        var suggested = found ? `(suggested: <b>'${found.region}')</b>` : '';
+        var fs = $('<fieldset id="mc-edits" />').append(`<legend class="btn">Editable Content for <span>${name}</span></legend>`);
+        var that = this;
+        sections.forEach((el_obj) => {
+            var id = el_obj.region;
+            var val = el_obj.content;
+            var parent = this.con_tmp_name.eq(0);
+            if (this.tmp_editables.length === 0) {
+                parent.after(fs);
+                fs.append(
+                    $('<div>')
+                        .addClass('field-instruct')
+                        .append(
+                            $(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`)
+                        )
+                );
+            }
+
+            fs.append(
+                $('<div>')
+                    .addClass('field-instruct')
+                    .append($(`<label>${id}</label>`).css('color', 'red').css('font-size', '20px'))
+                    .append(
+                        $(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
+                            'data-parsley-mincheck': '1',
+                            'data-parsley-multiple': 'mc-check'
+                        })
+                    )
+                    .append(
+                        $(`<label for="mc-check_${id}">(Message Body?)</label>`)
+                            .css('text-align', 'right')
+                            .css('display', 'inline-block')
+                    ),
+                $('<div>')
+                    .addClass('field-control')
+                    .append($(`<textarea id="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
+            );
+
+            $('input[name^="mc-check"').change(function () {
+                var chk = this.checked;
+                $('input[name^="mc-check"').not(this).each(function () {
+                    if (chk) {
+                        $(this).attr('checked', false).hide();
+                        $(`label[for=${this.name}]`).hide();
+                    } else {
+                        $(`label[for=${this.name}]`).show();
+                        $(this).show();
+                    }
+                });
+                var name = this.name.substr('mc-check_'.length);
+                if (chk) {
+                    that.template_editables = { name: name, regions: sections };
+                    that.toggle_message_div(chk);
+                }
+                console.log(name);
+            });
+        });
+    }
+
+    sync_template_body_content() {
+        var html = this.chosen_tmp.val();
+        if (html !== "") {
+            var htmlDoc = this.DOMParser.parseFromString(html, 'text/html');
+            this.template_editables.regions.forEach(element => {
+
+                var current = htmlDoc.querySelectorAll(`div[mc\\:edit=${element.region}]`);
+                var newHTML = $(`#${element.region}`).val();
+                current[0].innerHTML = newHTML;
+            });
+            this.chosen_tmp.val(htmlDoc.documentElement.outerHTML);
+        }
+        return this;
+    }
+    toggle_message_div(toggle) {
+        if (toggle) {
+            var message = `Edit the value of '${this.template_editables.template_body.attr('id')}' under "Editable Content"`;
+            $('[name=message')
+                .on('click', () => {
+                    this.show_message({
+                        title: 'Error! Template Body in use',
+                        html: message,
+                        type: 'error'
+                    });
+                    this.template_editables.template_body.focus();
+                })
+                .prop('readonly', true)
+                .val(this.template_editables.template_body.val());
+        } else {
+            $('[name=message')
+                .prop('onclick', null)
+                .off('click')
+                .prop('readonly', false);
+        }
+        return this;
+    }
+    mirror_body_content() {
+        this
+            .toggle_message_div(this.template_editables.template_body);
+        // .sync_template_body_content();
+    }
     prep_data_for_parse() {
         // remove validation errors
         var arr_current_csv = this.get_csv_recip(true);
@@ -638,104 +763,6 @@ class ManyMailerPlus_mod {
         return this;
     }
 
-    create_editable_content(sections) {
-        var email_body = [
-            'main',
-            'content'
-        ];
-        var found = sections.find(function (el) {
-            return $.inArray(el.edit_section, email_body) !== -1;
-        });
-        var suggested = found ? `(suggested: <b>'${found.edit_section}')</b>` : '';
-        var fs = $('<fieldset id="mc-edits" />').append('<legend class="btn">Editable Content</legend>');
-        var that = this;
-        sections.forEach((el_obj) => {
-            var id = el_obj.edit_section;
-            var val = el_obj.content;
-            var parent = this.con_tmp_name.eq(0);
-            if (this.tmp_editables.length === 0) {
-                parent.after(fs);
-                fs.append(
-                    $('<div>')
-                    .addClass('field-instruct')
-                    .append(
-                        $(`<label><em>Choose the section represented by the email body ${suggested} </em></label>`)
-                    )
-                );
-            }
-
-            fs.append(
-                $('<div>')
-                .addClass('field-instruct')
-                .append($(`<label>${id}</label>`).css('color', 'red').css('font-size', '20px'))
-                .append(
-                    $(`<input type="checkbox" " name="mc-check_${id}" id="mc-check_${id}" />`, {
-                        'data-parsley-mincheck': '1',
-                        'data-parsley-multiple': 'mc-check'
-                    })
-                )
-                .append(
-                    $(`<label for="mc-check_${id}">(Body?)</label>`)
-                    .css('text-align', 'right')
-                    .css('display', 'inline-block')
-                ),
-                $('<div>')
-                .addClass('field-control')
-                .append($(`<textarea id="${id}" name="mc-edit[${id}]" rows="10" cols="50">${val}</textarea>`))
-            );
-
-            $('input[name^="mc-check"').change(function () {
-                var chk = this.checked;
-                $('input[name^="mc-check"').not(this).each(function () {
-                    if (chk) {
-                        $(this).attr('checked', false).hide();
-                        $(`label[for=${this.name}]`).hide();
-                    } else {
-                        $(`label[for=${this.name}]`).show();
-                        $(this).show();
-                    }
-                });
-                var name = this.name.substr('mc-check_'.length);
-                if (chk) {
-                    that.template_body = $('#' + name);
-                    that.mirror_body_content();
-                    that.template_body.bind('change input blur', () => {
-                        that.mirror_body_content();
-                    });
-                }
-                console.log(name);
-            });
-        });
-    }
-    set_template_body_content() {
-        var parser = new DOMParser();
-        var uc
-        var htmlDoc = parser.parseFromString(data, 'text/html');
-        this.con_templates
-            .append(htmlDoc.getElementById('embed_templates'))
-            .append(htmlDoc.getElementsByClassName('modal-wrap'));
-    }
-    mirror_body_content() {
-        if (this.template_body) {
-            var message = `Edit the value of '${this.template_body.attr('id')}' under "Editable Content"`;
-            $('[name=message')
-                .on('click', () => {
-                    this.show_message({
-                        title: 'Error! Template Body in use',
-                        html: message,
-                        type: 'error'
-                    });
-                    this.template_body.focus();
-                })
-                .prop('readonly', true)
-                .val(this.template_body.val());
-        } else {
-            $('[name=message')
-                .prop('onclick', null)
-                .off('click')
-                .prop('readonly', false);
-        }
-    }
 
     show_active_services() {
         var val = this.active_services.val();
@@ -753,10 +780,10 @@ class ManyMailerPlus_mod {
     showPlaceholders() {
         $('#stick-here').remove();
         $('<div />', {
-                id: 'stick-here',
-                class: 'stick-here',
-                height: $('div.col.w-12').height()
-            })
+            id: 'stick-here',
+            class: 'stick-here',
+            height: $('div.col.w-12').height()
+        })
             .append(
                 $('<table />', {
                     id: 'csv_placeholder',
@@ -772,10 +799,10 @@ class ManyMailerPlus_mod {
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         Object.entries(this.csvObj.headerKeyMap).forEach(([key, value]) => {
             var btn = $('<button/>', {
-                    class: 'btn placeholder',
-                    value: value,
-                    text: key
-                })
+                class: 'btn placeholder',
+                value: value,
+                text: key
+            })
                 .wrap('<tr><td align="center"></td></tr>')
                 .closest('tr');
             this.con_placeholder.append(btn);

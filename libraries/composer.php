@@ -149,7 +149,7 @@ class Composer
 
         $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
         ee()->dbg->c_log($this->debug, __METHOD__);
-      
+       
         $vars['sections'] = array(
             'sender_info' => array(
                 array(
@@ -241,7 +241,7 @@ class Composer
             'compose_email_detail' => array(
                   array(
                     'title' => 'email_subject',
-                    'fields' => array(                        
+                    'fields' => array(
                         'subject' => array(
                             'type' => 'text',
                             'required' => true,
@@ -778,15 +778,18 @@ class Composer
                 $this->extras[$key] = ee()->input->post($key);
             }
         }
-        if ($this->extras['chosen_template_html'] !== "" && array_key_exists('mc-edit', $this->extras)) {
-            $message = $this->_merge_template($this->extras);
-        };
+        // if ($this->extras['chosen_template_html'] !== "" && array_key_exists('mc-edit', $this->extras)) {
+        //     $message =  "\"" . $this->extras['chosen_template_html'] ."\"";
+        //     unset($this->extras['chosen_template_html']);
+        // };
+        // ee()->dbg->c_log($message, __METHOD__, true);
         $recipient_array = array_map(
             function ($a) {
                 return filter_var($a, FILTER_SANITIZE_EMAIL);
-            }, $this->_recipient_array($recipient)
+            },
+            $this->_recipient_array($recipient)
         );
-     
+       
         if (isset($mailKey)) {
             $this->csv_email_column = preg_replace('/^(\'(.*)\'|"(.*)")$/', '$2$3', $mailKey);
         }
@@ -839,7 +842,7 @@ class Composer
             ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
         }
         $name = ee()->session->userdata('screen_name');
-
+        
         $debug_msg = '';
 
         switch ($mailtype) {
@@ -953,14 +956,14 @@ class Composer
         //** ----------------------------------------
         //  If batch-mode is not set, send emails
         // ----------------------------------------*/
-
+        
         if ($batch_mode == false) {
             $total_sent = $this->deliverManyEmails($email);
-
+           
             $debug_msg = ee()->email->print_debugger(array());
 
             $this->deleteAttachments($email); // Remove attachments now
-            $service = $this->get_service();
+            $service = $this->get_service();            
             // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
             if ($debug_msg != "") {
                 if (!is_null($service)) {
@@ -995,16 +998,18 @@ class Composer
 
     private function _merge_template($vars)
     {
+        // TODO: move functionality to service specific
         $return_html = $vars['chosen_template_html'];
         foreach (array_keys($vars['mc-edit']) as $value) {
-            $regex = '/<div mc:edit="'.$value.'">(.*?)</div>/';
+            $regex = '/<div mc:edit="'.$value.'">(.*?)<\/div>/';
             ee()->dbg->c_log($regex, __METHOD__);
-            $new_html = preg_replace($regex, $vars['mc-edit'][$value], $return_html);             
-            echo $new_html;
+            ee()->dbg->c_log($vars['mc-edit'][$value], __METHOD__);
+            ee()->dbg->c_log($return_html, __METHOD__);
+            $return_html = preg_replace($regex, $vars['mc-edit'][$value], $return_html);
+            echo $return_html[1];
             exit;
-           
         }
-        
+        return $return_html;
     }
     /**
      * Batch Email Send.
@@ -1153,7 +1158,7 @@ class Composer
                 $number_to_send = $batch_size;
             }
         }
-
+        
         $formatted_message = $email->message = $this->formatMessage($email, true);
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
@@ -1190,16 +1195,21 @@ class Composer
                     'csv_object' => array($record),
                     'mailKey' => $this->csv_email_column
                 );
-                ee()->dbg->c_log($cache_data, __METHOD__);
+                ee()->dbg->c_log($cache_data, __METHOD__);                
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
-                $cache_data['message'] =  $this->_mergeEmail($formatted_message, $record);
                 ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
-                if ($this->email_send($cache_data) or $this->deliverEmail($email, $email_address)) {
+                
+                if ($this->email_send($cache_data)) {
+                    
                     $this->_saveSingleEmail($cache_data);
                 } else {
-                    $this->_removeMail($email);
+                    $cache_data['message'] =  strtr($formatted_message, $record);
+                    if (!$this->deliverEmail($email, $email_address)) {
+                        $this->_removeMail($email);
+                    }
+                    $this->_saveSingleEmail($cache_data);
                 }
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
@@ -1230,18 +1240,6 @@ class Composer
         return false;
     }
 
-    /**
-     * Merges placeholders with data into the email object
-     *
-     * @param string $message message with placeholders
-     * @param array  $record  values for placeholders
-     *
-     * @return bool True on success; False on failure
-     */
-    private function _mergeEmail($message, $record = array())
-    {
-        return strtr($message, $record);
-    }
     
     /**
      * Delivers an email.
@@ -1420,14 +1418,14 @@ class Composer
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
                 }
-                $result = ee()->{$service}->send_email($this->email_out);
+                $result = ee()->{$service}->send_email($this->email_out);                
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
 
                 if ($missing_credentials == true) {
-                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), $service));
+                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), ucfirst($service)));
                 } elseif ($sent == false) {
-                    ee()->logger->developer(sprintf(lang('could_not_deliver'), $service));
+                    ee()->logger->developer(sprintf(lang('could_not_deliver'), ucfirst($service)));
                 }
             }
             // ee()->dbg->c_log($sent, __METHOD__);
@@ -2029,6 +2027,5 @@ class Composer
         $email->attachments = array();
         $email->save();
     }
-
 }
 // EOF

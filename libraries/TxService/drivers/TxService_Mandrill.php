@@ -56,8 +56,8 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
         ee()->dbg->c_log($email, __METHOD__);
         $sent = false;
         $missing_credentials = true;
+        
         if (!empty($email)) {
-            ee()->dbg->c_log($this->email_out, __METHOD__);
             if ($this->api_key !== '') {
                 $missing_credentials = false;
                 $subaccount = (!empty($this->settings['mandrill_subaccount']) ? $this->settings['mandrill_subaccount'] : '');
@@ -73,12 +73,15 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
      **/
     public function _send_email($email)
     {
+        
         $content = array(
             'key' => $this->api_key,
             'async' => true,
             'message' => $email,
         );
-        ee()->dbg->c_log($content, __METHOD__);
+        //ee()->dbg->c_log($content, __METHOD__);
+        // print_r($content);
+        
         if (isset($content['message']['extras'])) {
             if (isset($content['message']['extras']['from_name'])) {
                 $content['message']['from_name'] = $content['message']['extras']['from_name'];
@@ -100,19 +103,21 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
                 $t_content = array();
                 $edits = $content['message']['extras']['mc-edit'];
                 foreach ($edits as $k => $v) {
-                    $default = in_array($k, array('main', 'content', 'bod_content'));
-                    $chosen = ($k === $body_field);
-                    if ($chosen || $default) {
-                        $message = $content['message']['html'];
-                        $v = ($message !== '') ? $message : $v;
-                        ee()->dbg->c_log($v, __METHOD__);
-                    }
+                    // $default = in_array($k, array('main', 'content', 'bod_content'));
+                    // $chosen = ($k === $body_field);
+                    // if ($chosen || $default) {
+                    //     $message = $content['message']['html'];
+                    //     $v = ($message !== '') ? $message : $v;
+                    //     ee()->dbg->c_log($v, __METHOD__);
+                    // }
                     array_push($t_content, array('name' => $k, 'content' => $v));
                 }
                 $content['template_content'] = $t_content;
             }
         }
-        ee()->dbg->c_log($content, __METHOD__);
+        
+        
+        // ee()->dbg->c_log($content, __METHOD__);
         // if (!empty($subaccount)) {
         //     $content['message']['subaccount'] = $subaccount;
         // }
@@ -172,9 +177,11 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
 
         // Did someone set a template? Then we need a different API method.
         $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
+        
         $content = json_encode($content);
-
-        ee()->dbg->c_log($content, __METHOD__, true);
+        
+        
+        // ee()->dbg->c_log($content, __METHOD__, true);
         //TODO: save email data to table
         // ee()->logger->developer($content);
         return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', array(), $content, true);
