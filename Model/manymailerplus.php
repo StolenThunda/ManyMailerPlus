@@ -13,16 +13,16 @@ namespace EllisLab\Addons\SimpleCommerce\Model;
 use EllisLab\ExpressionEngine\Service\Model\Model;
 
 /**
- * 
+ *
  */
-class Manymailerplus extends Model {
+class Manymailerplus extends Model
+{
+    protected static $_primary_key = 'id';
+    protected static $_table_name = 'exp_manymailerplus';
 
-	protected static $_primary_key = 'id';
-	protected static $_table_name = 'exp_manymailerplus';
-
-	protected $id;
-	protected $site_id;
-	protected $settings;
+    protected $id;
+    protected $site_id;
+    protected $settings;
 }
 
 // EOF

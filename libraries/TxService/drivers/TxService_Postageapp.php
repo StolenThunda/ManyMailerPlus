@@ -1,8 +1,8 @@
 <?php
 
-use ManyMailerPlus\libraries\Tx_service\Tx_service as TransactionService;
+use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
 
-class Postageapp extends TransactionService
+class TxService_Postageapp extends TransactionService
 {
     public function __construct($settings = array())
     {
@@ -20,6 +20,7 @@ class Postageapp extends TransactionService
     public function send_email($email = null)
     {
         $sent = false;
+        $settings = ee()->mod_svc->get_settings() ;
         $missing_credentials = true;
         if ($email) {
             $this->email_out = $email;
@@ -106,6 +107,10 @@ class Postageapp extends TransactionService
         return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
     }
 
+    public function save_template()
+    {
+        return true;
+    }
     public function lookup_to_merger($lookup)
     {
         $merge_vars = array();

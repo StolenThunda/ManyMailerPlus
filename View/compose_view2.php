@@ -1,6 +1,8 @@
 <?php
     ee()->cp->load_package_css('settings');
-?>
+?><!-- Loader -->
+<div class="loader loader-default"></div>
+<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines(); ?></div>
 <div class="col-group">   
     <div class='form-standard'>
         
@@ -37,7 +39,14 @@
                                 <?php endif; ?>
                             <?php endif; ?>
                             <div class="field_control">
-                                <?=$sections[$fieldset][$el_name]; ?>
+                                <?php if (is_array($sections[$fieldset][$el_name])) {
+                                foreach ($sections[$fieldset][$el_name] as $el) {
+                                    echo $el;
+                                }
+                            } else {
+                                echo $sections[$fieldset][$el_name];
+                            }
+                                ?>
                             </div>
                         </fieldset>
                     <?php endforeach; ?>       

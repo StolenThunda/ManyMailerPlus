@@ -12,7 +12,7 @@
 
 		<?=$pagination?>
 
-		<?php if ( ! empty($table['columns']) && ! empty($table['data'])): ?>
+		<?php if (! empty($table['columns']) && ! empty($table['data'])): ?>
 			<fieldset class="tbl-bulk-act hidden">
 				<select name="bulk_action">
 					<option value="">-- <?=lang('with_selected')?> --</option>
@@ -24,7 +24,7 @@
 	<?=form_close()?>
 	</div>
 </div>
-<?php foreach($emails as $email): ?>
+<?php foreach ($emails as $email): ?>
 	<?php ee('CP/Modal')->startModal('email-' . $email->cache_id); ?>
 	<div class="modal-wrap modal-email-<?=$email->cache_id?> hidden">
 		<div class="modal">
@@ -38,7 +38,11 @@
 								<li>
 									<b><?=lang('sent')?>:</b> 
 									<?php echo ee()->localize->human_time($email->cache_date->format('U'))?> 
-									<?=lang('to')?> <?=$email->total_sent?> <?=lang('recipients')?></li>
+									<?=lang('to')?> <?=$email->total_sent?> <?=lang('recipients')?>
+								</li>
+								<li>
+									Recipient(s):  <br><?php echo str_replace(',', '<br>', $email->recipient);?> 
+								</li>
 							</ul>
 							<?=ee('Security/XSS')->clean($email->message)?>
 						</div>
@@ -52,11 +56,11 @@
 
 <?php
 $modal_vars = array(
-	'name'      => 'modal-confirm-remove',
-	'form_url'	=> $table['base_url'],
-	'hidden'	=> array(
-		'bulk_action'	=> 'remove'
-	)
+    'name'      => 'modal-confirm-remove',
+    'form_url'	=> $table['base_url'],
+    'hidden'	=> array(
+        'bulk_action'	=> 'remove'
+    )
 );
 
 $modal = $this->make('ee:_shared/modal_confirm_remove')->render($modal_vars);

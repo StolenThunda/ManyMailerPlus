@@ -1,80 +1,84 @@
 <?php
+use ManyMailerPlus\libraries\TxService;
+require_once APPPATH . '/libraries/Driver.php';
 
-use ManyMailerPlus\libraries\Tx_service\Tx_service as TransactionService;
-
-class Mandrill extends TransactionService
+class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterface
 {
+    use TxService\TX;
+    private $api_key = "";
     public function __construct($settings = array())
     {
-        parent::__construct($settings);
+        $this->debug = $settings['debug'] ?: false;
         $this->settings = $settings;
-        $this->key = $this->_get_api($settings);
-        // ee()->dbg->c_log($this, __METHOD__);
+        $this->_parseKey($this->settings);
+        ee()->dbg->c_log($this->api_key, __METHOD__);
     }
 
     public function get_api_key()
     {
-        // ee()->dbg->c_log($this->key, __METHOD__);
+        ee()->dbg->c_log($this->api_key, __METHOD__);
 
-        return $this->key;
+        return $this->api_key;
+    }
+    public function set_api_key($key)
+    {
+        $this->api_key = $key;
     }
 
-    public function send_email($email = null)
+    private function _parseKey($settings = array())
     {
+        if ($this->get_api_key() === "") {
+            try {
+                if (!ee()->load->is_loaded('mod_services')) {
+                    ee()->load->library('services_module', null, 'mod_svc');
+                }
+                $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
+                $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
+                $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
+                $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
+                $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
+                ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
+                $this->set_api_key($active_key);
+                return $active_key;
+            } catch (\Throwable $th) {
+                //throw $th;
+                ee()->dbg->c_log($th, __METHOD__);
+
+                return $th;
+            }
+        }else{ return $this->get_api_key();}        
+    }
+    public function ident(){
+        ee()->dbg->c_log('Loaded: '.__CLASS__.' k:'.$this->api_key, __METHOD__);
+    }
+    public function send_email($email = array())
+    {
+        ee()->dbg->c_log($email, __METHOD__);
         $sent = false;
         $missing_credentials = true;
-        if ($email) {
-            $this->email_out = $email;
-            unset($email);
-            if ($this->key !== '') {
+        
+        if (!empty($email)) {
+            if ($this->api_key !== '') {
                 $missing_credentials = false;
                 $subaccount = (!empty($this->settings['mandrill_subaccount']) ? $this->settings['mandrill_subaccount'] : '');
-                $sent = $this->_send_email($subaccount);
+                $sent = $this->_send_email($email);
             }
         }
         ee()->dbg->c_log(array('missing_credentials' => $missing_credentials, 'sent' => $sent), __METHOD__);
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
-    private function _get_api($settings = array())
-    {
-        try {
-            if (!ee()->load->is_loaded('mod_services')) {
-                ee()->load->library('services_module', null, 'mod_svc');
-            }
-            $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
-            $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-            $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-            $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
-            $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-            // ee()->dbg->c_log("Act Key: $active_key", __METHOD__);
-            return $active_key;
-        } catch (\Throwable $th) {
-            //throw $th;
-            ee()->dbg->c_log($th, __METHOD__);
-
-            return $th;
-        }
-    }
-
     /**
         Sending methods for each of our services follow.
      **/
-    public function _send_email($subaccount)
+    public function _send_email($email)
     {
         
         $content = array(
-            'key' => $this->key,
+            'key' => $this->api_key,
             'async' => true,
-            'message' => $this->email_out,
+            'message' => $email,
         );
-<<<<<<< HEAD:libraries/Tx_service/drivers/Mandrill.php
-        // ee()->dbg->c_log($content, __METHOD__);
-=======
-        //ee()->dbg->c_log($content, __METHOD__);
-        // print_r($content);
-        
->>>>>>> 8319acf... Mandrill Templates sending successfully:libraries/TxService/drivers/TxService_Mandrill.php
         if (isset($content['message']['extras'])) {
             if (isset($content['message']['extras']['from_name'])) {
                 $content['message']['from_name'] = $content['message']['extras']['from_name'];
@@ -82,9 +86,15 @@ class Mandrill extends TransactionService
             if (isset($content['message']['extras']['template_name'])) {
                 $content['template_name'] = $content['message']['extras']['template_name'];
             }
-            $body_field = substr(array_keys(array_filter($content['message']['extras'], function ($v, $k) {
-                return 'mc-check_' == substr($k, 0, strlen('mc-check_'));
-            }, ARRAY_FILTER_USE_BOTH))[0], strlen('mc-check_'));
+            $editables = array_filter($content['message']['extras'], function ($v, $k) {
+                        return 'mc-check_' == substr($k, 0, strlen('mc-check_'));
+            },
+                ARRAY_FILTER_USE_BOTH
+            );
+            if (count($editables) > 0) {
+                $body_field = substr(array_keys($editables)[0], strlen('mc-check_')) || array();
+            }
+            
 
             if (isset($content['message']['extras']['mc-edit'])) {
                 $t_content = array();
@@ -102,20 +112,14 @@ class Mandrill extends TransactionService
                 $content['template_content'] = $t_content;
             }
         }
-<<<<<<< HEAD:libraries/Tx_service/drivers/Mandrill.php
         ee()->dbg->c_log($content, __METHOD__);
         if (!empty($subaccount)) {
             $content['message']['subaccount'] = $subaccount;
         }
-=======
-        
-        
         // ee()->dbg->c_log($content, __METHOD__);
         // if (!empty($subaccount)) {
         //     $content['message']['subaccount'] = $subaccount;
         // }
->>>>>>> 8319acf... Mandrill Templates sending successfully:libraries/TxService/drivers/TxService_Mandrill.php
-
         $content['message']['from_email'] = $content['message']['from']['email'];
         if (!empty($content['message']['from']['name'])) {
             $content['message']['from_name'] = $content['message']['from']['name'];
@@ -173,17 +177,11 @@ class Mandrill extends TransactionService
         $method = (!empty($content['template_name']) && !empty($content['template_content'])) ? 'send-template' : 'send';
         
         $content = json_encode($content);
-<<<<<<< HEAD:libraries/Tx_service/drivers/Mandrill.php
-
         ee()->dbg->c_log($content, __METHOD__);
-=======
-        
-        
         // ee()->dbg->c_log($content, __METHOD__, true);
->>>>>>> 8319acf... Mandrill Templates sending successfully:libraries/TxService/drivers/TxService_Mandrill.php
         //TODO: save email data to table
         // ee()->logger->developer($content);
-        return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', $this->headers, $content);
+        return $this->curl_request('https://mandrillapp.com/api/1.0/messages/'.$method.'.json', array(), $content, true);
     }
 
     public function lookup_to_merger($lookup)
@@ -199,22 +197,34 @@ class Mandrill extends TransactionService
         return $merge_vars;
     }
 
+    
+    public function get_template($obj = array('template_name' => '', 'func' => 'list'))
+    {
+        $obj[0]['template_name'] = str_replace(' ', '-', strtolower($obj[0]['template_name']));
+        $req = $obj[0];
+        ee()->dbg->c_log($req, __METHOD__);
+        return $this->get_templates($req);
+    }
     public function get_templates($obj = array('template_name' => '', 'func' => 'list'))
     {
+        ee()->dbg->c_log($obj, __METHOD__);
         $templates = array();
         $func = (isset($obj['func'])) ? $obj['func'] : 'list';
         $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$func.'.json';
-        $data = array(
-            'key' => $this->_get_api(),
-        );
-        if (!is_null($template_name)) {
-            $data['name'] = $template_name;
+        $key = $this->get_api_key();
+        if ($key !== '') {
+            $data = array(
+                'key' => $key,
+            );
+            if (!is_null($template_name)) {
+                $data['name'] = $template_name;
+            }
+            $content = json_encode($data);
+            ee()->dbg->c_log($api_endpoint.$content, __METHOD__);
+            $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
+            ee()->dbg->c_log($templates, __METHOD__);
         }
-        $content = json_encode($data);
-        ee()->dbg->c_log($api_endpoint.$content, __METHOD__);
-        $templates = $this->curl_request($api_endpoint, $this->headers, $content, true);
-        ee()->dbg->c_log($templates, __METHOD__);
 
         return $templates;
     }
@@ -234,12 +244,12 @@ class Mandrill extends TransactionService
             // "labels",
         );
 
-        // ee()->dbg->c_log($_POST, __METHOD__);
+        ee()->dbg->c_log($_POST, __METHOD__);
         foreach ($_POST as $key => $val) {
-            // ee()->dbg->c_log("$key : ".ee()->input->post($key),__METHOD__);
+            ee()->dbg->c_log("$key : ".ee()->input->post($key), __METHOD__);
             if (in_array($key, $form_fields)) {
                 $$key = ee()->input->get_post($key);
-                // ee()->dbg->c_log("$key : ".ee()->input	->post($key),__METHOD__);
+                ee()->dbg->c_log("$key : ".ee()->input	->post($key), __METHOD__);
             }
         }
 
@@ -269,7 +279,7 @@ class Mandrill extends TransactionService
         $function = ($created_at_hidden !== '') ? 'update' : 'add';
 
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$function.'.json';
-        // ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__);
+        ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__);
         $result = $this->curl_request($api_endpoint, $this->headers, $cache_data, true);
         if (isset($result['status'])) {
             ee()->view->set_message($result['status'], $result['message'], null, true);
