@@ -831,7 +831,7 @@ class Composer
 
         if (ee()->form_validation->run() === false) {
             // ee()->dbg->c_log($sender, __METHOD__, true);
-            ee()->dbg->c_log(ee()->form_validation, __METHOD__, true);
+            ee()->dbg->c_log(ee()->form_validation->error_string(), __METHOD__, true);
             ee()->view->set_message('issue', lang('compose_error'), lang('compose_error_desc'));
             ee('CP/Alert')->makeInline('issue')
                 ->asIssue()
@@ -846,26 +846,26 @@ class Composer
         $debug_msg = '';
 
         switch ($mailtype) {
-            case 'text':
+        case 'text':
+            $text_fmt = 'none';
+            $plaintext_alt = '';
+            break;
+
+        case 'markdown':
+            $text_fmt = 'markdown';
+            $mailtype = 'html';
+            $plaintext_alt = $message;
+            break;
+
+        case 'html':
+            // If we strip tags and it matches the message, then there was
+            // not any HTML in it and we'll format for them.
+            if ($message == strip_tags($message)) {
+                $text_fmt = 'xhtml';
+            } else {
                 $text_fmt = 'none';
-                $plaintext_alt = '';
-                break;
-
-            case 'markdown':
-                $text_fmt = 'markdown';
-                $mailtype = 'html';
-                $plaintext_alt = $message;
-                break;
-
-            case 'html':
-                // If we strip tags and it matches the message, then there was
-                // not any HTML in it and we'll format for them.
-                if ($message == strip_tags($message)) {
-                    $text_fmt = 'xhtml';
-                } else {
-                    $text_fmt = 'none';
-                }
-                break;
+            }
+            break;
         }
 
         $subject = "${subject} (TEMPLATE) ";
@@ -963,7 +963,7 @@ class Composer
             $debug_msg = ee()->email->print_debugger(array());
 
             $this->deleteAttachments($email); // Remove attachments now
-            $service = $this->get_service();            
+            $service = $this->get_service();
             // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
             if ($debug_msg != "") {
                 if (!is_null($service)) {
@@ -1195,14 +1195,13 @@ class Composer
                     'csv_object' => array($record),
                     'mailKey' => $this->csv_email_column
                 );
-                ee()->dbg->c_log($cache_data, __METHOD__);                
+                ee()->dbg->c_log($cache_data, __METHOD__);
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
                 ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
                 
                 if ($this->email_send($cache_data)) {
-                    
                     $this->_saveSingleEmail($cache_data);
                 } else {
                     $cache_data['message'] =  strtr($formatted_message, $record);
@@ -1418,7 +1417,7 @@ class Composer
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
                 }
-                $result = ee()->{$service}->send_email($this->email_out);                
+                $result = ee()->{$service}->send_email($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
 
