@@ -963,7 +963,7 @@ class Composer
             $debug_msg = ee()->email->print_debugger(array());
 
             $this->deleteAttachments($email); // Remove attachments now
-            $service = $this->get_service();            
+            $service = $this->get_service();
             // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
             if ($debug_msg != "") {
                 if (!is_null($service)) {
@@ -1195,14 +1195,13 @@ class Composer
                     'csv_object' => array($record),
                     'mailKey' => $this->csv_email_column
                 );
-                ee()->dbg->c_log($cache_data, __METHOD__);                
+                ee()->dbg->c_log($cache_data, __METHOD__);
                 $cache_data['lookup'] = $record;
                 $cache_data['html'] = $formatted_message;
                 $cache_data['extras'] = $this->extras;
                 ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
                 
                 if ($this->email_send($cache_data)) {
-                    
                     $this->_saveSingleEmail($cache_data);
                 } else {
                     $cache_data['message'] =  strtr($formatted_message, $record);
@@ -1418,7 +1417,7 @@ class Composer
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
                 }
-                $result = ee()->{$service}->send_email($this->email_out);                
+                $result = ee()->{$service}->send_email($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
 
@@ -1799,18 +1798,23 @@ class Composer
             );
 
             ee()->load->library('typography');
-            ee()->typography->initialize(array(
+            ee()->typography->initialize(
+                array(
                 'bbencode_links' => false,
                 'parse_images' => false,
                 'parse_smileys' => false,
-            ));
+                    )
+            );
 
-            $email->message = ee()->typography->parse_type($email->message, array(
+            $email->message = ee()->typography->parse_type(
+                $email->message,
+                array(
                 'text_format' => ($email->text_fmt == 'markdown') ? 'markdown' : 'xhtml',
                 'html_format' => 'all',
                 'auto_links' => 'n',
                 'allow_img_url' => 'y',
-            ));
+                    )
+            );
 
             $vars['emails'][] = $email;
         }
