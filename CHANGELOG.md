@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ## ChangeLog
 
+## [1.8.0] - 2019-10-30
+- Working Emailing
+- Working Dynamic service classes
+
 ## [0.1.5] - 2019-03-14
 
 - Beta release

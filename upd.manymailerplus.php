@@ -19,17 +19,18 @@ class Manymailerplus_upd
 
     public function install()
     {
+        
         $this->settings = array();
         
         // ADD EXTENSION FOR SERVICES INTEGRATION
         $ext_data = array(
-            'class'		=> ucfirst(EXT_SHORT_NAME).'_ext',
-            'method'	=> 'email_send',
-            'hook'		=> 'email_send',
-            'settings'	=> serialize($this->settings),
-            'version'	=> $this->version,
+            'class'     => ucfirst(EXT_SHORT_NAME).'_ext',
+            'method'    => 'email_send',
+            'hook'      => 'email_send',
+            'settings'  => serialize($this->settings),
+            'version'   => $this->version,
             'priority'  => 1,
-            'enabled'	=> 'y'
+            'enabled'   => 'y'
         );
         ee()->db->insert('extensions', $ext_data);
 

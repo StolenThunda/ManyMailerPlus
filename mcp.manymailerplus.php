@@ -17,8 +17,6 @@ if (!defined('BASEPATH')) {
 class Manymailerplus_mcp
 {
     private $_vars = array();
-    private $_config =  array('debug' => true);
-
     /**
      * Constructor.
      */
@@ -29,12 +27,16 @@ class Manymailerplus_mcp
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
         }
+         $this->model = ee('Model')->get('Extension')
+             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
+             ->first();
+        $this->_config =  array('debug' => ($this->model->settings['debug_mode'] === 'y'));
+        $this
+            ->_loadLibs()
+            ->_loadConfigs()
+            ->_jsConfigAutoload()
+            ->_updateServiceOptions(array_keys($this->services));
         
-        $this->_loadLibs();
-        $this->_loadConfigs();
-        $this->_jsConfigAutoload();
-        $this->_updateServiceOptions(array_keys($this->services));
-
         if (!$this->sidebar_loaded) {
             //render page to show errors
             $_vars = array(
@@ -47,6 +49,9 @@ class Manymailerplus_mcp
 
             return ee('View')->make(EXT_SHORT_NAME.':'.$this->view)->render($vars);
         }
+       
+        ee()->dbg->c_log($this->model->settings, __METHOD__);
+    
         $this->_vars['save_btn_text'] = '';
         $this->_vars['save_btn_text_working'] = '';
         $this->_vars['sections'] = array();
@@ -67,7 +72,9 @@ class Manymailerplus_mcp
         ee()->load->library('debughelper', $this->_config, 'dbg');
         ee()->load->library('services_module', $this->_config, 'mail_svc');
         ee()->load->library('composer', $this->_config, 'mail_funcs');
+        ee()->load->library('settings', $this->_config, 'mail_settings');
         // ee()->load->driver('txservice/txservice');
+        return $this;
     }
     /**
      * Loads configs
@@ -79,6 +86,8 @@ class Manymailerplus_mcp
         $this->services = ee()->config->item('services', 'services');
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
+        return $this;
+
     }
     /**
      * Ensures proper js injection
@@ -97,6 +106,7 @@ class Manymailerplus_mcp
         foreach ($external_js as $script) {
             ee()->cp->add_to_foot($script);
         }
+        return $this;
     }
     /**
      * Make the sidebar using config files
@@ -131,6 +141,7 @@ class Manymailerplus_mcp
         if (!empty($additional_links)) {
             $this->sidebar_options['services']['links'] = array_unique(array_merge($this->sidebar_options['services']['links'], ee()->mail_svc->get_service_order()));
         }
+        return $this;
         // ee()->dbg->c_log($this->sidebar_options['services']['links'], __METHOD__);
     }
 
@@ -226,15 +237,12 @@ class Manymailerplus_mcp
             return ee()->output->send_ajax_response(ee()->mail_svc->{$func}());
             // ee()->functions->redirect($_SERVER['HTTP_REFERER']);
         default:
+            $this->_vars['current_action'] = 'settings';
+            array_pop($breadcrumbs);
             // if the current = the service detail page
             $this->_vars = array_merge($this->_vars, ee()->mail_svc->settings_form(array()));
             break;
         }
-        if (!isset($this->_vars['current_service'])) {
-            array_pop($breadcrumbs);
-        }
-        $this->_vars['active_service_names'] = json_encode(ee()->mail_svc->get_active_services(), 1);
-
         return $this->view_page($breadcrumbs);
     }
 
@@ -254,15 +262,22 @@ class Manymailerplus_mcp
         $this->_vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
         $this->_vars['cp_page_title'] = lang(__FUNCTION__.'_title');
         $this->_vars['current_action'] = __FUNCTION__;
+       
         switch ($func) {
+        case 'return_settings':
+            return ee()->output->send_ajax_response(ee()->mail_settings->{$func}());
+            // ee()->functions->redirect($_SERVER['HTTP_REFERER']);
+        case 'save_settings':
+            $service_settings = ee()->mail_svc->get_settings();
+            $this->_vars = array_merge($this->_vars, ee()->mail_settings->save_settings($service_settings)); 
+            break;           
         default:
-            // if the current = the service detail page
-            $this->_vars = array_merge($this->_vars, ee()->mail_opts->{$func}());
-            break;
+            $this->_vars = array_merge($this->_vars, ee()->mail_settings->settings());
+        
         }
+        ee()->dbg->c_log($this->_vars, __METHOD__);
         return $this->view_page($breadcrumbs);
     }
-
     /**
      * Renderer function for all pages
      *

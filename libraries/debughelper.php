@@ -35,6 +35,14 @@ class Debughelper
                 $this->{$key} = $value;
             }
         }
+        $this->settings = ee('Model')->get('Extension')
+            ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
+            ->first()->settings;
+    }
+
+    public function debug_enabled()
+    {
+        return ($this->settings['debug_mode'] === 'y');
     }
 
     public function add_message($str = '', $type = 'content', $method = 'log', $style = null, $obj = null)
@@ -158,7 +166,7 @@ class Debughelper
 
     public function c_log($value, $title = null, $exit = false)
     {
-        if ($this->debug) {
+        if ($this->debug_enabled()) {
             $this->_string = '';
             $this->messages = array();
             $needs_encoded = (is_array($value) or is_object($value));

@@ -135,7 +135,7 @@ class Services_module
                 $settings['service_order'] = $this->get_service_order();
             }
         }
-        ee()->dbg->c_log($settings, __METHOD__);
+        // ee()->dbg->c_log($settings, __METHOD__);
 
         return $settings;
     }
@@ -192,7 +192,8 @@ class Services_module
     public function get_service_order()
     {
         $all_settings = $this->model->settings;
-        $settings = (empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
+        ee()->dbg->c_log($all_settings, __METHOD__);
+        $settings = (count($all_settings) > 0 && array_key_exists($this->site_id, $all_settings)) ?$all_settings[$this->site_id]: $all_settings;
 
         $active_services = $this->get_active_services();
                
@@ -201,7 +202,7 @@ class Services_module
             return array_keys($this->services);
         } else {
             $other_services = array_diff(array_keys($this->services), $active_services);
-            ee()->dbg->c_log($other_services, __METHOD__);
+            
             foreach ($other_services as $service) {
                 $active_services[] = $service;
             }
@@ -237,7 +238,7 @@ class Services_module
 
     private function _get_service_detail()
     {
-        $settings = (isset($this->model->settings[$this->site_id])) ? $this->model->settings[$this->site_id] : $this->model->settings; //$this->get_settings();
+        $settings = (isset($this->model->settings[$this->site_id])) ? $this->model->settings[$this->site_id] : $this->model->settings;
         $sections = array(
             array(
                 'title' => lang('description'),
@@ -339,25 +340,6 @@ class Services_module
         );
     }
 
-    public function viewDbg(&$vars)
-    {
-        // if ($this->debug){
-        // add any accumalated debug messages
-        $content = $this->dbg_msgs->data;
-
-        // add messages to page
-        ee()->load->helper('html');
-        foreach ($this->dbg_msgs as $msg) {
-            $vars['form_vars']['extra_alerts'][] = array('config_vars');
-            ee('CP/Alert')->makeInline($msg->title)
-                    ->asAttention()
-                    ->withTitle($msg->title)
-                    ->addToBody($msg->msg)
-                    ->canClose()
-                    ->now();
-        }
-        // }
-    }
 
     public function ee_version()
     {
