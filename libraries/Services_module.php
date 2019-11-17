@@ -27,7 +27,6 @@ require_once PATH_THIRD.EXT_SHORT_NAME.'/config.php';
 class Services_module
 {
     public $config;
-    public $debug = false;
     public $email_crlf = '\n';
     public $email_in = array();
     public $email_out = array();
@@ -44,7 +43,6 @@ class Services_module
     {
         ee()->load->helper('MessageArray');
         ee()->load->helper('html');
-        $this->debug = (isset($settings['debug']) ? $settings['debug'] : false);
         $this->config = ee()->config->item(EXT_SHORT_NAME.'_settings');
         if (ee()->config->item('email_crlf') != false) {
             $this->email_crlf = ee()->config->item('email_crlf');
@@ -78,7 +76,6 @@ class Services_module
             }
         }
         $vars = array(
-            'debug' => $this->debug,
             'current_service' => false,
             'current_settings' => $settings,
             'services' => $services_sorted,
@@ -119,8 +116,8 @@ class Services_module
 
     public function get_settings($all_sites = false)
     {
-        // $all_settings = $this->model->settings;
-        $settings = $this->model->settings;//($all_sites === true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
+        $all_settings = $this->model->settings;
+        $settings = (count($all_settings) > 0 && array_key_exists($this->site_id, $all_settings)) ?$all_settings[$this->site_id]: $all_settings;
         // Check for config settings - they will override database settings
         if ($all_sites == false) {
             // Override each setting from config

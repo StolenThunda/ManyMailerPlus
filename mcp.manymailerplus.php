@@ -30,7 +30,7 @@ class Manymailerplus_mcp
          $this->model = ee('Model')->get('Extension')
              ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
              ->first();
-        $this->_config =  array('debug' => true); //($this->model->settings['debug_mode'] === 'y'));
+        $this->_config =  array('debug' => ($this->model->settings['debug_mode'] === 'y'));
         $this
             ->_loadLibs()
             ->_loadConfigs()
@@ -241,6 +241,9 @@ class Manymailerplus_mcp
             // if the current = the service detail page
             $this->_vars = array_merge($this->_vars, ee()->mail_svc->settings_form(array()));
             break;
+        }
+        if (!isset($this->_vars['current_service'])) {
+            array_pop($breadcrumbs);
         }
         return $this->view_page($breadcrumbs);
     }
