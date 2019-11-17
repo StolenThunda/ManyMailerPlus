@@ -4,7 +4,7 @@
  <!-- CSS Loader -->
     <div class="loader loader-bar" data-text data-rounded></div>
    <?php
-    if (isset($current_settings) && $debug) {
+    if (isset($current_settings)) {
         echo '<div class="app-notice-wrap">'. ee("CP/Alert")->getAllInlines() .'</div>';
         ee()->dbg->c_log($current_settings, "Current Settings");
         echo "<script>console.groupCollapsed('Current Services Settings');</script>";

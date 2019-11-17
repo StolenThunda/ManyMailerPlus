@@ -119,8 +119,8 @@ class Services_module
 
     public function get_settings($all_sites = false)
     {
-        $all_settings = $this->model->settings;
-        $settings = ($all_sites == true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
+        // $all_settings = $this->model->settings;
+        $settings = $this->model->settings;//($all_sites === true || empty($all_settings)) ? $all_settings : $all_settings[$this->site_id];
         // Check for config settings - they will override database settings
         if ($all_sites == false) {
             // Override each setting from config
@@ -129,14 +129,12 @@ class Services_module
                     $settings[$k] = $v;
                 }
             }
-
             // Set a service order if none is set
             if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) || ($settings['service_order'] !== $this->service_order)) {
                 $settings['service_order'] = $this->get_service_order();
             }
         }
         // ee()->dbg->c_log($settings, __METHOD__);
-
         return $settings;
     }
 

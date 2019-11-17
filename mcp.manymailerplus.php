@@ -30,7 +30,7 @@ class Manymailerplus_mcp
          $this->model = ee('Model')->get('Extension')
              ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
              ->first();
-        $this->_config =  array('debug' => ($this->model->settings['debug_mode'] === 'y'));
+        $this->_config =  array('debug' => true); //($this->model->settings['debug_mode'] === 'y'));
         $this
             ->_loadLibs()
             ->_loadConfigs()
@@ -50,15 +50,14 @@ class Manymailerplus_mcp
             return ee('View')->make(EXT_SHORT_NAME.':'.$this->view)->render($vars);
         }
        
-        ee()->dbg->c_log($this->model->settings, __METHOD__);
-    
+        ee()->dbg->c_log($this->model->settings, __METHOD__);    
         $this->_vars['save_btn_text'] = '';
         $this->_vars['save_btn_text_working'] = '';
         $this->_vars['sections'] = array();
         $this->_vars['sidebar'] = array_keys($this->sidebar_options);
         $this->_vars['services'] = $this->services;
         $this->_vars['view'] = 'compose_view';
-        $this-> _makeSidebar();
+        $this->_makeSidebar();
     }
 
     /**
@@ -268,8 +267,7 @@ class Manymailerplus_mcp
             return ee()->output->send_ajax_response(ee()->mail_settings->{$func}());
             // ee()->functions->redirect($_SERVER['HTTP_REFERER']);
         case 'save_settings':
-            $service_settings = ee()->mail_svc->get_settings();
-            $this->_vars = array_merge($this->_vars, ee()->mail_settings->save_settings($service_settings)); 
+            ee()->mail_settings->save_settings(ee()->mail_svc->get_settings()); 
             break;           
         default:
             $this->_vars = array_merge($this->_vars, ee()->mail_settings->settings());

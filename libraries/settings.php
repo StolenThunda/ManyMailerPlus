@@ -7,12 +7,8 @@
  * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
-// use EllisLab\ExpressionEngine\Controller\Utilities;
-// use EllisLab\ExpressionEngine\Library\CP\Table;
-// use ManyMailerPlus\libraries\chriskacerguis\RestServer\RestController;
-
 /**
- * Copy of Communicate Controller
+ * MANYMAILERPLUS internal settings
  */
 class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\RestController
 {
@@ -40,18 +36,16 @@ class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\Res
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/settings/save_settings');
         $vars['save_btn_text'] = 'btn_save_settings';
         $vars['save_btn_text_working'] = 'btn_saving';
-        $vars['sections'] = array(
-            array(
-                array(
+        $vars['sections'] = array(array(array(
                     'title' => 'debug_mode',
                     'fields' => array(
                         'debug_mode' => array(
                             'type' => 'yes_no',
-                            'value' => (isset($defaults['debug_mode'])) ? $defaults['debug_mode'] : "",
+                            'value' => (isset($defaults['debug_mode'])) ? $defaults['debug_mode'] : "n",
                         )
-                    ),
+                    )
                 )
-            )
+        )
         );
         ee()->dbg->c_log($vars, __METHOD__);
         return $vars;
@@ -78,18 +72,19 @@ class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\Res
         if (empty($_POST)) {
             show_error(ee()->lang->line('unauthorized_access'));
         } else {
-            $settings = array_merge($this->get_settings(), $other_settings);
+            $settings = $this->get_settings();//array_merge($this->get_settings(), $other_settings);;
         }
+        // var_dump($other_settings);
         ee()->dbg->c_log($settings, __METHOD__);
         $this->model->settings = $settings;
         $this->model->save();
-        ee('CP/Alert')->makeStandard('message_success')
+        ee('CP/Alert')->makeInline('message_success')
         ->asSuccess()
         ->canClose()
         ->withTitle(lang('message_success'))
         ->addToBody(lang('preferences_updated'))
         ->defer();
-        ee()->functions->redirect(ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings/get_options')->compile());
+        ee()->functions->redirect(ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings')->compile());
     }
 }
 // END CLASS

@@ -929,7 +929,7 @@ class ManyMailerPlus_mod {
         this.service_list
             .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
             .addClass('service-list');
-        if (this.active_services.length > 0) {
+        if (window.location.href.split("/").includes('services')) {
             this.show_active_services();
         } else {
             this.service_list.hide();
