@@ -177,7 +177,7 @@ class Manymailerplus_mcp
         $this->_vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
         switch ($func) {
-        case 'get_template_view':
+        case 'getTemplateView':
             return ee()->mail_funcs->{$func}();
         case 'view_templates':
             $this->_vars = array_merge($this->_vars, ee()->mail_funcs->{$func}());

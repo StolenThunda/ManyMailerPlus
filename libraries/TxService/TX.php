@@ -51,6 +51,13 @@ trait TX
         if ($http_code !== 200) ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
         return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
     }
+
+    public function getCurrentSettings(){
+        return ee('Model')->get('Extension')
+            ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
+            ->first()->settings;
+    }
 }
+
 
 ?>

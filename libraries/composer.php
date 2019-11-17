@@ -43,6 +43,9 @@ class Composer
             ee()->cp->add_to_foot($script);
         }
         $this->debug = isset($settings['debug']) ? $settings['debug'] : false;
+        $this->model = ee('Model')->get('Extension')
+            ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
+            ->first();
     }
 
     /**
@@ -53,7 +56,7 @@ class Composer
     private function extractBracketedEmail($str = null)
     {
         $emails = explode(',', $str);
-        ee()->dbg->c_log($str, __METHOD__);
+        // ee()->dbg->c_log($str, __METHOD__);
         $matches = null;
         foreach ($emails as $email) {
             preg_match_all($this->email_regex, $email, $matches, PREG_SET_ORDER, 0);
@@ -65,7 +68,7 @@ class Composer
         }
        
         $email_str = empty($emails) ? $str : join(", ", $emails);
-        ee()->dbg->c_log($matches, __METHOD__);
+        // ee()->dbg->c_log($matches, __METHOD__);
         return $email_str;
     }
 
@@ -147,8 +150,7 @@ class Composer
             ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
         }
 
-        $template_view = ee('View')->make(EXT_SHORT_NAME.':email/embed_templates');
-        ee()->dbg->c_log($this->debug, __METHOD__);
+        // ee()->dbg->c_log($this->debug, __METHOD__);
        
         $vars['sections'] = array(
             'sender_info' => array(
@@ -390,16 +392,22 @@ class Composer
         return $vars;
     }
 
-    public function get_template_view()
+    /**
+     *  Returns the html rendered by view_templates
+     * 
+     * @return string html 
+     */
+    public function getTemplateView()
     {
         $vars = $this->view_templates();
         ee()->dbg->c_log($vars, __METHOD__);
         return  ee('View')->make(EXT_SHORT_NAME.':email/embed_templates')->render($vars);
     }
     /**
-     * compose.
+     *  Stepped version of composer
      *
      * @param obj $email An EmailCache object for use in re-populating the form (see: resend())
+     *
      */
     public function compose2(EmailCache $email = null)
     {
@@ -778,11 +786,6 @@ class Composer
                 $this->extras[$key] = ee()->input->post($key);
             }
         }
-        // if ($this->extras['chosen_template_html'] !== "" && array_key_exists('mc-edit', $this->extras)) {
-        //     $message =  "\"" . $this->extras['chosen_template_html'] ."\"";
-        //     unset($this->extras['chosen_template_html']);
-        // };
-        // ee()->dbg->c_log($message, __METHOD__, true);
         $recipient_array = array_map(
             function ($a) {
                 return filter_var($a, FILTER_SANITIZE_EMAIL);
@@ -844,7 +847,7 @@ class Composer
         $name = ee()->session->userdata('screen_name');
         
         $debug_msg = '';
-
+        
         switch ($mailtype) {
             case 'text':
                 $text_fmt = 'none';
@@ -996,21 +999,6 @@ class Composer
         ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
     }
 
-    private function _merge_template($vars)
-    {
-        // TODO: move functionality to service specific
-        $return_html = $vars['chosen_template_html'];
-        foreach (array_keys($vars['mc-edit']) as $value) {
-            $regex = '/<div mc:edit="'.$value.'">(.*?)<\/div>/';
-            ee()->dbg->c_log($regex, __METHOD__);
-            ee()->dbg->c_log($vars['mc-edit'][$value], __METHOD__);
-            ee()->dbg->c_log($return_html, __METHOD__);
-            $return_html = preg_replace($regex, $vars['mc-edit'][$value], $return_html);
-            echo $return_html[1];
-            exit;
-        }
-        return $return_html;
-    }
     /**
      * Batch Email Send.
      *
@@ -1165,7 +1153,6 @@ class Composer
             ee()->dbg->c_log($this->csv_lookup, __METHOD__);
             ee()->dbg->c_log($email_address, __METHOD__);
             if ($csv_lookup_loaded) {
-                $tmp_plaintext = $email->plaintext_alt;
                 $record = $this->csv_lookup[$email_address];
                 ee()->dbg->c_log(isset($record['{{first_name}}']) && isset($record['{{last_name}}']), __METHOD__);
                 // standard 'First Last <email address> format
@@ -1333,7 +1320,7 @@ class Composer
 
     public function email_send($data)
     {
-        $settings = ee()->mail_svc->get_settings();
+        $settings = $this->model->settings;
         $str_settings = json_encode(json_decode(json_encode($settings, JSON_PRETTY_PRINT)));
         if (empty($settings['service_order'])) {
             return false;
@@ -1430,7 +1417,6 @@ class Composer
             // ee()->dbg->c_log($sent, __METHOD__);
             if ($sent == true) {
                 ee()->extensions->end_script = true;
-
                 return true;
             }
         }
@@ -1442,7 +1428,7 @@ class Composer
     {
         if (!isset($this->service)) {
             $service = ee()->mail_svc->get_initial_service();
-            $service_settings = array('debug' => $this->debug, 'settings' => ee()->mail_svc->get_settings());
+            $service_settings = array('debug' => $this->debug, 'settings' => $this->model->settings);
             $file_path = sprintf(PATH_THIRD.'manymailerplus/libraries/TxService/drivers/TxService_%s.php', ucfirst($service));
             $this->service = strtolower($service);
             ee()->dbg->c_log($file_path, __METHOD__ . ": Path");
@@ -1738,14 +1724,14 @@ class Composer
         $search = $table->search;
         if (!empty($search)) {
             $emails = $emails->filterGroup()
-                               ->filter('subject', 'LIKE', '%'.$table->search.'%')
-                               ->orFilter('message', 'LIKE', '%'.$table->search.'%')
-                               ->orFilter('from_name', 'LIKE', '%'.$table->search.'%')
-                               ->orFilter('from_email', 'LIKE', '%'.$table->search.'%')
-                               ->orFilter('recipient', 'LIKE', '%'.$table->search.'%')
-                               ->orFilter('cc', 'LIKE', '%'.$table->search.'%')
-                               ->orFilter('bcc', 'LIKE', '%'.$table->search.'%')
-                             ->endFilterGroup();
+                ->filter('subject', 'LIKE', '%'.$table->search.'%')
+                ->orFilter('message', 'LIKE', '%'.$table->search.'%')
+                ->orFilter('from_name', 'LIKE', '%'.$table->search.'%')
+                ->orFilter('from_email', 'LIKE', '%'.$table->search.'%')
+                ->orFilter('recipient', 'LIKE', '%'.$table->search.'%')
+                ->orFilter('cc', 'LIKE', '%'.$table->search.'%')
+                ->orFilter('bcc', 'LIKE', '%'.$table->search.'%')
+                ->endFilterGroup();
         }
 
         $count = $emails->count();

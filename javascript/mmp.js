@@ -393,7 +393,7 @@ class ManyMailerPlus_mod {
         if (toggle) {
             // debugger;
             let current_base_url = 'http://' + window.location.hostname;
-            let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/get_template_view', current_base_url);
+            let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/getTemplateView', current_base_url);
             this.toggle_loading();
             $.get(url, {}, function (data, textStatus, jqXHR) {
                 console.log(url.href);

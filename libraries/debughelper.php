@@ -191,10 +191,9 @@ class Debughelper
             ob_start();
             echo $this;
             $value = ob_get_contents();
-        }
-
-        if ($exit) {
-            exit();
+            if ($exit) {
+                exit();
+            }
         }
     }
 

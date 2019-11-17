@@ -261,9 +261,9 @@ class TxService_Mandrill extends EE_Driver implements TxService\TxServiceInterfa
             ee()->form_validation->set_rules('template_name', 'lang:template_name', 'required|valid_xss_check');
             if (ee()->form_validation->run() === false) {
                 ee()->view->set_message('issue', lang('save_template_error'), lang('save_template_error_desc'));
-                echo '<pre>';
-                print_r($_POST);
-                echo '</pre>';
+                // echo '<pre>';
+                // print_r($_POST);
+                // echo '</pre>';
 
                 return $this->edit_template($template_name);
             }
