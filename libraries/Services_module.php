@@ -131,7 +131,7 @@ class Services_module
                 $settings['service_order'] = $this->get_service_order();
             }
         }
-        // ee()->dbg->c_log($settings, __METHOD__);
+        ee()->dbg->c_log($settings, __METHOD__);
         return $settings;
     }
 
@@ -188,11 +188,8 @@ class Services_module
     {
         $all_settings = $this->model->settings;
         ee()->dbg->c_log($all_settings, __METHOD__);
-        $settings = (count($all_settings) > 0 && array_key_exists($this->site_id, $all_settings)) ?$all_settings[$this->site_id]: $all_settings;
-
+        $settings = (count($all_settings) > 0 && array_key_exists($this->site_id, $all_settings)) ? $all_settings[$this->site_id]: $all_settings;
         $active_services = $this->get_active_services();
-               
-
         if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
             return array_keys($this->services);
         } else {

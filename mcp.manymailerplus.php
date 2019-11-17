@@ -245,6 +245,7 @@ class Manymailerplus_mcp
         if (!isset($this->_vars['current_service'])) {
             array_pop($breadcrumbs);
         }
+        $this->_vars['active_service_names'] = json_encode(ee()->mail_svc->get_active_services(), 1);
         return $this->view_page($breadcrumbs);
     }
 
