@@ -56,6 +56,7 @@ $lang = array(
     'csv_recipient' => 'CSV data',
     'description' => 'Description',
     'debug_mode' => 'Debugging Mode',
+    'debug_desc' => 'Use the developer tools to view logged info',
     'disabled' => 'Disabled',
     'edit_template_name' => 'Create/Edit Templates',
     'edit_template' => 'Create/Edit Template',

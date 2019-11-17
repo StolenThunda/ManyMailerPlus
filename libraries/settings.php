@@ -38,6 +38,7 @@ class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\Res
         $vars['save_btn_text_working'] = 'btn_saving';
         $vars['sections'] = array(array(array(
                     'title' => 'debug_mode',
+                    'desc' => 'debug_desc',
                     'fields' => array(
                         'debug_mode' => array(
                             'type' => 'yes_no',
