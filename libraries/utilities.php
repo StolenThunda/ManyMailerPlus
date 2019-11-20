@@ -4,11 +4,11 @@ namespace ManyMailerPlus\libraries;
 /**
  * Utility functions for MMP modules
  */
-trait Utility_Functions
+trait Utilities
 {
     public static function _getExtModel()
     {
-        $id = Utility_Functions::u_getSiteID();
+        $id = Utilities::u_getSiteID();
         return ee('Model')
             ->get('Extension')
             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
@@ -21,14 +21,14 @@ trait Utility_Functions
      */
     public static function u_getCurrentSettings()
     {
-        $model = Utility_Functions::_getExtModel();
-        $id = Utility_Functions::u_getSiteID();
+        $model = Utilities::_getExtModel();
+        $id = Utilities::u_getSiteID();
         return (array_key_exists($id, $model->settings)) ? $model->settings[$id] : $model->settings;
     }
 
     public function u_debug_enabled()
     {
-        $model = Utility_Functions::_getExtModel();
+        $model = Utilities::_getExtModel();
         return (array_key_exists('debug_mode', $model->settings) && $model->settings['debug_mode'] === 'y');
     }
 
@@ -39,8 +39,8 @@ trait Utility_Functions
 
     public static function u_saveSettings($settings)
     {
-        $model = Utility_Functions::_getExtModel();
-        $merge_settings =  empty($settings) ? $settings : array_merge(Utility_Functions::u_getcurrentSettings(), $settings);
+        $model = Utilities::_getExtModel();
+        $merge_settings =  empty($settings) ? $settings : array_merge(Utilities::u_getcurrentSettings(), $settings);
         $model->settings = $merge_settings;
         // ee()->dbg->c_log($merge_settings, __METHOD__, true);
         $model->save();
@@ -69,17 +69,17 @@ trait Utility_Functions
     //DEPRECATED 
     public function u_setDEBUG($val = false)
     {
-        $model = Utility_Functions::_getExtModel();
-        $id = Utility_Functions::u_getSiteID();
+        $model = Utilities::_getExtModel();
+        $id = Utilities::u_getSiteID();
         $setting = ($val) ? 'y' : 'n';
         if (array_key_exists($id, $model->settings)) {
             $current = $model->settings[$id];
             if (array_key_exists('debug_mode', $current)) {
                 $current['debug_mode'] = $setting;
-                Utility_Functions::u_saveSettings($current);
+                Utilities::u_saveSettings($current);
                 // ee()->dbg->c_log($current, __METHOD__, true);
             }
         }
-        return Utility_Functions::u_getCurrentSettings();
+        return Utilities::u_getCurrentSettings();
     }
 }

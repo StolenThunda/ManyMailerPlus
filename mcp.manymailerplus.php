@@ -1,12 +1,6 @@
 <?php
 /**
  * MANYMAILERPLUS
- */
-if (!defined('BASEPATH')) {
-    exit('No direct script access allowed');
-}
-/**
- * Manymailerplus_mcp class
  *
  * @category Bootstrap_For_MMP
  * @package  Category
@@ -14,9 +8,18 @@ if (!defined('BASEPATH')) {
  * @license  MIT http://url.com
  * @link     http://url.com
  */
+namespace ManyMailerPlus;
+
+if (!defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
+/**
+ * Manymailerplus_mcp class
+ *
+ */
 class Manymailerplus_mcp
 {
-    use ManyMailerPlus\libraries\Utility_Functions;
+    use libraries\Utility_Functions;
     private $_vars = array();
     /**
      * Constructor.
@@ -67,7 +70,7 @@ class Manymailerplus_mcp
     {
         ee()->load->helper('html');
         ee()->load->library('debughelper', array(), 'dbg');
-        ee()->load->library('services_module', array(), 'mail_svc');
+        ee()->load->library('services', array(), 'mail_svc');
         ee()->load->library('composer', array(), 'mail_funcs');
         ee()->load->library('settings', array(), 'mail_settings');
         return $this;
@@ -225,7 +228,7 @@ class Manymailerplus_mcp
         case 'save':
             ee()->mail_svc->save_settings();
             return false;
-        // case 'update_service_order':
+        case 'update_service_order':
         case 'get_settings':
         case 'get_service_order':
         case 'get_active_services':

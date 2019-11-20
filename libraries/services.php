@@ -24,7 +24,7 @@
 
 require_once PATH_THIRD.EXT_SHORT_NAME.'/config.php';
 
-class Services_module
+class Services
 {
     use ManyMailerPlus\libraries\Utility_Functions;
     public $config;
@@ -148,23 +148,22 @@ class Services_module
         ee()->functions->redirect(ee('CP/URL')->make('addons/settings/'.EXT_SHORT_NAME.'/services/'.$current_service));
     }
 
-    // public function update_service_order($settings = null)
-    // {
+    public function update_service_order($settings = null)
+    {
         
-    //     $settings = (!is_null($settings)) ? $settings : $this->get_settings();
-    //    ee()->dbg->c_log($settings, __METHOD__);
-    //     if ($services = ee('Request')->post('service_order')) {
-    //         $settings[$this->site_id]['service_order'] = explode(',', $services);
-    //         $this->model->settings = $settings;
+        $settings = (!is_null($settings)) ? $settings : $this->get_settings();
+        ee()->dbg->c_log($settings, __METHOD__);
+        if ($services = ee('Request')->post('service_order')) {
+            $settings['service_order'] = explode(',', $services);
+            $settings = array_merge($this->u_getCurrentSettings(), $settings);
+            $this->u_saveSettings($settings);
+            // ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
+            return $this->u_getCurrentSettings();
+        }
+        ee()->dbg->c_log($settings, __METHOD__);
 
-    //         $this->model->save();
-    //        ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
-    //         // exit();
-    //     }
-    //    ee()->dbg->c_log($settings, __METHOD__);
-
-    //     return $settings['service_order'];
-    // }
+        return $settings['service_order'];
+    }
 
     public function get_service_order()
     {

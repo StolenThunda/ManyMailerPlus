@@ -775,6 +775,7 @@ class ManyMailerPlus_mod {
             }
             $(this).attr('data-service', list_item);
         });
+        return this;
     }
 
     showPlaceholders() {
@@ -927,53 +928,57 @@ class ManyMailerPlus_mod {
     }
     init_service_list() {
         this.service_list
-            .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/')
+            .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
             .addClass('service-list');
         if (window.location.href.split("/").includes('services')) {
-            this.show_active_services();
+            this
+                .show_active_services()
+                .init_sortable();
         } else {
             this.service_list.hide();
         }
         return this;
     }
 
-    // init_sortable(){
-    //  $('.service-list').sortable({
-    //     axis: 'y',
-    //     opacity: 0.5,
-    //     update: function() {
-    //         var serviceOrder = [];
-    //         var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
-    //         $('.service-list li').each(function() {
-    //             serviceOrder.push($(this).data('service'));
-    //         });
-    //         $.post(url, {
-    //                 service_order: serviceOrder.toString(),
-    //                 CSRF_TOKEN: EE.CSRF_TOKEN,
-    //                 XID: EE.XID
-    //             })
-    //             .success(function(data) {
-    //                 data = procReq(data);
-    //                 $('.service-list').data('order', data);
-    //                 if (data.indexOf('console') === 0){
-    //                     logs = data.split(');');
-    //                     logs.forEach(element => {
-    //                         element = element.trim() + ');';
-    //                         if (element.indexOf('console') === 0){
-    //                             eval(element);
-    //                         }
-    //                     });
-    //                 }else{
-    //                     console.dir(data);
-    //                 }
-    //             })
-    //             .fail(function(err){
-    //                 data = procReq(this.data, true);
-    //                 console.log(data);
-    //             });
-    //     }
-    // });
-    // }
+    init_sortable(){
+     $('.service-list').sortable({
+        axis: 'y',
+        opacity: 0.5,
+        update: function() {
+            var serviceOrder = [];
+            var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
+            $('.service-list li').each(function() {
+                serviceOrder.push($(this).data('service'));
+            });
+            $.post(url, {
+                    service_order: serviceOrder.toString(),
+                    CSRF_TOKEN: EE.CSRF_TOKEN,
+                    XID: EE.XID
+                })
+                .success(function(data) {
+                    debugger;
+                    data = this.procReq(data);
+                    $('.service-list').data('order', data);
+                    if (data.indexOf('console') === 0){
+                        logs = data.split(');');
+                        logs.forEach(element => {
+                            element = element.trim() + ');';
+                            if (element.indexOf('console') === 0){
+                                eval(element);
+                            }
+                        });
+                    }else{
+                        console.dir(data);
+                    }
+                })
+                .fail(function(err){
+                    data = this.procReq(this.data, true);
+                    console.log(data);
+                });
+        }
+    });
+    return this;
+    }
     isJson(item) {
         item = typeof item !== 'string' ? JSON.stringify(item) : item;
         try {
@@ -995,19 +1000,19 @@ class ManyMailerPlus_mod {
         return JSON.parse(JSON.stringify('{' + retVals + '}'));
     }
 
-        procReq(data, query = false) {
-            if (query) {
-                return this.qs2json(data);
-            }
-            // console.log(data);
-            logs = data.substring(0, data.lastIndexOf('</script>') + 9);
-            // console.log(logs);
-            var d1 = document.getElementsByTagName('head')[0];
-            d1.insertAdjacentHTML('beforeend', logs);
-            data = data.substring(logs.length);
-            // console.log(data);
-            return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : isJson(data) ? JSON.parse(data) : data;
+    procReq(data, query = false) {
+        if (query) {
+            return this.qs2json(data);
         }
+        // console.log(data);
+        logs = data.substring(0, data.lastIndexOf('</script>') + 9);
+        // console.log(logs);
+        var d1 = document.getElementsByTagName('head')[0];
+        d1.insertAdjacentHTML('beforeend', logs);
+        data = data.substring(logs.length);
+        // console.log(data);
+        return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : this.isJson(data) ? JSON.parse(data) : data;
+    }
     test_funcs() {
         var that = this;
         $('#btnData').on('click', function () {
