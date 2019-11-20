@@ -220,7 +220,6 @@ class Manymailerplus_mcp
         );
         $this->_vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
         $this->_vars['cp_page_title'] = lang(__FUNCTION__.'_title');
-        // $this->_vars['current_action'] = $this->_vars['view'] = __FUNCTION__;
         switch ($func) {
         case 'save':
             ee()->mail_svc->save_settings();
@@ -232,8 +231,7 @@ class Manymailerplus_mcp
         case 'get_initial_service':
             return ee()->output->send_ajax_response(ee()->mail_svc->{$func}());
         default:
-            $this->_vars['current_action'] = 'settings';
-            array_pop($breadcrumbs);
+            $this->_vars['current_action'] = 'services';
             // if the current = the service detail page
             $this->_vars = array_merge($this->_vars, ee()->mail_svc->settings_form(array()));
             break;
