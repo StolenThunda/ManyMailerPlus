@@ -68,20 +68,4 @@ Thanks to ***Derek Hogue*** @ **[Amphibian Design](https://www.sparkpost.com/)**
 All other columns will be automatically injested to create tokenized placeholder buttons for use during email composition.
 
 [^1]: Recipient Emails textbox is disabled by default
-
-## Changelog
-
-### [1.0.0] - 2019-03-22 - ManyMailerPlus v1.0
-
-- commited 20 files [(98e948b)](https://github.com/StolenThunda/manymailerplus/commit/98e948bc35c1678b03a0e3e970e5cca6b681f693)
-- converted extension to module
-- added new view for module
-- fixed bug in debug_helper to refer to the last class it can find to output
-
-### [0.1.5] - 2019-03-14 - Beta release
-
-Current Release has the ability to:
-
-- send emails
-- view sent mail
-- separate template/actual emails in log
+## [Changelog](./CHANGELOG.md)
