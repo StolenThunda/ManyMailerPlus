@@ -10,17 +10,20 @@
 /**
  * MANYMAILERPLUS internal settings
  */
-class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\RestController
+class Settings 
 {
+    use ManyMailerPlus\libraries\Utility_Functions;
     /**
      * Constructor
      */
     public function __construct($settings=array())
     {
-        // parent::__construct();
-        $CI = ee();
+        // $CI = ee();
+        $list = get_class_methods($this);
+        rsort($list);
+        // ee()->dbg->c_log(json_encode($list, 1), __METHOD__, true);
+        
         $this->settings = $settings;
-        $this->site_id = ee()->config->item('site_id');
         $this->model = ee('Model')->get('Extension')
             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
             ->first();
@@ -32,7 +35,7 @@ class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\Res
     
     public function settings()
     {
-        $defaults = $this->model->settings;
+        $defaults = $this->u_getCurrentSettings();
         $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/settings/save_settings');
         $vars['save_btn_text'] = 'btn_save_settings';
         $vars['save_btn_text_working'] = 'btn_saving';
@@ -48,7 +51,7 @@ class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\Res
                 )
         )
         );
-        ee()->dbg->c_log($vars, __METHOD__);
+        ee()->dbg->c_log($defaults, __METHOD__);
         return $vars;
     }
 
@@ -59,34 +62,50 @@ class Settings //extends \ManyMailerPlus\libraries\chriskacerguis\RestServer\Res
             $settings[$key] = $val;
         }
        
-     
-        return $settings;
+        // ee()->dbg->c_log($settings, __METHOD__, true);
+        return array_merge($this->u_getCurrentSettings(), $settings);
     }
 
-    public function return_settings()
+    public function reset_settings()
     {
-        return ee()->mail_svc->get_service_order();
+        $name = $title = $body = 'reset_';
+        $this->u_saveSettings(array());
+        $current = $this->u_getCurrentSettings();
+        $status = true;
+        $defer = true;
+        if (!empty($current)) {
+            $name .= 'error';
+            $title .= 'error_title';
+            $body .= 'error_body';
+            $status = false;
+            $defer = false;
+        } else {
+            $name .= 'success';
+            $title .= 'success_title';
+            $body .= 'success_body';
+        }
+        
+        $this->u_messages($name, lang($title), lang($body), $status, $defer);
+        return $current;
     }
-
-    public function save_settings($other_settings=array())
+  
+    public function save_settings()
     {
+        
+        $final_settings = array();
         if (empty($_POST)) {
             show_error(ee()->lang->line('unauthorized_access'));
         } else {
-            $settings = $this->get_settings();//array_merge($this->get_settings(), $other_settings);;
+            $final_settings = $this->get_settings();
         }
-        // var_dump($other_settings);
-        ee()->dbg->c_log($settings, __METHOD__);
-        $this->model->settings = $settings;
-        $this->model->save();
-        ee('CP/Alert')->makeInline('message_success')
-        ->asSuccess()
-        ->canClose()
-        ->withTitle(lang('message_success'))
-        ->addToBody(lang('preferences_updated'))
-        ->defer();
+        // ee()->dbg->c_log($final_settings, __METHOD__, true);
+        $this->u_saveSettings($final_settings);
+        
+        // ee()->dbg->c_log($this->u_getCurrentSettings(), __METHOD__, true);
+        $this->u_messages('message_success', lang('message_success'), lang('preferences_updated'), false, false);
         ee()->functions->redirect(ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings')->compile());
     }
+
 }
 // END CLASS
 // EOF

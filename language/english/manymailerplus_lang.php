@@ -1,7 +1,16 @@
 <?php
- if (!defined('BASEPATH')) {
+/**
+ * ManyMailerPlus English Language file
+ * 
+ * @category Language_File
+ * @package  ManyMailerPlus
+ * @author   Tony Moses <tonymoses@texasbluesalley.com>
+ * @license  MIT http://url.com
+ * @link     http://url.com
+ */
+if (!defined('BASEPATH')) {
      exit('No direct script access allowed');
- }
+}
 $email_detail = EXT_NAME.'\'s ';
 $email_detail .= <<<HERE
 Composer Is just like the built in "Communicate" utility with one enhancement. It provides options for: <blockquote>
@@ -130,10 +139,14 @@ $lang = array(
     'recipient_type_desc' => "Default: Type email <br/>{$recip_csv_type}: Paste contents of CSV File <br/> {$recip_file_type}: Upload local CSV File",
     'recipient_type' => 'Recipient Entry Method',
     'recipients' => 'Recipient(s)',
+    'reset_success_title' => 'Success',
+    'reset_success_body' => 'Preferences have been successfully cleared',
+    'reset_error_title' => 'Error',
+    'reset_error_body' => 'Preferences have not been cleared',
     'save_settings' => 'Save Settings',
-    'save_template_error_desc' => 'We were unable to save this template in it\'s current state. Please fix errors below',
-    'save_template_error' => 'Error Saving Template',
-    'save_template' => 'Save Template',
+    'saveTemplateErrorDesc' => 'We were unable to save this template in it\'s current state. Please fix errors below',
+    'saveTemplateError' => 'Error Saving Template',
+    'saveTemplate' => 'Save Template',
     'search_emails_button' => 'Search Emails',
     'search_templates_button' => 'Search Templates',
     'send_as' => 'Send As: ',
@@ -147,7 +160,7 @@ $lang = array(
     'services_heading' => 'Services Overview',
     'services_name' => 'Services',
     'services_text' => '<p>Activate and configure as many services as you like via the links in the sidebar.</p>
-		<p>If the topmost activated service fails to send a particular email, the next active service will be used. If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',
+		<p> If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',//If the topmost activated service fails to send a particular email, the next active service will be used.
     'services_title' => 'Services',
     'services' => 'Services',
     'settings' => 'Module Settings',

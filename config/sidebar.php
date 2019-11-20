@@ -11,10 +11,10 @@
                 'links' => array('compose', 'sent', 'edit_template', 'view_templates')//, 'compose2' )
             ),
             'settings' => array(
-                // 'links' => array('return_settings')
+                'links' => array()//'get_settings',  'reset_settings')
             ),
             'services' => array(
-                'links' => array(),
+                'links' => array()//'get_settings', 'get_service_order', 'get_active_services', 'get_initial_service',),
             ),
         ),
     );

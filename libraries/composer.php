@@ -1,34 +1,29 @@
 <?php
 /**
  * This source file is part of the open source project
- * ExpressionEngine (https://expressionengine.com).
- *
- * @see      https://expressionengine.com/
- *
- * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
- * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
 // use EllisLab\ExpressionEngine\Model\Email\EmailCache;
 use ManymailerPlus\Model\EmailCachePlus as EmailCache;
-
+use ManyMailerPlus\libraries\Utility_Functions;
 /**
  * Copy of Communicate Controller.
  */
 class Composer
 {
-    private $attachments = array();
-    private $csv_lookup = array();
-    private $csv_email_column = '{{email}}';
-    private $email_regex = '/<([^>]+)>/';//'/(?:[a-z0-9!#$%&\'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/m';
-
+    use  Utility_Functions;
+    private $_attachments = array();
+    private $_csv_lookup = array();
+    private $_csv_email_column = '{{email}}';
+    private $_email_regex = '/<([^>]+)>/';//'/(?:[a-z0-9!#$%&\'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/m';
+     
     /**
      * Constructor.
      */
     public function __construct($settings = array())
     {
         $CI = ee();
-
+        $this->debug = $this->u_debug_enabled();
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
         }
@@ -42,7 +37,6 @@ class Composer
         foreach ($external_js as $script) {
             ee()->cp->add_to_foot($script);
         }
-        $this->debug = isset($settings['debug']) ? $settings['debug'] : false;
         $this->model = ee('Model')->get('Extension')
             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
             ->first();
@@ -51,6 +45,7 @@ class Composer
     /**
      *  Removes <>'ed email addresses from a string
      *  (Tony Moses \<tonymoses@texasbluesalley.com\>, Antonio Moses \<tonym415@gmail.com\>, test \<test@test.com\>)
+     * 
      * @param String $str String of email address. May or may not have <> in the string
      */
     private function extractBracketedEmail($str = null)
@@ -59,7 +54,7 @@ class Composer
         // ee()->dbg->c_log($str, __METHOD__);
         $matches = null;
         foreach ($emails as $email) {
-            preg_match_all($this->email_regex, $email, $matches, PREG_SET_ORDER, 0);
+            preg_match_all($this->_email_regex, $email, $matches, PREG_SET_ORDER, 0);
             foreach ($matches as $key=>$match) {
                 if (!in_array($match[0][0], $emails)) {
                     $emails[] = $match[0][0];
@@ -327,7 +322,7 @@ class Composer
                 'title' => '',
                 'fields' => array(
                     'btn' => array(
-                        'type' => ($this->debug) ? 'html' : 'hidden',
+                        'type' => ($this->u_debug_enabled()) ? 'html' : 'hidden',
                         'content' => '<div class="form-btns">'.form_button('btnDump', 'Dump Hidden Values', "class='btn'").BR.form_button('btnDump2', 'Dump Form Values', 'class="btn dbg"').'</div>',
                     ),
                 )
@@ -556,7 +551,7 @@ class Composer
                         ->canClose()
                         ->now();
 
-            ee('CP/Alert')->makeInline('save_template_req')
+            ee('CP/Alert')->makeInline('saveTemplate_req')
                         ->asIssue()
                         ->withTitle(ee()->session->flashdata('save_endpoint'))
                         ->addToBody(ee()->session->flashdata('save_api_data'))
@@ -699,8 +694,8 @@ class Composer
         );
 
         $vars['cp_page_title'] = lang(__FUNCTION__);
-        $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/save_template');
-        $vars['save_btn_text'] = lang('save_template');
+        $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/email/saveTemplate');
+        $vars['save_btn_text'] = lang('saveTemplate');
         $vars['save_btn_text_working'] = lang('saving_template');
 
         ee()->dbg->c_log($vars, __METHOD__);
@@ -708,11 +703,11 @@ class Composer
         return $vars;
     }
 
-    public function save_template()
+    public function saveTemplate()
     {
         $service = $this->get_service();
         if (!is_null($service)) {
-            ee()->{$service}->save_template();
+            ee()->{$service}->saveTemplate();
         }
     }
 
@@ -794,18 +789,18 @@ class Composer
         );
        
         if (isset($mailKey)) {
-            $this->csv_email_column = preg_replace('/^(\'(.*)\'|"(.*)")$/', '$2$3', $mailKey);
+            $this->_csv_email_column = preg_replace('/^(\'(.*)\'|"(.*)")$/', '$2$3', $mailKey);
         }
         // create lookup array for easy email lookup
         if (isset($csv_object) and $csv_object !== '' and isset($mailKey)) {
             $rows = json_decode($csv_object, true);
     
             foreach ($rows as $row) {
-                // ee()->dbg->c_log(in_array($this->csv_email_column, array_keys($row)), __METHOD__ . ":".$this->csv_email_column);
-                $this->csv_lookup[trim($row[$this->csv_email_column])] = $row;
+                // ee()->dbg->c_log(in_array($this->_csv_email_column, array_keys($row)), __METHOD__ . ":".$this->_csv_email_column);
+                $this->_csv_lookup[trim($row[$this->_csv_email_column])] = $row;
             }
         }
-        ee()->dbg->c_log($this->csv_lookup, __METHOD__);
+        ee()->dbg->c_log($this->_csv_lookup, __METHOD__);
         //  Verify privileges
         if (count($groups) > 0 && !ee()->cp->allowed_group('can_email_member_groups')) {
             show_error(lang('not_allowed_to_email_member_groups'));
@@ -890,8 +885,8 @@ class Composer
             'text_fmt' => $text_fmt,
             'total_sent' => 0,
             'plaintext_alt' => $plaintext_alt,
-            'attachments' => $this->attachments,
-            'mailKey' => !empty($this->csv_email_column) ? $this->csv_email_column : "error",
+            'attachments' => $this->_attachments,
+            'mailKey' => !empty($this->_csv_email_column) ? $this->_csv_email_column : "error",
             'csv_object' => !empty($csv_object) ? json_decode($csv_object, true) : array()
         );
         ee()->dbg->c_log($cache_data, __METHOD__);
@@ -1133,7 +1128,7 @@ class Composer
         ee()->dbg->c_log($email->recipient_array, __METHOD__);
         $recipient_array = array_slice($email->recipient_array, $email->total_sent);
         $number_to_send = count($recipient_array);
-        $csv_lookup_loaded = (count($this->csv_lookup) > 0);
+        $csv_lookup_loaded = (count($this->_csv_lookup) > 0);
 
         if ($number_to_send < 1) {
             return 0;
@@ -1150,16 +1145,16 @@ class Composer
         $formatted_message = $email->message = $this->formatMessage($email, true);
         for ($x = 0; $x < $number_to_send; ++$x) {
             $email_address = array_shift($recipient_array);
-            ee()->dbg->c_log($this->csv_lookup, __METHOD__);
+            ee()->dbg->c_log($this->_csv_lookup, __METHOD__);
             ee()->dbg->c_log($email_address, __METHOD__);
             if ($csv_lookup_loaded) {
-                $record = $this->csv_lookup[$email_address];
+                $record = $this->_csv_lookup[$email_address];
                 ee()->dbg->c_log(isset($record['{{first_name}}']) && isset($record['{{last_name}}']), __METHOD__);
                 // standard 'First Last <email address> format
                 if (isset($record['{{first_name}}']) && isset($record['{{last_name}}'])) {
-                    $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record[$this->csv_email_column]}>"; //TODO: https://trello.com/c/1lffhlXm
+                    $to = "{$record['{{first_name}}']} {$record['{{last_name}}']}  <{$record[$this->_csv_email_column]}>"; //TODO: https://trello.com/c/1lffhlXm
                 } else {
-                    $to = $record[$this->csv_email_column];
+                    $to = $record[$this->_csv_email_column];
                 }
 
                 $cache_data = array(
@@ -1178,9 +1173,9 @@ class Composer
                     'text_fmt' => $email->text_fmt,
                     'total_sent' => 0,
                     'plaintext_alt' => $email->message,
-                    'attachments' => $this->attachments,
+                    'attachments' => $this->_attachments,
                     'csv_object' => array($record),
-                    'mailKey' => $this->csv_email_column
+                    'mailKey' => $this->_csv_email_column
                 );
                 ee()->dbg->c_log($cache_data, __METHOD__);
                 $cache_data['lookup'] = $record;
@@ -1404,7 +1399,7 @@ class Composer
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
                 }
-                $result = ee()->{$service}->send_email($this->email_out);
+                $result = ee()->{$service}->sendEmail($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
                 $sent = $result['sent'];
 
@@ -1464,7 +1459,7 @@ class Composer
         ee()->dbg->c_log($req_settings, __METHOD__);
         $service = (array_key_exists('service', $req_settings)) ? $req_settings['service'] : $this->get_service();
         if (!is_null($service)) {
-            $templates = ee()->{$service}->get_templates($req_settings);
+            $templates = ee()->{$service}->getTemplates($req_settings);
         }
         ee()->dbg->c_log($templates, __METHOD__);
 
@@ -1587,9 +1582,9 @@ class Composer
         );
 
         $str = str_replace('"', '', $str);
-        if (preg_match($this->email_regex, $str, $email_matches)) {
+        if (preg_match($this->_email_regex, $str, $email_matches)) {
             $r['email'] = trim($email_matches[1]);
-            $str = trim(preg_replace($this->email_regex, '', $str));
+            $str = trim(preg_replace($this->_email_regex, '', $str));
             if (!empty($str) && $str != $r['email']) {
                 $r['name'] = utf8_encode($str);
             }
@@ -1943,7 +1938,7 @@ class Composer
         $vars['save_btn_text_working'] = '';
         $vars['sections'] = array();
 
-        //ee()->dbg->c_log($vars, __METHOD__);
+        ee()->dbg->c_log($vars, __METHOD__);
         return $vars;
     }
 
@@ -1997,7 +1992,7 @@ class Composer
 
         $data = ee()->upload->data();
 
-        $this->attachments[] = $data['full_path'];
+        $this->_attachments[] = $data['full_path'];
 
         return true;
     }

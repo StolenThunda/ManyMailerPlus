@@ -12,12 +12,12 @@ class TxService_Postageapp extends TransactionService
         ee()->dbg->c_log($this, __METHOD__);
     }
 
-    public function get_api_key()
+    public function getApiKey()
     {
         return $this->key;
     }
 
-    public function send_email($email = null)
+    public function sendEmail($email = null)
     {
         $sent = false;
         $settings = ee()->mod_svc->get_settings() ;
@@ -104,10 +104,10 @@ class TxService_Postageapp extends TransactionService
         }
         $content = json_encode($content);
 
-        return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
+        return $this->_curlRequest('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
     }
 
-    public function save_template()
+    public function saveTemplate()
     {
         return true;
     }
@@ -124,7 +124,7 @@ class TxService_Postageapp extends TransactionService
         return $merge_vars;
     }
 
-    public function get_templates($obj = array('template_name' => ''))
+    public function getTemplates($obj = array('template_name' => ''))
     {
         return array();
     }
@@ -137,7 +137,7 @@ class TxService_Postageapp extends TransactionService
         );
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
 
-        return $this->curl_request($api_endpoint, $this->headers, $data, true);
+        return $this->curlRequest($api_endpoint, $this->headers, $data, true);
     }
 
     /**

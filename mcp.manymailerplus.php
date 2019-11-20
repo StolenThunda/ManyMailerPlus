@@ -16,6 +16,7 @@ if (!defined('BASEPATH')) {
  */
 class Manymailerplus_mcp
 {
+    use ManyMailerPlus\libraries\Utility_Functions;
     private $_vars = array();
     /**
      * Constructor.
@@ -27,19 +28,16 @@ class Manymailerplus_mcp
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
         }
-         $this->model = ee('Model')->get('Extension')
-             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
-             ->first();
-        $this->_config =  array('debug' => ($this->model->settings['debug_mode'] === 'y'));
+         
+        
         $this
             ->_loadLibs()
             ->_loadConfigs()
             ->_jsConfigAutoload()
             ->_updateServiceOptions(array_keys($this->services));
-        
         if (!$this->sidebar_loaded) {
             //render page to show errors
-            $_vars = array(
+            $this->_vars = array(
                 'base_url' => ee('CP/URL', EXT_SETTINGS_PATH),
                 'cp_page_title' => lang(EXT_SHORT_NAME),
                 'save_btn_text' => 'btn_save_settings',
@@ -47,10 +45,10 @@ class Manymailerplus_mcp
                 'save_btn_text_working' => 'btn_saving',
             );
 
-            return ee('View')->make(EXT_SHORT_NAME.':'.$this->view)->render($vars);
+            return ee('View')->make(EXT_SHORT_NAME.':'.$this->view)->render($this->_vars);
         }
        
-        ee()->dbg->c_log($this->model->settings, __METHOD__);    
+        ee()->dbg->c_log($this->u_getCurrentSettings(), __METHOD__);
         $this->_vars['save_btn_text'] = '';
         $this->_vars['save_btn_text_working'] = '';
         $this->_vars['sections'] = array();
@@ -68,11 +66,10 @@ class Manymailerplus_mcp
     private function _loadLibs()
     {
         ee()->load->helper('html');
-        ee()->load->library('debughelper', $this->_config, 'dbg');
-        ee()->load->library('services_module', $this->_config, 'mail_svc');
-        ee()->load->library('composer', $this->_config, 'mail_funcs');
-        ee()->load->library('settings', $this->_config, 'mail_settings');
-        // ee()->load->driver('txservice/txservice');
+        ee()->load->library('debughelper', array(), 'dbg');
+        ee()->load->library('services_module', array(), 'mail_svc');
+        ee()->load->library('composer', array(), 'mail_funcs');
+        ee()->load->library('settings', array(), 'mail_settings');
         return $this;
     }
     /**
@@ -86,7 +83,6 @@ class Manymailerplus_mcp
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
         return $this;
-
     }
     /**
      * Ensures proper js injection
@@ -196,7 +192,7 @@ class Manymailerplus_mcp
                 break;
             }
             // no break
-        case 'save_template':
+        case 'saveTemplate':
         case 'delete_template':
             $this->_vars = array_merge($this->_vars, ee()->mail_funcs->{$func}());
             // no break
@@ -224,17 +220,17 @@ class Manymailerplus_mcp
         );
         $this->_vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/'.__FUNCTION__);
         $this->_vars['cp_page_title'] = lang(__FUNCTION__.'_title');
-        $this->_vars['current_action'] = __FUNCTION__;
+        // $this->_vars['current_action'] = $this->_vars['view'] = __FUNCTION__;
         switch ($func) {
         case 'save':
-            return ee()->mail_svc->save_settings();
+            ee()->mail_svc->save_settings();
+            return false;
         // case 'update_service_order':
         case 'get_settings':
         case 'get_service_order':
         case 'get_active_services':
         case 'get_initial_service':
             return ee()->output->send_ajax_response(ee()->mail_svc->{$func}());
-            // ee()->functions->redirect($_SERVER['HTTP_REFERER']);
         default:
             $this->_vars['current_action'] = 'settings';
             array_pop($breadcrumbs);
@@ -267,12 +263,14 @@ class Manymailerplus_mcp
         $this->_vars['current_action'] = __FUNCTION__;
        
         switch ($func) {
-        case 'return_settings':
+        case 'get_settings':
             return ee()->output->send_ajax_response(ee()->mail_settings->{$func}());
-            // ee()->functions->redirect($_SERVER['HTTP_REFERER']);
         case 'save_settings':
-            ee()->mail_settings->save_settings(ee()->mail_svc->get_settings()); 
-            break;           
+            ee()->mail_settings->save_settings(ee()->mail_svc->get_settings());
+            break;
+        case 'reset_settings':
+            $this->_vars = array_merge($this->_vars, ee()->mail_settings->{$func}());
+            break;
         default:
             $this->_vars = array_merge($this->_vars, ee()->mail_settings->settings());
         

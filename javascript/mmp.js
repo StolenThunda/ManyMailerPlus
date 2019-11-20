@@ -395,7 +395,7 @@ class ManyMailerPlus_mod {
             let current_base_url = 'http://' + window.location.hostname;
             let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/getTemplateView', current_base_url);
             this.toggle_loading();
-            $.get(url, {}, function (data, textStatus, jqXHR) {
+            $.get(url, {}, function (data) {
                 console.log(url.href);
                 console.log(data);
                 var htmlDoc = this.DOMParser.parseFromString(data, 'text/html');
@@ -974,48 +974,49 @@ class ManyMailerPlus_mod {
     //     }
     // });
     // }
-    // isJson(item) {
-    //     item = typeof item !== 'string' ? JSON.stringify(item) : item;
-    //     try {
-    //         item = JSON.parse(item);
-    //     } catch (e) {
-    //         return false;
-    //     }
+    isJson(item) {
+        item = typeof item !== 'string' ? JSON.stringify(item) : item;
+        try {
+            item = JSON.parse(item);
+        } catch (e) {
+            return false;
+        }
 
-    //     if (typeof item === 'object' && item !== null) {
-    //         return true;
-    //     }
-    //     console.log(item);
-    //     return false;
-    // }
+        if (typeof item === 'object' && item !== null) {
+            return true;
+        }
+        console.log(item);
+        return false;
+    }
 
-    // qs2json(data) {
-    //     var pairs = data.split('&');
-    //     var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
-    //     return JSON.parse(JSON.stringify('{' + retVals + '}'));
-    // }
+    qs2json(data) {
+        var pairs = data.split('&');
+        var retVals = decodeURIComponent(pairs[0]).replace('=', ':');
+        return JSON.parse(JSON.stringify('{' + retVals + '}'));
+    }
 
-    //     procReq(data, query = false) {
-    //         if (query) {
-    //             return this.qs2json(data);
-    //         }
-    //         // console.log(data);
-    //         logs = data.substring(0, data.lastIndexOf('</script>') + 9);
-    //         // console.log(logs);
-    //         var d1 = document.getElementsByTagName('head')[0];
-    //         d1.insertAdjacentHTML('beforeend', logs);
-    //         data = data.substring(logs.length);
-    //         // console.log(data);
-    //         return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : isJson(data) ? JSON.parse(data) : data;
-    //     }
+        procReq(data, query = false) {
+            if (query) {
+                return this.qs2json(data);
+            }
+            // console.log(data);
+            logs = data.substring(0, data.lastIndexOf('</script>') + 9);
+            // console.log(logs);
+            var d1 = document.getElementsByTagName('head')[0];
+            d1.insertAdjacentHTML('beforeend', logs);
+            data = data.substring(logs.length);
+            // console.log(data);
+            return data === '' ? logs.replace(/<\/?[^>]+(>|$)/g, '') : isJson(data) ? JSON.parse(data) : data;
+        }
     test_funcs() {
-        $('#btnData').on('click', function (e) {
+        var that = this;
+        $('#btnData').on('click', function () {
             var url = document.getElementsByClassName('service-list')[0].getAttribute('action-url');
             Swal.fire({
                 title: 'Select Fuction',
                 input: 'select',
                 inputOptions: {
-                    update_service_order: 'Update SO',
+                    // update_service_order: 'Update SO',
                     get_settings: 'Get Settings',
                     get_service_order: 'Get SO',
                     get_active_services: 'Active',
@@ -1024,28 +1025,13 @@ class ManyMailerPlus_mod {
                 inputPlaceholder: 'Select Function',
                 showCancelButton: true,
                 allowOutsideClick: () => !Swal.isLoading(),
-                preConfirm: (value) => {
-                    return $.post(url + value).always(function (jqXHR) {
-                        // debugger
-                        var data;
-                        if (jqXHR.hasOwnProperty('responseText')) {
-                            data = jqXHR.responseText;
-                        } else {
-                            data = jqXHR;
-                        }
-                        if (isJson(data)) {
-                            data = jqXHR;
-                        } else {
-                            data = procReq(data);
-                        }
-                        console.dir(data);
-                        data = JSON.stringify(data, null, 4);
-
+                preConfirm: (value) => {                    
+                    $.get(url + value, {}, function(data){
                         Swal.fire({
                             type: 'question',
-                            html: data
+                            html: JSON.stringify($.parseHTML(data))
                         });
-                    });
+                    }.bind(that));
                 }
             });
         });

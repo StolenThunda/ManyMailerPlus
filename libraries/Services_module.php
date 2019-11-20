@@ -26,6 +26,7 @@ require_once PATH_THIRD.EXT_SHORT_NAME.'/config.php';
 
 class Services_module
 {
+    use ManyMailerPlus\libraries\Utility_Functions;
     public $config;
     public $email_crlf = '\n';
     public $email_in = array();
@@ -51,7 +52,6 @@ class Services_module
             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
             ->first();
         $this->protocol = ee()->config->item('mail_protocol');
-        $this->site_id = ee()->config->item('site_id');
         $this->sidebar_loaded = ee()->config->load('sidebar', true, true);
         $this->services_loaded = ee()->config->load('services', true, true);
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
@@ -63,21 +63,20 @@ class Services_module
 
     public function settings_form($all_settings)
     {
-        $settings = $this->get_settings();
+        // $settings = $this->get_settings();
         $services_sorted = $this->service_order;
         if (ee('Request')->isAjax()) {
             // $this->update_service_order($all_settings);
             if ($services = ee('Request')->post('service_order')) {
-                $all_settings[$this->site_id]['service_order'] = explode(',', $services);
-                $this->model->settings = $all_settings;
-                $this->model->save();
+                $all_settings['service_order'] = explode(',', $services);
+                $this->u_saveSettings($all_settings);
                 ee()->dbg->c_log($all_settings, __METHOD__, true);
                 exit;
             }
         }
         $vars = array(
             'current_service' => false,
-            'current_settings' => $settings,
+            'current_settings' => $this->u_getCurrentSettings(),
             'services' => $services_sorted,
             'ee_version' => $this->ee_version(),
             'categories' => array_keys($this->sidebar_options),
@@ -114,48 +113,31 @@ class Services_module
         return $vars;
     }
 
-    public function get_settings($all_sites = false)
+    public function get_settings($vals = array())
     {
-        $all_settings = $this->model->settings;
-        $settings = (count($all_settings) > 0 && array_key_exists($this->site_id, $all_settings)) ?$all_settings[$this->site_id]: $all_settings;
-        // Check for config settings - they will override database settings
-        if ($all_sites == false) {
-            // Override each setting from config
-            if (!empty($this->config[$this->site_id])) {
-                foreach ($this->config[$this->site_id] as $k => $v) {
-                    $settings[$k] = $v;
-                }
-            }
-            // Set a service order if none is set
-            if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order']) || ($settings['service_order'] !== $this->service_order)) {
-                $settings['service_order'] = $this->get_service_order();
+        $current_settings = $this->u_getCurrentSettings();
+        $settings = array();
+        $settings['debug_mode'] = (array_key_exists('debug_mode', $current_settings)) ? $current_settings['debug_mode'] : 'n';
+        $settings['service_order'] = $this->service_order;
+        ee()->dbg->c_log($vals, __METHOD__);
+        if ($vals) {
+            $active_services = $this->get_active_services($vals);
+            ee()->dbg->c_log($active_services, __METHOD__, true);         
+            foreach ($vals as $svc => $setting) {
+                $settings[$svc] = $setting;
             }
         }
-        ee()->dbg->c_log($settings, __METHOD__);
+        $settings = array_merge($current_settings, $settings);
+        // ee()->dbg->c_log($settings, __METHOD__, true);
         return $settings;
     }
 
     public function save_settings()
     {
-        $settings = $this->get_settings(true);
+        $settings = $this->get_settings($_POST);
         $current_service = '';
-        ee()->dbg->c_log($settings, __METHOD__);
-        foreach ($this->services as $service => $service_settings) {
-            ee()->dbg->c_log($service, __METHOD__);
-            $v = ee('Request')->post($service.'_active');
-            if (! is_null($v)) {
-                $current_service = $service;
-                $settings[$this->site_id][$service.'_active'] = $v;
-
-                foreach ($service_settings as $setting) {
-                    $settings[$this->site_id][$setting] = ee('Request')->post($setting);
-                }
-            }
-        }
-
-        ee()->dbg->c_log($settings, __METHOD__);
-        $this->model->settings = $settings;
-        $this->model->save();
+       
+        $this->u_saveSettings($settings);
         ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
         ee('CP/Alert')->makeInline()
             ->asSuccess()
@@ -186,25 +168,15 @@ class Services_module
 
     public function get_service_order()
     {
-        $all_settings = $this->model->settings;
-        ee()->dbg->c_log($all_settings, __METHOD__);
-        $settings = (count($all_settings) > 0 && array_key_exists($this->site_id, $all_settings)) ? $all_settings[$this->site_id]: $all_settings;
         $active_services = $this->get_active_services();
-        if (empty($settings['service_order']) && empty($this->config[$this->site_id]['service_order'])) {
-            return array_keys($this->services);
-        } else {
-            $other_services = array_diff(array_keys($this->services), $active_services);
-            
-            foreach ($other_services as $service) {
-                $active_services[] = $service;
-            }
-            // if ($active_services !== $settings['service_order']) {
-            //     $this->model->settings = $settings;
-            //     $this->model->save();
-            // }
-
-            return $active_services;
+        $current_service_order =  $this->u_getCurrentSettings()['service_order'];
+        $other_services = array_diff(array_keys($this->services), $active_services);
+        
+        foreach (array_values($other_services) as $service) {
+            $active_services[] = $service;
         }
+        $service_order = !empty(array_diff($active_services, $current_service_order)) ? $current_service_order : $active_services ;
+        return $service_order;
     }
 
     public function get_initial_service()
@@ -213,10 +185,11 @@ class Services_module
         return  (empty($active)) ? null : $active[0];
     }
 
-    public function get_active_services()
+    public function get_active_services($value_array = array())
     {
         $active = array();
-        $current_settings = (isset($this->model->settings[$this->site_id])) ? $this->model->settings[$this->site_id] : $this->model->settings;
+        $current_settings = empty($value_array) ? $this->u_getCurrentSettings() : $value_array; 
+        ee()->dbg->c_log($current_settings, __METHOD__);
         $active_services = array_filter($current_settings, function ($v, $k) {
             return $v == 'y' && strstr($k, '_active') !== false;
         }, ARRAY_FILTER_USE_BOTH);
@@ -224,13 +197,12 @@ class Services_module
         $active = array_map(function ($k) {
             return explode('_', $k)[0];
         }, array_keys($active_services));
-
         return array_unique($active);
     }
 
     private function _get_service_detail()
     {
-        $settings = (isset($this->model->settings[$this->site_id])) ? $this->model->settings[$this->site_id] : $this->model->settings;
+        $settings = $this->u_getCurrentSettings();
         $sections = array(
             array(
                 'title' => lang('description'),

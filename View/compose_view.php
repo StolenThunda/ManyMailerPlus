@@ -3,14 +3,14 @@
 ?>
  <!-- CSS Loader -->
     <div class="loader loader-bar" data-text data-rounded></div>
+    
    <?php
+   ee()->dbg->c_log(get_defined_vars(), "Current Settings");
     if (isset($current_settings)) {
-        echo '<div class="app-notice-wrap">'. ee("CP/Alert")->getAllInlines() .'</div>';
         ee()->dbg->c_log($current_settings, "Current Settings");
         echo "<script>console.groupCollapsed('Current Services Settings');</script>";
         echo "<script>console.dir(". json_encode($current_settings).");</script>";
         echo "<script>console.groupEnd();</script>";
-        echo '<input type="button" id="btnData" class="btn" value="Show Data" />';
     }
     ?>
 <div>
@@ -21,7 +21,8 @@
  
     </div>
 <div class="col-group ">
-
+<div class="col w-12">
+    <div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines(); ?></div>
     <?php if (isset($table)) : ?>
 
         <?php $this->embed(EXT_SHORT_NAME.((isset($emails)) ? ':email/sent' : ':email/templates'), $table); ?>
@@ -33,4 +34,5 @@
     <?php else: ?>
         <?php $this->embed('ee:_shared/form', $vars); ?>
     <?php endif; ?>
+    </div>
 </div>
