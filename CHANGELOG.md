@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ## ChangeLog
 
+## [1.8.1] - 2019-11-19
+### TODO
+- [ ] Fix css for tables (sent/templates)
+- [ ] Draggable service order
+
 ## [1.8.0] - 2019-10-30
 - Working Emailing
 - Working Dynamic service classes
@@ -128,8 +133,8 @@ Figure out why sending email crashes had to comment out following code from comp
 
 ### Todo (functionality)
 
-- [ ] Get working sent page with resend functionality
-- [ ] update lang file
+- [x] Get working sent page with resend functionality
+- [x] update lang file
 
 ### Bugs
 

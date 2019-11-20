@@ -4,11 +4,11 @@
 
 This ExpressionEngine extension/module allows you to send custom emails (using placeholders)
 
-![placeholders](./images/placeholders.png))
+![placeholders](images/placeholders.png))
 
 to send emails to a list of people using a csv list!
 The email form is based on the native 'Communicate' utility with a new enhancement of the 'Recipent Options':
-![CSV Upload](./images/compose_1.png)
+![CSV Upload](images/compose_1.png)
 
 ### Installation
 
@@ -22,7 +22,7 @@ Move the 'manymailerplus' folder to the *./system/user/addons* directory
 
 Enables uploads of local file
 
-![CSV Upload](./images/csv_upload.png)
+![CSV Upload](images/csv_upload.png)
 
 ##### CSV (Raw)
 
@@ -32,11 +32,11 @@ reviewed and the harvested emails will be inserted into the "Recipients Emails" 
 
 Any errors validate the data are prominently displayed along with suggestions for fixes
 
-![CSV Paste](./images/csv_raw_errors.png)
+![CSV Paste](images/csv_raw_errors.png)
 
 ##### CSV Results
 
-![CSV Result](./images/csv_result.png)
+![CSV Result](images/csv_result.png)
 
 ##### Services Enhancement
 
