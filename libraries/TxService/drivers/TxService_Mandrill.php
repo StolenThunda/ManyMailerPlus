@@ -2,12 +2,12 @@
 use ManyMailerPlus\libraries;
 class TxService_Mandrill extends libraries\TxService\TxService
 {
+    use libraries\Utility_Functions;
     private $_apiKey = "";
     public function __construct($settings = array())
     {
         $this->debug = $this->u_debug_enabled();
         $this->settings = $settings;
-        // $this->_parseKey($this->settings);
         ee()->dbg->c_log($this->getApiKey(), __METHOD__);
     }
 
@@ -27,29 +27,6 @@ class TxService_Mandrill extends libraries\TxService\TxService
     {
         $this->_apiKey = $key;
     }
-
-    // private function _parseKey($settings = array())
-    // {
-    //     if ($this->getApiKey() === "") {
-    //         try {
-    //             $settings = empty($settings) ? $this->u_getCurrentSettings()->settings : $settings;
-    //             $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
-    //             $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
-    //             $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
-    //             $active_key = ($test_mode && $test_key !== '') ? $test_key : $key;
-    //             ee()->dbg->c_log($settings['settings'][1], __METHOD__);
-    //             $this->setApiKey($active_key);
-    //             return $active_key;
-    //         } catch (\Throwable $th) {
-    //             //throw $th;
-    //             ee()->dbg->c_log($th, __METHOD__);
-
-    //             return $th;
-    //         }
-    //     } else {
-    //         return $this->getApiKey();
-    //     }
-    // }
     public function ident()
     {
         ee()->dbg->c_log('Loaded: '.__CLASS__.' k:'.$this->getApiKey(), __METHOD__);
@@ -61,7 +38,7 @@ class TxService_Mandrill extends libraries\TxService\TxService
         $missing_credentials = true;
         
         if (!empty($email)) {
-            if ($this->getApiKey !== '') {
+            if ($this->getApiKey() !== '') {
                 $missing_credentials = false;
                 $subaccount = (!empty($this->settings['mandrill_subaccount']) ? $this->settings['mandrill_subaccount'] : '');
                 $sent = $this->_send_email($email);
@@ -77,7 +54,7 @@ class TxService_Mandrill extends libraries\TxService\TxService
     public function _send_email($email)
     {
         $content = array(
-            'key' => $this->_apikey,
+            'key' => $this->_apiKey,
             'async' => true,
             'message' => $email,
         );

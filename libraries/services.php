@@ -1,7 +1,7 @@
 <?php
- if (!defined('BASEPATH')) {
-     exit('No direct script access allowed');
- }
+if (!defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
 
 /*
     This file is part of ManyMailer add-on for ExpressionEngine.
@@ -24,7 +24,7 @@
 
 require_once PATH_THIRD.EXT_SHORT_NAME.'/config.php';
 
-class Services_module
+class Services
 {
     use ManyMailerPlus\libraries\Utility_Functions;
     public $config;
@@ -42,7 +42,6 @@ class Services_module
 
     public function __construct($settings = '')
     {
-        ee()->load->helper('MessageArray');
         ee()->load->helper('html');
         $this->config = ee()->config->item(EXT_SHORT_NAME.'_settings');
         if (ee()->config->item('email_crlf') != false) {
@@ -57,7 +56,6 @@ class Services_module
         $this->sidebar_options = ee()->config->item('options', 'sidebar');
         $this->services = ee()->config->item('services', 'services');
         $this->settings = $settings;
-        $this->dbg_msgs = new MessageArray();
         $this->service_order = $this->get_service_order();
     }
 
@@ -117,12 +115,12 @@ class Services_module
     {
         $current_settings = $this->u_getCurrentSettings();
         $settings = array();
-        $settings['debug_mode'] = (array_key_exists('debug_mode', $current_settings)) ? $current_settings['debug_mode'] : 'n';
+        $settings['debug_mode'] = $current_settings['debug_mode'] ?: 'n';
         $settings['service_order'] = $this->service_order;
         ee()->dbg->c_log($vals, __METHOD__);
         if ($vals) {
             $active_services = $this->get_active_services($vals);
-            ee()->dbg->c_log($active_services, __METHOD__, true);         
+            // ee()->dbg->c_log($active_services, __METHOD__, true);
             foreach ($vals as $svc => $setting) {
                 $settings[$svc] = $setting;
             }
@@ -135,8 +133,17 @@ class Services_module
     public function save_settings()
     {
         $settings = $this->get_settings($_POST);
+        
         $current_service = '';
-       
+        foreach ($this->services as $service => $service_settings) {
+            ee()->dbg->c_log($service, __METHOD__);
+            $v = ee('Request')->post($service.'_active');
+            if (! is_null($v)) {
+                $current_service = $service;
+                break;
+            }
+        }
+        // ee()->dbg->c_log($current_service, __METHOD__, true);
         $this->u_saveSettings($settings);
         ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
         ee('CP/Alert')->makeInline()
@@ -148,35 +155,34 @@ class Services_module
         ee()->functions->redirect(ee('CP/URL')->make('addons/settings/'.EXT_SHORT_NAME.'/services/'.$current_service));
     }
 
-    // public function update_service_order($settings = null)
-    // {
-        
-    //     $settings = (!is_null($settings)) ? $settings : $this->get_settings();
-    //    ee()->dbg->c_log($settings, __METHOD__);
-    //     if ($services = ee('Request')->post('service_order')) {
-    //         $settings[$this->site_id]['service_order'] = explode(',', $services);
-    //         $this->model->settings = $settings;
+    public function update_service_order($settings = null)
+    {
+        $settings = (!is_null($settings)) ? $settings : $this->get_settings();
+        ee()->dbg->c_log($settings, __METHOD__);
+        if ($services = ee('Request')->post('service_order')) {
+            $settings['service_order'] = $services;
+            $settings = array_merge($this->u_getCurrentSettings(), $settings);
+            $this->u_saveSettings($settings);
+            return $this->u_getCurrentSettings()['service_order'];
+        }
+        ee()->dbg->c_log($settings, __METHOD__);
 
-    //         $this->model->save();
-    //        ee()->dbg->c_log("$current_service : ".json_encode($settings), __METHOD__);
-    //         // exit();
-    //     }
-    //    ee()->dbg->c_log($settings, __METHOD__);
-
-    //     return $settings['service_order'];
-    // }
+        return $settings['service_order'];
+    }
 
     public function get_service_order()
     {
         $active_services = $this->get_active_services();
-        $current_service_order =  $this->u_getCurrentSettings()['service_order'];
-        $other_services = array_diff(array_keys($this->services), $active_services);
-        
-        foreach (array_values($other_services) as $service) {
-            $active_services[] = $service;
-        }
-        $service_order = !empty(array_diff($active_services, $current_service_order)) ? $current_service_order : $active_services ;
-        return $service_order;
+        $current_settings = $this->u_getCurrentSettings();
+        $current_service_order = isset($current_settings['service_order']) ? $current_settings['service_order'] : array_keys($this->services);
+        // $other_services = array_diff($current_service_order, $active_services);
+        // foreach (array_values($other_services) as $service) {
+        //     $active_services[] = $service;
+        // }
+        // $service_order = !empty(array_diff($current_service_order, $active_services)) ? $current_service_order : $active_services ;
+        // var_dump(json_encode($current_service_order) ===  json_encode($active_services));
+        // ee()->dbg->c_log($current_service_order, __METHOD__, true);
+        return $current_service_order;
     }
 
     public function get_initial_service()
@@ -185,10 +191,11 @@ class Services_module
         return  (empty($active)) ? null : $active[0];
     }
 
+    
     public function get_active_services($value_array = array())
     {
         $active = array();
-        $current_settings = empty($value_array) ? $this->u_getCurrentSettings() : $value_array; 
+        $current_settings = empty($value_array) ? $this->u_getCurrentSettings() : $value_array;
         ee()->dbg->c_log($current_settings, __METHOD__);
         $active_services = array_filter($current_settings, function ($v, $k) {
             return $v == 'y' && strstr($k, '_active') !== false;
