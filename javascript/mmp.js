@@ -421,7 +421,7 @@ class ManyMailerPlus_mod {
         return this;
     }
 
-    display_message(id) {
+    display_message_by_id(id) {
         var html = $(id).html();
         var title = $($.parseHTML(html)).find('h1').text();
         var info = $($.parseHTML(html)).find('.txt-wrap').html();

@@ -57,7 +57,7 @@ $lang = array(
     'compose_title' => EXT_NAME.'\'s Composer',
     'config_warning_heading' => EXT_SHORT_NAME.' is configured elsewhere',
     'config_warning_text' => 'You appear to have '.EXT_NAME.' configured via config.php, so changes you make here may be overridden.',
-    'could_not_deliver' => EXT_SHORT_NAME.' tried to deliver your email with %s but the service failed.',
+    'could_not_deliver' => EXT_NAME.' tried to deliver your email with %s but the service failed.',
     'create_new_email' => 'Create New Email?',
     'create_new_template' => 'Create New Template',
     'created_at' => 'Created',
@@ -65,7 +65,7 @@ $lang = array(
     'csv_recipient' => 'CSV data',
     'description' => 'Description',
     'debug_mode' => 'Debugging Mode',
-    'debug_desc' => 'Use the developer tools to view logged info',
+    'debug_desc' => 'Use the developer tools to view logged info (experimental)',
     'disabled' => 'Disabled',
     'edit_template_name' => 'Create/Edit Templates',
     'edit_template' => 'Create/Edit Template',
@@ -160,7 +160,7 @@ $lang = array(
     'services_heading' => 'Services Overview',
     'services_name' => 'Services',
     'services_text' => '<p>Activate and configure as many services as you like via the links in the sidebar.</p>
-		<p> If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',//If the topmost activated service fails to send a particular email, the next active service will be used.
+		<p>If the topmost activated service fails to send a particular email, the next active service will be used.<p> If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',//If the topmost activated service fails to send a particular email, the next active service will be used.
     'services_title' => 'Services',
     'services' => 'Services',
     'settings' => 'Module Settings',
