@@ -1,12 +1,11 @@
 <?php
 
-use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
+use ManyMailerPlus\libraries;
 
-class TxService_Postageapp extends TransactionService
+class TxService_Postageapp extends libraries\TxService\TxService
 {
     public function __construct($settings = array())
     {
-        parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
         ee()->dbg->c_log($this, __METHOD__);

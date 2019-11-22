@@ -23,7 +23,7 @@ trait Utilities
     {
         $model = Utilities::_getExtModel();
         $id = Utilities::u_getSiteID();
-        return (array_key_exists($id, $model->settings)) ? $model->settings[$id] : $model->settings;
+        return $model->settings[$id] ?: $model->settings;
     }
 
     public function u_debug_enabled()

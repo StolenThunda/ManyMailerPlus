@@ -11,7 +11,7 @@
                 'links' => array('compose', 'sent', 'edit_template', 'view_templates')//, 'compose2' )
             ),
             'settings' => array(
-                'links' => array()//'get_settings',  'reset_settings')
+                'links' => array('reset_settings')//, 'get_settings' )
             ),
             'services' => array(
                 'links' => array()//'get_settings', 'get_service_order', 'get_active_services', 'get_initial_service',),
