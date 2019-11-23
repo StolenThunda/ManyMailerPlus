@@ -8,6 +8,10 @@
     --gray: rgb(133, 130, 130);
 }
 
+h1 {
+    font-size: 18px !important;
+    font-weight: 400 !important;
+}
 .service-list li {
     cursor: move;
     position: relative;
