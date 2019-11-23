@@ -7,57 +7,51 @@
  * @copyright Copyright (c) 2003-2018, EllisLab, Inc. (https://ellislab.com)
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
-use EllisLab\ExpressionEngine\Controller\Utilities;
-use EllisLab\ExpressionEngine\Library\CP\Table;
-use EllisLab\ExpressionEngine\Model\Email\EmailCache;
-
 /**
- * Copy of Communicate Controller
+ * MANYMAILERPLUS internal settings
  */
 class Settings
 {
-
-
+    use ManyMailerPlus\libraries\Utility_Functions;
     /**
      * Constructor
      */
     public function __construct($settings=array())
     {
-        $CI = ee();
+        // $CI = ee();
+        $list = get_class_methods($this);
+        rsort($list);
+        // ee()->dbg->c_log(json_encode($list, 1), __METHOD__, true);
+        
         $this->settings = $settings;
-        $this->site_id = ee()->config->item('site_id');
-        // $this->model = ee('Model')->get(EXT_SHORT_NAME)->first();
+        $this->model = ee('Model')->get('Extension')
+            ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
+            ->first();
     }
+    // --------------------------------
+    //  Settings
+    // --------------------------------
 
-    public function get_options()
+    
+    public function settings()
     {
-        $defaults = $this->get_settings();
-        $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/settings/save');
+        $defaults = $this->u_getCurrentSettings();
+        $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/settings/save_settings');
         $vars['save_btn_text'] = 'btn_save_settings';
         $vars['save_btn_text_working'] = 'btn_saving';
-        $vars['sections'] = array(
-            array(
-                array(
+        $vars['sections'] = array(array(array(
                     'title' => 'debug_mode',
+                    'desc' => 'debug_desc',
                     'fields' => array(
                         'debug_mode' => array(
                             'type' => 'yes_no',
-                            'value' => (isset($defaults['debug_mod'])) ? $defaults['debug_mode'] : "",
-                        )
-                    ),
-                ),
-                array(
-                    'title' => 'language_options',
-                    'fields' => array(
-                        'language_options' => array(
-                            'type' => 'select',
-                            'choices' => array('EN'),
+                            'value' => (isset($defaults['debug_mode'])) ? $defaults['debug_mode'] : "n",
                         )
                     )
                 )
-            )
+        )
         );
-        ee()->dbg->c_log($vars, __METHOD__);
+        ee()->dbg->c_log($defaults, __METHOD__);
         return $vars;
     }
 
@@ -67,31 +61,48 @@ class Settings
         foreach ($_POST as $key => $val) {
             $settings[$key] = $val;
         }
-        return $settings;
+       
+        // ee()->dbg->c_log($settings, __METHOD__, true);
+        return array_merge($this->u_getCurrentSettings(), $settings);
     }
 
+    public function reset_settings()
+    {
+        $name = $title = $body = 'reset_';
+        $this->u_saveSettings(array());
+        $current = $this->u_getCurrentSettings();
+        $status = true;
+        $defer = true;
+        if (!empty($current)) {
+            $name .= 'error';
+            $title .= 'error_title';
+            $body .= 'error_body';
+            $status = false;
+            $defer = false;
+        } else {
+            $name .= 'success';
+            $title .= 'success_title';
+            $body .= 'success_body';
+        }
+        
+        $this->u_messages($name, lang($title), lang($body), $status, $defer);
+        return $current;
+    }
+  
     public function save_settings()
     {
+        $final_settings = array();
         if (empty($_POST)) {
             show_error(ee()->lang->line('unauthorized_access'));
         } else {
-            $settings = $this->get_settings();
+            $final_settings = $this->get_settings();
         }
-
-    
-        unset($_POST['submit']);
-    
-        // ee()->db->where('module_name', EXT_NAME);
-        // ee()->db->update(EXT_SHORT_NAME, array('settings' => serialize($_POST)));
-        // $this->model->settings = $settings;
-        // $this->model->save();
-        ee('CP/Alert')->makeInline('message_success')
-        ->asAttention()
-        ->withTitle('message_success')
-        ->addToBody('preferences_updated')
-        ->canClose()
-        ->now();
-        ee()->functions->redirect(ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings/options')->compile());
+        // ee()->dbg->c_log($final_settings, __METHOD__, true);
+        $this->u_saveSettings($final_settings);
+        
+        // ee()->dbg->c_log($this->u_getCurrentSettings(), __METHOD__, true);
+        $this->u_messages('message_success', lang('message_success'), lang('preferences_updated'), false, false);
+        ee()->functions->redirect(ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings')->compile());
     }
 }
 // END CLASS

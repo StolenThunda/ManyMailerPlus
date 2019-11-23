@@ -89,7 +89,10 @@ button.btn.placeholder {
     align-items: flex-start !important;
 }
 
-
+#mc-edits {
+    border: thick !important;
+    border-style: ridge double !important;
+}
 /* span>ul,
 parsley-errors-list>ul {
     color: red !important;
@@ -253,6 +256,7 @@ parsley-errors-list>ul {
     line-height: normal;
     padding: 5px 8px 6px;
 }
+
 
 .btn-info,
 .btn-default {

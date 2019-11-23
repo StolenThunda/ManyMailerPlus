@@ -1,42 +1,53 @@
 <?php
-
-use ManyMailerPlus\libraries\TxService\TxService as TransactionService;
-
-class TxService_Postageapp extends TransactionService
+/**
+ * PostageApp's web transactional api
+ * 
+ * @category Service
+ * @package  TxService
+ * @author   Tony Moses <tonymoses@texasbluesalley.com>
+ * @license  MIT http://url.com
+ * @link     http://url.com
+ */
+use ManyMailerPlus\libraries;
+/**
+ * Transactional service plugin for PostageApp
+ * 
+ */
+class TxService_Postageapp extends libraries\TxService\TxService
 {
+    use libraries\Utility_Functions;
     public function __construct($settings = array())
     {
-        parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
         ee()->dbg->c_log($this, __METHOD__);
     }
 
-    public function get_api_key()
+    public function getApiKey()
     {
         return $this->key;
     }
 
-    public function send_email($email = null)
+    public function sendEmail($email = null)
     {
         $sent = false;
-        $settings = ee()->mod_svc->get_settings() ;
+        $settings = $this->u_getCurrentSettings();
         $missing_credentials = true;
-        if ($email) {
-            $this->email_out = $email;
-            unset($email);
-            if (!empty($settings['postageapp_api_key'])) {
-                $sent = $this->_send_email($settings['postageapp_api_key']);
-                $missing_credentials = false;
-            }
-        }
+        // if ($email) {
+        //     $this->email_out = $email;
+        //     unset($email);
+        //     if (!empty($settings['postageapp_api_key'])) {
+        //         $sent = $this->_send_email($settings['postageapp_api_key']);
+        //         $missing_credentials = false;
+        //     }
+        // }
 
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
     private function _get_api($settings = array())
     {
-        $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
+        $settings = empty($settings) ? $this->u_getCurrentSettings() : $settings;
         ee()->dbg->c_log($settings, __METHOD__);
 
         return (!empty($settings['postageapp_api_key']) || !isset($settings['postageapp_api_key'])) ? null : $settings['postageapp_api_key'];
@@ -104,10 +115,10 @@ class TxService_Postageapp extends TransactionService
         }
         $content = json_encode($content);
 
-        return $this->_curl_request('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
+        return $this->_curlRequest('https://api.postageapp.com/v.1.0/send_message.json', $headers, $content);
     }
 
-    public function save_template()
+    public function saveTemplate()
     {
         return true;
     }
@@ -124,7 +135,7 @@ class TxService_Postageapp extends TransactionService
         return $merge_vars;
     }
 
-    public function get_templates($obj = array('template_name' => ''))
+    public function getTemplates($obj = array('template_name' => ''))
     {
         return array();
     }
@@ -137,7 +148,7 @@ class TxService_Postageapp extends TransactionService
         );
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/delete.json';
 
-        return $this->curl_request($api_endpoint, $this->headers, $data, true);
+        return $this->curlRequest($api_endpoint, $this->headers, $data, true);
     }
 
     /**

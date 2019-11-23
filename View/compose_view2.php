@@ -2,9 +2,8 @@
     ee()->cp->load_package_css('settings');
 ?><!-- Loader -->
 <div class="loader loader-default"></div>
-
-<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines(); ?></div>
 <div class="col-group">   
+<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines(); ?></div>
     <div class='form-standard'>
         
     <form class="demo-form" action="<?=$base_url; ?>" method="post">

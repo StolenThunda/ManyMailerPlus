@@ -1,20 +1,43 @@
 <?php
+/**
+ *   Common functionality for transactional services
+ * 
+ * @category Transactional_Services
+ * @package  ManyMailerPlus
+ * @author   Tony Moses <tonymoses@texasbluesalley.com>
+ * @license  MIT http://url.com
+ * @link     http://url.com
+ */
 namespace ManyMailerPlus\libraries\TxService;
 /**
- * common functionality for transactional services
+ * Used for common transactional service functions
+ * 
+ * @category Transactional_Services
+ * @package  ManyMailerPlus
+ * @author   Tony Moses <tonymoses@texasbluesalley.com>
+ * @license  MIT http://url.com
+ * @link     http://url.com
  */
 trait TX
 {
     /**
-        Ultimately sends the email to each server.
-     **/
-    public function curl_request($server, $headers = array(), $content, $return_data = false, $htpw = null)
+     * Ultimately sends the email to each server.
+     * 
+     * @param string $server      the url to send the request to
+     * @param array  $headers     http headers
+     * @param json   $content     payload
+     * @param bool   $return_data return json?
+     * @param string $htpw        http password
+     * 
+     * @return bool if $return_data is false otherwise json data
+     */
+    public function curlRequest($server, $headers = array('Accept: application/json','Content-Type: application/json'), $content = "", $return_data = false, $htpw = null)
     {
-        $defaultHeaders = array(
-            'Accept: application/json',
-            'Content-Type: application/json',
-        );
-        $headers =  !empty($headers) ? $headers : $defaultHeaders;
+        // $defaultHeaders = array(
+        //     'Accept: application/json',
+        //     'Content-Type: application/json',
+        // );
+        // $headers =  !empty($headers) ? $headers : $defaultHeaders;
         $content = (is_array($content) ? json_encode($content) : $content);
         ee()->dbg->c_log($server.$content, __METHOD__);
         $ch = curl_init($server);
@@ -48,9 +71,10 @@ trait TX
         ee()->dbg->c_log($curl_error, __METHOD__);
         $result = ($return_data) ? json_decode($status) : true;
         ee()->dbg->c_log($result, __METHOD__);
-        if ($http_code !== 200) ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
+        if ($http_code !== 200) {
+            ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
+        }
         return ($http_code != 200 && !$return_data) ? false : json_decode(json_encode($result), true);
     }
 }
-
-?>
+//EOF

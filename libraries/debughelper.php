@@ -8,8 +8,9 @@ if (!defined('BASEPATH')) {
 class Debughelper
 {
     public $messages = array();
-    private $sections = array('header', 'backtrace', 'content', 'footer');
+    private $_sections = array('header', 'backtrace', 'content', 'footer');
     private $_string = '';
+    private $_site_id = 1;
     const GRP_OPEN = ['[[' => 'group', '[' => 'groupCollapsed'];
     const GRP_CLOSED = [']' => 'groupEnd'];
     // backtrace offset to cutoff the stack right before the helper is called CHANGE: with caution
@@ -35,6 +36,20 @@ class Debughelper
                 $this->{$key} = $value;
             }
         }
+        // $this->settings = ee('Model')->get('Extension')
+        //     ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
+        //     ->first()->settings;
+    }
+
+    public function debug_enabled()
+    {
+        $model = ee('Model')->get('Extension')->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')->first();
+        // var_dump($model->settings);
+        if (array_key_exists('debug_mode', $model->settings)) {
+            return ($model->settings['debug_mode'] === 'y');
+        } else {
+            return false;
+        }
     }
 
     public function add_message($str = '', $type = 'content', $method = 'log', $style = null, $obj = null)
@@ -48,7 +63,7 @@ class Debughelper
         if (is_null($style)) {
             $style = self::STYLES['info'];
         }
-        foreach ($this->sections as $sect) {
+        foreach ($this->_sections as $sect) {
             if ($sect === $type) {
                 $this->messages[] = array(
                         'str' => ($method === 'table') ? $str : addslashes($str),
@@ -111,7 +126,7 @@ class Debughelper
 
     public function _buildConsoleStrings()
     {
-        foreach ($this->sections as $section) {        // loop all sections to get message order
+        foreach ($this->_sections as $section) {        // loop all sections to get message order
            $sect = $this->strByType($section);      // gather all msgs in section
             // echo($section.BR);
             // echo(sizeof($sect).BR);
@@ -158,7 +173,7 @@ class Debughelper
 
     public function c_log($value, $title = null, $exit = false)
     {
-        if ($this->debug) {
+        if ($this->debug_enabled()) {
             $this->_string = '';
             $this->messages = array();
             $needs_encoded = (is_array($value) or is_object($value));
@@ -183,10 +198,9 @@ class Debughelper
             ob_start();
             echo $this;
             $value = ob_get_contents();
-        }
-
-        if ($exit) {
-            exit();
+            if ($exit) {
+                exit();
+            }
         }
     }
 
@@ -258,8 +272,8 @@ class Debughelper
             'style' => self::STYLES[$detailLogLevel],
         );
         $str_msg = array(
-            'str' => '%cString Val: '.preg_replace('/[\x00-\x1F\x74]/u', '<br />', $value),
-
+            'str' => '%cString Val: '.preg_replace('/[\x00-\x1F]/u', '', $value),
+            // 'str' => '%cString Val: '.$value,
             'type' => 'content',
             'method' => 'log',
             'style' => self::STYLES[$detailLogLevel],

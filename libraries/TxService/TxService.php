@@ -1,27 +1,10 @@
 <?php
-
 namespace ManyMailerPlus\libraries\TxService;
+use ManyMailerPlus\libraries;
 
-require_once APPPATH . '/libraries/Driver.php';
-use EE_Driver_Library;
-
-interface_exists('TxServiceInterface', false) or require_once 'TxServiceInterface.php';
-
-
-class TxService extends EE_Driver_Library
+// interface_exists('TxServiceInterface', false) or require_once 'TxServiceInterface.php';
+abstract class TxService implements libraries\TxService\TxServiceInterface
 {
-    private $debug = false;
-    protected $headers = array();
-    
-
-    public function __construct($settings = array())
-    {
-        if (isset($settings['debug'])) {
-            $this->debug = $settings['debug'];
-        }
-       
-    );
-        $this->valid_drivers = array('Mandrill', 'Postageapp');
-    }
-    
+    use libraries\TxService\TX; // to share transactional functions (curl, etc.)
+    use libraries\Utility_Functions; // misc shared module functions
 }

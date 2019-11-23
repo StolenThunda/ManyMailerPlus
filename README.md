@@ -4,11 +4,11 @@
 
 This ExpressionEngine extension/module allows you to send custom emails (using placeholders)
 
-![placeholders](./images/placeholders.png))
+![placeholders](images/placeholders.png))
 
 to send emails to a list of people using a csv list!
 The email form is based on the native 'Communicate' utility with a new enhancement of the 'Recipent Options':
-![CSV Upload](./images/compose_1.png)
+![CSV Upload](images/compose_1.png)
 
 ### Installation
 
@@ -22,7 +22,7 @@ Move the 'manymailerplus' folder to the *./system/user/addons* directory
 
 Enables uploads of local file
 
-![CSV Upload](./images/csv_upload.png)
+![CSV Upload](images/csv_upload.png)
 
 ##### CSV (Raw)
 
@@ -32,11 +32,11 @@ reviewed and the harvested emails will be inserted into the "Recipients Emails" 
 
 Any errors validate the data are prominently displayed along with suggestions for fixes
 
-![CSV Paste](./images/csv_raw_errors.png)
+![CSV Paste](images/csv_raw_errors.png)
 
 ##### CSV Results
 
-![CSV Result](./images/csv_result.png)
+![CSV Result](images/csv_result.png)
 
 ##### Services Enhancement
 
@@ -68,20 +68,4 @@ Thanks to ***Derek Hogue*** @ **[Amphibian Design](https://www.sparkpost.com/)**
 All other columns will be automatically injested to create tokenized placeholder buttons for use during email composition.
 
 [^1]: Recipient Emails textbox is disabled by default
-
-## Changelog
-
-### [1.0.0] - 2019-03-22 - ManyMailerPlus v1.0
-
-- commited 20 files [(98e948b)](https://github.com/StolenThunda/manymailerplus/commit/98e948bc35c1678b03a0e3e970e5cca6b681f693)
-- converted extension to module
-- added new view for module
-- fixed bug in debug_helper to refer to the last class it can find to output
-
-### [0.1.5] - 2019-03-14 - Beta release
-
-Current Release has the ability to:
-
-- send emails
-- view sent mail
-- separate template/actual emails in log
+## [Changelog](./CHANGELOG.md)

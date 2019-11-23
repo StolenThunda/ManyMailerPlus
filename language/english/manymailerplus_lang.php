@@ -1,7 +1,16 @@
 <?php
- if (!defined('BASEPATH')) {
+/**
+ * ManyMailerPlus English Language file
+ * 
+ * @category Language_File
+ * @package  ManyMailerPlus
+ * @author   Tony Moses <tonymoses@texasbluesalley.com>
+ * @license  MIT http://url.com
+ * @link     http://url.com
+ */
+if (!defined('BASEPATH')) {
      exit('No direct script access allowed');
- }
+}
 $email_detail = EXT_NAME.'\'s ';
 $email_detail .= <<<HERE
 Composer Is just like the built in "Communicate" utility with one enhancement. It provides options for: <blockquote>
@@ -48,13 +57,15 @@ $lang = array(
     'compose_title' => EXT_NAME.'\'s Composer',
     'config_warning_heading' => EXT_SHORT_NAME.' is configured elsewhere',
     'config_warning_text' => 'You appear to have '.EXT_NAME.' configured via config.php, so changes you make here may be overridden.',
-    'could_not_deliver' => EXT_SHORT_NAME.' tried to deliver your email with %s but the service failed.',
+    'could_not_deliver' => EXT_NAME.' tried to deliver your email with %s but the service failed.',
     'create_new_email' => 'Create New Email?',
     'create_new_template' => 'Create New Template',
     'created_at' => 'Created',
     'csv_recipient_desc' => 'Paste Raw CSV data',
     'csv_recipient' => 'CSV data',
     'description' => 'Description',
+    'debug_mode' => 'Debugging Mode',
+    'debug_desc' => 'Use the developer tools to view logged info (experimental)',
     'disabled' => 'Disabled',
     'edit_template_name' => 'Create/Edit Templates',
     'edit_template' => 'Create/Edit Template',
@@ -78,6 +89,7 @@ $lang = array(
     'index_title' => 'Overview',
     'labels_desc' => 'an optional array of up to 10 labels to use for filtering purposes',
     'labels' => 'Labels',
+    'language_options' => 'Language Options',
     'mailgun_api_key' => 'API Key',
     'mailgun_description' => 'MailGun is run by RackSpace, and offers 10,000 email sends per month on their free plan. Sign-up at <a href="%s">http://mailgun.com</a>.',
     'mailgun_domain' => 'Domain Name',
@@ -91,13 +103,15 @@ $lang = array(
     'mandrill_test_api_key' => 'Test API Key <i>(optional)</i>',
     'mandrill_testmode__yes_no' => 'Test Mode',
     'manual' => 'Manual Entry of CSV Data',
-    'message_desc' => '',
     'message' => 'Email Body',
+    'message_desc' => '',
+    'message_success' => 'Saved successfully',
     'missing_service_credentials' => 'You have %s activated as a service in '.EXT_NAME.', but you are missing some required credentials to send email with this service.'.BR.BR.' Please visit your '.EXT_NAME.' settings screen to fix this.',
     'missing_service_class' => 'You have %s activated as a service in '.EXT_NAME.', but you are missing this service\'s class file.',
     'no_cached_emails' => 'No Sent Email',
     'no_cached_templates' => 'No <b>mail templates</b> found!',
     'optional' => '(Optional)',
+    'option_name' => '',
     'other_recipient_options' => 'Additional Recipient Options',
     'plaintext_alt_desc' => 'Alternate content for your HTML Email, will be delivered in Plain Text, when an Email application cannot render HTML',
     'plaintext_alt' => 'Alternate content for your HTML Email, will be delivered in Plain Text, when an Email application cannot render HTML.',
@@ -110,6 +124,7 @@ $lang = array(
     'postmark_description' => 'Postmark offers your first 25,000 email sends free, followed by pay-as-you-go pricing. Sign-up at <a href="%s">http://postmarkapp.com</a>. <i>Note: the From address of each email must be approved in your Postmark dashboard in order to send successfully.</i>',
     'postmark_link' => 'http://postmarkapp.com',
     'postmark_name' => 'Postmark',
+    'preferences_updated' => 'Settings updated!',
     'primary_recipient_type_desc' => 'Enable CSV recipient option?',
     'primary_recipient_type' => 'Recipent Entry Type',
     'primary_recipients_desc' => 'To Email(s). Separate multiple recipients with a comma.',
@@ -124,10 +139,14 @@ $lang = array(
     'recipient_type_desc' => "Default: Type email <br/>{$recip_csv_type}: Paste contents of CSV File <br/> {$recip_file_type}: Upload local CSV File",
     'recipient_type' => 'Recipient Entry Method',
     'recipients' => 'Recipient(s)',
+    'reset_success_title' => 'Success',
+    'reset_success_body' => 'Preferences have been successfully cleared',
+    'reset_error_title' => 'Error',
+    'reset_error_body' => 'Preferences have not been cleared',
     'save_settings' => 'Save Settings',
-    'save_template_error_desc' => 'We were unable to save this template in it\'s current state. Please fix errors below',
-    'save_template_error' => 'Error Saving Template',
-    'save_template' => 'Save Template',
+    'saveTemplateErrorDesc' => 'We were unable to save this template in it\'s current state. Please fix errors below',
+    'saveTemplateError' => 'Error Saving Template',
+    'saveTemplate' => 'Save Template',
     'search_emails_button' => 'Search Emails',
     'search_templates_button' => 'Search Templates',
     'send_as' => 'Send As: ',
@@ -141,9 +160,11 @@ $lang = array(
     'services_heading' => 'Services Overview',
     'services_name' => 'Services',
     'services_text' => '<p>Activate and configure as many services as you like via the links in the sidebar.</p>
-		<p>If the topmost activated service fails to send a particular email, the next active service will be used. If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',
+		<p>If the topmost activated service fails to send a particular email, the next active service will be used.<p> If all active services fail, your email will be sent via ExpressionEngine&reg;&rsquo;s default email method.</p>',//If the topmost activated service fails to send a particular email, the next active service will be used.
     'services_title' => 'Services',
     'services' => 'Services',
+    'settings' => 'Module Settings',
+    'settings_title' => 'Settings/Preferences',
     'sparkpost_api_key' => 'API Key',
     'sparkpost_description' => 'SparkPost offers 100,000 email sends per month on their free plan. Sign-up at <a href="%s">http://sparkpost.com</a>.',
     'sparkpost_link' => 'http://sparkpost.com',
