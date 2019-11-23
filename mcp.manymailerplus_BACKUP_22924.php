@@ -21,6 +21,11 @@ class Manymailerplus_mcp
 {
     use libraries\Utility_Functions;
     private $_vars = array();
+<<<<<<< HEAD
+=======
+    private $_config =  array('debug' => false);
+
+>>>>>>> release/MMP_1.8.0
     /**
      * Constructor.
      */
