@@ -15,9 +15,9 @@ use ManyMailerPlus\libraries;
  */
 class TxService_Postageapp extends libraries\TxService\TxService
 {
+    use libraries\Utility_Functions;
     public function __construct($settings = array())
     {
-        parent::__construct($settings);
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
         ee()->dbg->c_log($this, __METHOD__);
@@ -31,23 +31,23 @@ class TxService_Postageapp extends libraries\TxService\TxService
     public function sendEmail($email = null)
     {
         $sent = false;
-        $settings = ee()->mod_svc->get_settings() ;
+        $settings = $this->u_getCurrentSettings();
         $missing_credentials = true;
-        if ($email) {
-            $this->email_out = $email;
-            unset($email);
-            if (!empty($settings['postageapp_api_key'])) {
-                $sent = $this->_send_email($settings['postageapp_api_key']);
-                $missing_credentials = false;
-            }
-        }
+        // if ($email) {
+        //     $this->email_out = $email;
+        //     unset($email);
+        //     if (!empty($settings['postageapp_api_key'])) {
+        //         $sent = $this->_send_email($settings['postageapp_api_key']);
+        //         $missing_credentials = false;
+        //     }
+        // }
 
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
     private function _get_api($settings = array())
     {
-        $settings = empty($settings) ? ee()->mod_svc->get_settings() : $settings;
+        $settings = empty($settings) ? $this->u_getCurrentSettings() : $settings;
         ee()->dbg->c_log($settings, __METHOD__);
 
         return (!empty($settings['postageapp_api_key']) || !isset($settings['postageapp_api_key'])) ? null : $settings['postageapp_api_key'];

@@ -10,7 +10,7 @@
 /**
  * MANYMAILERPLUS internal settings
  */
-class Settings 
+class Settings
 {
     use ManyMailerPlus\libraries\Utility_Functions;
     /**
@@ -91,7 +91,6 @@ class Settings
   
     public function save_settings()
     {
-        
         $final_settings = array();
         if (empty($_POST)) {
             show_error(ee()->lang->line('unauthorized_access'));
@@ -105,7 +104,6 @@ class Settings
         $this->u_messages('message_success', lang('message_success'), lang('preferences_updated'), false, false);
         ee()->functions->redirect(ee('CP/URL')->make(EXT_SETTINGS_PATH.'/settings')->compile());
     }
-
 }
 // END CLASS
 // EOF
