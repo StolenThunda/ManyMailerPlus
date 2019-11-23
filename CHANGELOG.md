@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 ## [1.8.1] - 2019-11-19
 ### TODO
 - [ ] Fix css for tables (sent/templates)
-- [ ] Draggable service order
+- [x] Draggable service order
 
 ## [1.8.0] - 2019-10-30
 - Working Emailing

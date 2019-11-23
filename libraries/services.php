@@ -201,9 +201,12 @@ class Services
             return $v == 'y' && strstr($k, '_active') !== false;
         }, ARRAY_FILTER_USE_BOTH);
 
-        $active = array_map(function ($k) {
-            return explode('_', $k)[0];
-        }, array_keys($active_services));
+        $active = array_map(
+            function ($k) {
+                return explode('_', $k)[0];
+            },
+            array_keys($active_services)
+        );
         return array_unique($active);
     }
 

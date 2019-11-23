@@ -1,7 +1,18 @@
 <?php
-
+/**
+ * PostageApp's web transactional api
+ * 
+ * @category Service
+ * @package  TxService
+ * @author   Tony Moses <tonymoses@texasbluesalley.com>
+ * @license  MIT http://url.com
+ * @link     http://url.com
+ */
 use ManyMailerPlus\libraries;
-
+/**
+ * Transactional service plugin for PostageApp
+ * 
+ */
 class TxService_Postageapp extends libraries\TxService\TxService
 {
     use libraries\Utility_Functions;

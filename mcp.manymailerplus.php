@@ -247,9 +247,8 @@ class Manymailerplus_mcp
             $result =  ee()->output->send_ajax_response(ee()->mail_svc->{$func}());
             break;
         default:
-            // if the current = the services detail page
-            array_pop($breadcrumbs);
-            $this->_vars['current_action'] = 'settings';
+            $this->_vars['current_action'] = 'services';
+            // if the current = the service detail page
             $this->_vars = array_merge($this->_vars, ee()->mail_svc->settings_form(array()));
             break;
         }
