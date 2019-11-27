@@ -3,16 +3,14 @@
  * This source file is part of the open source project
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
-// use EllisLab\ExpressionEngine\Model\Email\EmailCache;
 use ManymailerPlus\Model\EmailCachePlus as EmailCache;
-use ManyMailerPlus\libraries\Utility_Functions;
 
 /**
  * Copy of Communicate Controller.
  */
 class Composer
 {
-    use  Utility_Functions;
+    use ManyMailerPlus\libraries\Utility_Functions;
     private $_attachments = array();
     private $_csv_lookup = array();
     private $_csv_email_column = '{{email}}';
@@ -965,10 +963,10 @@ class Composer
             // ee()->dbg->c_log($debug_msg != '', __METHOD__, true);
             if ($debug_msg != "") {
                 if (!is_null($service)) {
-                    $debug_msg .= sprintf(lang('missing_service_credentials'), $service);
+                    $debug_msg .= sprintf(lang('missing_service_credentials'), ucfirst($service), ucfirst($service));
                 }
             } else {
-                $debug_msg = sprintf(lang('sent_service'), $service);
+                $debug_msg = sprintf(lang('sent_service'), ucfirst($service));
             }
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
             ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
@@ -1404,7 +1402,7 @@ class Composer
                 $sent = $result['sent'];
 
                 if ($missing_credentials == true) {
-                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), ucfirst($service)));
+                    ee()->logger->developer(sprintf(lang('missing_service_credentials'), ucfirst($service), ucfirst($service)));
                 } elseif ($sent == false) {
                     ee()->logger->developer(sprintf(lang('could_not_deliver'), ucfirst($service)));
                 }

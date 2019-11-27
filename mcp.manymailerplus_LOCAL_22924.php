@@ -19,7 +19,7 @@ if (!defined('BASEPATH')) {
  */
 class Manymailerplus_mcp
 {
-    use libraries\Utility_Functions;
+   
     private $_vars = array();
     /**
      * Constructor.

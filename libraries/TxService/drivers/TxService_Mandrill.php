@@ -2,7 +2,7 @@
 use ManyMailerPlus\libraries;
 class TxService_Mandrill extends libraries\TxService\TxService
 {
-    use libraries\Utility_Functions;
+   
     private $_apiKey = "";
     public function __construct($settings = array())
     {

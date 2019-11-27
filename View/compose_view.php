@@ -22,7 +22,7 @@
     </div>
 <div class="col-group ">
 <div class="col w-12">
-    <div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines(); ?></div>
+    
     <?php if (isset($table)) : ?>
 
         <?php $this->embed(EXT_SHORT_NAME.((isset($emails)) ? ':email/sent' : ':email/templates'), $table); ?>

@@ -15,7 +15,7 @@ use ManyMailerPlus\libraries;
  */
 class TxService_Postageapp extends libraries\TxService\TxService
 {
-    use libraries\Utility_Functions;
+   
     public function __construct($settings = array())
     {
         $this->settings = $settings;
