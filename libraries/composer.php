@@ -1182,6 +1182,7 @@ class Composer
                 ee()->dbg->c_log($cache_data, __METHOD__.': Cache before send');
                 
                 if ($this->email_send($cache_data)) {
+                    $cache_data['message'] =  strtr($formatted_message, $record);
                     $this->_saveSingleEmail($cache_data);
                 } else {
                     $cache_data['message'] =  strtr($formatted_message, $record);
@@ -1389,13 +1390,15 @@ class Composer
 
         // Set HTML/Text and attachments
         // $this->_body_and_attachments();
-
+        memory_get_usage();
         foreach ($settings['service_order'] as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
                 ee()->dbg->c_log($service, __METHOD__);
+                memory_get_usage();
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->debug)), $service);
+                    memory_get_usage();
                 }
                 $result = ee()->{$service}->sendEmail($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
@@ -1411,7 +1414,8 @@ class Composer
             if ($sent == true) {
                 ee()->extensions->end_script = true;
                 return true;
-            }
+            } 
+            memory_get_usage();
         }
 
         return false;
