@@ -1,21 +1,60 @@
 {
-	"folders": [
-		{
-			"path": "."
+	 "logViewer.watch": [
+        {
+            "title": "/var/logs",
+            "pattern": "/var/log/**/*.log"
 		}
 	],
 	"settings": {
-		"sftp.debug": true,
-		"sftp.printDebugLog": true,
-		"editor.wordWrap": "on",
+		"sqltools.connections": [
+			{
+				"database": "ee",
+				"dialect": "MySQL",
+				"isActive": false,
+				"isConnected": false,
+				"name": "EE",
+				"password": "www-data",
+				"port": 3306,
+				"server": "localhost",
+				"username": "www-data"
+			}
+		],
+		"php-cs-fixer.onsave": true,
+		"php-cs-fixer.formatHtml": true,
+		"php-cs-fixer.autoFixBySemicolon": true,
+		"phpcs.showWarnings": false,
+		"phpcs.showSources": true,
+		"phpcs.warningSeverity": 3,
 		"editor.minimap.side": "left",
-		"editor.suggestFontSize": 14,
-		"editor.suggestLineHeight": 5,
-		"workbench.colorTheme": "Default Dark+",
-		"workbench.iconTheme": "material-icon-theme",
-		"eslint.alwaysShowStatus": true,
-		"eslint.autoFixOnSave": true,
-		"eslint.lintTask.enable": true,
-		"expressionengine.thirdPartyAddonPath": "${rootPath}/engine/user/addons/"
-	}
+		"logViewer.showStatusBarItemOnChange": true,
+		"MinifyAll.disableJavascript": false,
+		"MinifyAll.disableJavascriptReact": false,
+		"MinifyAll.disableHexadecimalShortener": false,
+		"checkpoints.showActiveFileOnly": true,
+		"gitHistory.hideCommitViewExplorer": true,
+		"gitlens.views.lineHistory.location": "scm",
+		"gitlens.views.fileHistory.location": "scm",
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/.DS_Store": true
+		},
+		"explorerExclude.backup": null
+	},
+	"folders": [
+		{
+			"name": "log",
+			"path": "/var/log"
+		},
+		{
+			"name": "ee",
+			"path": "/var/www/ee"
+		},
+		{
+			"name": "manymailerplus",
+			"path": "/var/www/ee/system/user/addons/manymailerplus"
+		}
+	]
 }

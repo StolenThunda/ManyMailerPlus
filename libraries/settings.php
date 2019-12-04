@@ -18,11 +18,8 @@ class Settings
      */
     public function __construct($settings=array())
     {
-        // $CI = ee();
-        $list = get_class_methods($this);
-        rsort($list);
-        // ee()->dbg->c_log(json_encode($list, 1), __METHOD__, true);
-        
+        $this->settings = ee()->config->load('settings_cfg', true);
+        $this->settings_options = ee()->config->item('options', 'settings_cfg');
         $this->settings = $settings;
         $this->model = ee('Model')->get('Extension')
             ->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')
@@ -35,24 +32,38 @@ class Settings
     
     public function settings()
     {
-        $defaults = $this->u_getCurrentSettings();
-        $vars['base_url'] = ee('CP/URL', EXT_SETTINGS_PATH.'/settings/save_settings');
-        $vars['save_btn_text'] = 'btn_save_settings';
-        $vars['save_btn_text_working'] = 'btn_saving';
-        $vars['sections'] = array(array(array(
-                    'title' => 'debug_mode',
-                    'desc' => 'debug_desc',
-                    'fields' => array(
-                        'debug_mode' => array(
-                            'type' => 'yes_no',
-                            'value' => (isset($defaults['debug_mode'])) ? $defaults['debug_mode'] : "n",
+        $vars = array(
+            'base_url' => ee('CP/URL', EXT_SETTINGS_PATH.'/settings/save_settings'),
+            'save_btn_text' => 'btn_save_settings',
+            'save_btn_text_working' => 'btn_saving',
+            'sections' => $this->_buildSections()
+        );
+        return $vars;
+    }
+    
+    private function _buildSections()
+    {
+        $sections = array();
+        $db_defaults = $this->u_getCurrentSettings();
+        foreach ($this->settings_options as $key => $cfg) {
+            ee()->dbg->c_log($cfg, __METHOD__ . '  ' . __LINE__);
+            $field = array(
+                'title' => $key,
+                'desc'  => $key . '_desc',
+                'fields' => array(
+                    $key => array(
+                        'type' => $cfg['type'],
+                        'value' => $db_defaults['config'][$key] ?: $cfg['default']
                         )
                     )
-                )
-        )
-        );
-        ee()->dbg->c_log($defaults, __METHOD__);
-        return $vars;
+                );
+            $sections[] = $field;
+            // ee()->dbg->c_log($db_defaults['config'][$key], __METHOD__ . '  ' . __LINE__, true);
+        }
+        
+        $return = (count($sections) < 1) ? array() : array($sections);
+        // ee()->dbg->c_log($return, __METHOD__ . '  ' . __LINE__, true);
+        return $return;
     }
 
     public function get_settings()
@@ -63,7 +74,7 @@ class Settings
         }
        
         // ee()->dbg->c_log($settings, __METHOD__, true);
-        return array_merge($this->u_getCurrentSettings(), $settings);
+        return array_merge($this->u_getCurrentSettings(), array('config' => $settings));
     }
 
     public function reset_settings()

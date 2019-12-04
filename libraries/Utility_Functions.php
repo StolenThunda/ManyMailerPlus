@@ -29,7 +29,7 @@ trait Utility_Functions
     public function u_debug_enabled()
     {
         $model = Utility_Functions::_getExtModel();
-        return (array_key_exists('debug_mode', $model->settings) && $model->settings['debug_mode'] === 'y');
+        return (array_key_exists('debug_mode', $model->settings) && $model->settings['config']['debug_mode'] === 'y');
     }
 
     public static function u_getSiteID()

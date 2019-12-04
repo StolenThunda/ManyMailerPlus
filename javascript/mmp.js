@@ -118,6 +118,9 @@ class ManyMailerPlus_mod {
 
     init_dom_events() {
         this.doc_body
+            .on('query_so', function(e){
+                return e.data;
+            })
             .on('click', '*[data-conditional-modal]', function (e) {
                 e.preventDefault();
                 $('.modal-confirm-remove').hide();
@@ -247,9 +250,8 @@ class ManyMailerPlus_mod {
     }
 
     init_service_list() {
-        let svc_order = this.db_service_order;
+        this.db_service_order; // get db service order and assign data to element
         this.service_list
-            .data('order', svc_order)
             .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
             .addClass('service-list');
         if (window.location.href.split("/").includes('services')) {
@@ -263,8 +265,8 @@ class ManyMailerPlus_mod {
     }
 
     init_datatable() {
-        // this.val_with_linenum('');
         $('#csv_content').addClass('fixed_header display').DataTable({
+            destroy: true,
             defaultContent: '',
             dom: '<"top"i>rt<"bottom"flp><"clear">',
             initComplete: function () {
@@ -275,8 +277,8 @@ class ManyMailerPlus_mod {
             },
             columns: this.tableData.columns,
             data: this.tableData.data,
-            paging: false,
-            ordering: false
+            // paging: false,
+            // ordering: false
         });
         return this;
     }
@@ -331,13 +333,17 @@ class ManyMailerPlus_mod {
     }
     
     get db_service_order(){
-        let that = this;
+        var that = this;
         $.get('/admin.php?/cp/addons/settings/manymailerplus/services/get_service_order')
+        .success(function(data){
+            return data; 
+        })
         .fail(function (data) {
             return that.parseDbgFromJson(data); 
         })
         .always(function (data) {
-           return data;
+            console.dir(data);
+            that.service_list.attr('data-order', data);
         });
     }
 
@@ -438,6 +444,24 @@ class ManyMailerPlus_mod {
             var onServices = window.location.href.split('/').slice(-1)[0].indexOf('services') > -1;
             if (onServices) this.update_sortable(this.DOMserviceOrder);
         }
+        var tables = $("form table:has(thead ~ tbody>tr)");
+        tables.DataTable({
+            "aoColumns" : null,
+            "retrieve" : true,
+            "pagingType": "full_numbers",
+            "scrollY":        "400px",
+            "info":           true,
+            "autoWidth":      true,
+            "paging":         true
+        });
+       
+        if (tables.forEach){
+            tables.forEach(el => {
+            el.columns.adjust().draw();
+        });
+        }
+        
+        
         return onCompose;
     }
 
@@ -608,32 +632,46 @@ class ManyMailerPlus_mod {
     }
 
     evt_toggle_templates(e) {
+        console.dir(e);
         this.con_templates = $("input[name^='use_template'] ~ div");
-        var toggle = e.currentTarget.value === 'y' ? 'slow' : false;
+        var toggle = e.currentTarget && e.currentTarget.value === 'y' ? 'slow' : false;
         if (toggle) {
             // 
             let current_base_url = 'http://' + window.location.hostname;
             let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/getTemplateView', current_base_url);
             this.toggle_loading();
             $.get(url, {}, function (data) {
-                console.log(url.href);
-                console.log(data);
                 var htmlDoc = this.DOMParser.parseFromString(data, 'text/html');
-                this.con_templates
-                    .append(htmlDoc.getElementById('embed_templates'))
-                    .append(htmlDoc.getElementsByClassName('modal-wrap'))
-                    .show();
-                this.tmp_selections = $('input[name="selection[]"');
-                $.each(this.tmp_selections, (idx, val) => {
-                    val.addEventListener(
-                        'change',
-                        function (e) {
-                            this.evt_select_template(e);
-                        }.bind(this),
-                        false
-                    );
-                });
-                this.toggle_loading();
+                if (htmlDoc.getElementsByClassName('no-results').length === 0)
+                {
+                    this.con_templates
+                        .append(htmlDoc.getElementById('embed_templates'))
+                        .append(htmlDoc.getElementsByClassName('modal-wrap'))
+                        .show();
+                    this.tmp_selections = $('input[name="selection[]"');
+                    $.each(this.tmp_selections, (idx, val) => {
+                        val.addEventListener(
+                            'change',
+                            function (e) {
+                                this.evt_select_template(e);
+                            }.bind(this),
+                            false
+                        );
+                    });
+                }else{
+                    
+                    let order = this.service_list.data('order').split(',')[0];
+                    order = order.charAt(0).toUpperCase() + order.slice(1);
+                    this.display_message({
+                        title: 'Information',
+                        html: `You have no saved templates for your ${order} (highest ranked service.)`,
+                        type: 'info'
+                    });
+                    $("input[name^='use_template']").filter('[value="n"]').prop('checked', true).trigger('change');
+                }
+                
+                
+                this.toggle_loading().on_compose_page;
                 return this;
             }.bind(this));
         } else {
@@ -654,6 +692,7 @@ class ManyMailerPlus_mod {
 
     evt_convert_csv() {
         this.convertCSV();
+        // this.on_compose_page;
         this.sel_csv_entry
             .val('file_recipient')
             .trigger('change');
@@ -1126,6 +1165,7 @@ $(document).ready(function () {
         }
     }
 
+    
     var MMP = new ManyMailerPlus_mod(isAPIAvailable());
     MMP.init();
 

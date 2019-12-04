@@ -27,28 +27,29 @@ class Manymailerplus_mcp
     public function __construct()
     {
         $CI = ee();
-        ini_set('memory_limit', '2G');
+        // ini_set('memory_limit', '2G');
         ee()->extensions->end_script = true;
         if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
         }
         $this
-        ->_loadLibs()
-        ->_loadConfigs()
-        ->_jsConfigAutoload()
-        ->_updateServiceOptions()
-        ->_makeSidebar();
+            ->_loadLibs()
+            ->_loadConfigs()
+            ->_jsConfigAutoload()
+            ->_updateServiceOptions()
+            ->_makeSidebar();
 
         $current_settings = $this->u_getCurrentSettings();
-        $service_list = isset($current_settings['service_order']) ? $current_settings['service_order'] : array_keys($this->services);
+        $service_list = $current_settings['service_order'] ?: array_keys($this->services);
         
-        // ee()->dbg->c_log($this->u_getCurrentSettings(), __METHOD__);
-        $this->_vars['save_btn_text'] = '';
-        $this->_vars['save_btn_text_working'] = '';
-        $this->_vars['sections'] = array();
-        $this->_vars['sidebar'] = array_keys($this->sidebar_options);
-        $this->_vars['services'] = $service_list; 
-        $this->_vars['view'] = 'compose_view';
+        $this->_vars = array(
+            'save_btn_text' => '',
+            'save_btn_text_working' => '',
+            'sections' => array(),
+            'sidebar' => array_keys($this->sidebar_options),
+            'services' => $service_list,
+            'view' => 'compose_view'
+        );
         if (!$this->sidebar_loaded) {
             //render page to show errors
             $this->_vars = array(
@@ -107,6 +108,15 @@ class Manymailerplus_mcp
         foreach ($external_js as $script) {
             ee()->cp->add_to_foot($script);
         }
+        ee()->cp->add_to_foot(
+            link_tag(
+                array(
+                    'href' => 'http://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css',
+                    'rel' => 'stylesheet',
+                    'type' => 'text/css',
+                )
+            )
+        );
         return $this;
     }
     /**
@@ -144,7 +154,7 @@ class Manymailerplus_mcp
         if (empty($additional_links)) {
             
             $current_settings = $this->u_getCurrentSettings();  
-            $additional_links = isset($current_settings['service_order']) ? $current_settings['service_order'] : array_keys($this->services);
+            $additional_links =  $current_settings['service_order'] ?: array_keys($this->services);
         }
         $link_list = array_unique(
             array_merge(
@@ -179,7 +189,7 @@ class Manymailerplus_mcp
      */
     public function email($func = '')
     {
-        ee()->dbg->c_log($this->_vars, __METHOD__);
+        // ee()->dbg->c_log($this->_vars, __METHOD__ . '  ' . __LINE__);
         $breadcrumbs = array(
             ee('CP/URL')->make(EXT_SETTINGS_PATH)->compile() => EXT_NAME,
             ee('CP/URL')->make(EXT_SETTINGS_PATH.'/email')->compile() => lang('email_title'),
@@ -189,34 +199,30 @@ class Manymailerplus_mcp
         $id = ee()->uri->segment(7, '');
         switch ($func) {
         case 'getTemplateView':
-            return ee()->mail_funcs->{$func}();
-        case 'view_templates':
-            $this->_vars = array_merge($this->_vars, ee()->mail_funcs->{$func}());
-            break;
+            return ee()->mail_funcs->{$func}();        
         case 'compose2':
             $this->_vars['view'] = 'compose_view2';
             // no break
+        case 'edit_template':
         case 'compose':
         case 'send':
         case 'sent':
         case 'resend':
         case 'batch':
         case 'edit_template':
+        case 'saveTemplate':
+        case 'view_templates':
+        case 'delete_template':
             if ($id != '') {
                 $this->_vars = array_merge($this->_vars, ee()->mail_funcs->{$func}($id));
                 break;
             }
-            // no break
-        case 'saveTemplate':
-        case 'delete_template':
             $this->_vars = array_merge($this->_vars, ee()->mail_funcs->{$func}());
-            // no break
+        break;
         default:
             $this->_vars['current_action'] = 'email';
             array_pop($breadcrumbs);
         }
-        ee()->dbg->c_log($this->_vars, __METHOD__);
-
         return $this->view_page($breadcrumbs);
     }
 
@@ -293,7 +299,7 @@ class Manymailerplus_mcp
             $this->_vars = array_merge($this->_vars, ee()->mail_settings->settings());
         
         }
-        ee()->dbg->c_log($this->_vars, __METHOD__);
+        ee()->dbg->c_log($this->_vars, __METHOD__ . '  ' . __LINE__);
         return $this->view_page($breadcrumbs);
     }
     /**
@@ -313,8 +319,8 @@ class Manymailerplus_mcp
             'breadcrumb' => $breadcrumbs,
             'heading' => $this->_vars['cp_page_title'],
         );
-        ee()->dbg->c_log($this->_vars, __METHOD__);
-
+        ee()->dbg->c_log($this->_vars, __METHOD__ . ' View Page ' . __LINE__);
+        ob_end_clean();
         return $return;
     }
 

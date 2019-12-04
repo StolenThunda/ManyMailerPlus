@@ -30,6 +30,8 @@ Composer Is just like the built in "Communicate" utility with one enhancement. I
 
 
 HERE;
+$sent_mail_title = 'View Sent Mail';
+$saved_temps_title = 'View Saved Templates';
 $lang = array(
     'add_member_groups_desc' => 'Send Email to all members in chosen group(s).',
     'add_member_groups' => 'Add member group(s)',
@@ -65,7 +67,11 @@ $lang = array(
     'csv_recipient' => 'CSV data',
     'description' => 'Description',
     'debug_mode' => 'Debugging Mode',
-    'debug_desc' => 'Use the developer tools to view logged info (experimental)',
+    'debug_mode_desc' => 'Use the developer tools to view logged info (experimental)',
+    'default_sent_rows' => 'Sent Rows',
+    'default_sent_rows_desc' => "# of row to show on '${sent_mail_title}' screen",
+    'default_template_rows' => 'Template Rows',
+    'default_template_rows_desc' => "# of row to show on '${saved_temps_title}' screen",
     'disabled' => 'Disabled',
     'edit_template_name' => 'Create/Edit Templates',
     'edit_template' => 'Create/Edit Template',
@@ -155,7 +161,7 @@ $lang = array(
     'sendgrid_description' => 'SendGrid offers 12,000 email sends per month on their free plan. Sign-up at <a href="%s">http://sendgrid.com</a>.',
     'sendgrid_link' => 'http://sendgrid.com',
     'sendgrid_name' => 'SendGrid',
-    'sent_name' => 'View Sent Mail',
+    'sent_name' => $sent_mail_title,
     'sent_service' => 'Your message has been successfully sent using the following service: %s ',
     'services_heading' => 'Services Overview',
     'services_name' => 'Services',
@@ -187,7 +193,7 @@ $lang = array(
     'view_email_cache' => 'Sent Emails',
     'view_template' => 'Quick View',
     'view_template_cache' => 'Saved %s Templates',
-    'view_templates_name' => 'View Saved Templates',
+    'view_templates_name' => $saved_temps_title,
     'word_wrap' => 'Word Wrap',
     'your_email' => 'Email of Sender',
 );

@@ -20,7 +20,7 @@ class TxService_Postageapp extends libraries\TxService\TxService
     {
         $this->settings = $settings;
         $this->key = $this->_get_api($settings);
-        ee()->dbg->c_log($this, __METHOD__);
+        ee()->dbg->c_log($this, __METHOD__ . '  ' . __LINE__);
     }
 
     public function getApiKey()
@@ -48,7 +48,7 @@ class TxService_Postageapp extends libraries\TxService\TxService
     private function _get_api($settings = array())
     {
         $settings = empty($settings) ? $this->u_getCurrentSettings() : $settings;
-        ee()->dbg->c_log($settings, __METHOD__);
+        ee()->dbg->c_log($settings, __METHOD__ . '  ' . __LINE__);
 
         return (!empty($settings['postageapp_api_key']) || !isset($settings['postageapp_api_key'])) ? null : $settings['postageapp_api_key'];
     }

@@ -6,15 +6,15 @@ class TxService_Mandrill extends libraries\TxService\TxService
     private $_apiKey = "";
     public function __construct($settings = array())
     {
-        $this->debug = $this->u_debug_enabled();
-        $this->settings = $settings;
-        ee()->dbg->c_log($this->getApiKey(), __METHOD__);
+       
+        $this->getApiKey();
+        ee()->dbg->c_log(get_object_vars($this), __METHOD__ . '  ' . __LINE__);
     }
 
     public function getApiKey()
     {
         $settings = $this->u_getCurrentSettings();
-        ee()->dbg->c_log($settings, __METHOD__);
+        
         $key = (!empty($settings['mandrill_api_key'])) ? $settings['mandrill_api_key'] : '';
         $test_key = (!empty($settings['mandrill_test_api_key'])) ? $settings['mandrill_test_api_key'] : '';
         $test_mode = (isset($settings['mandrill_testmode__yes_no']) && $settings['mandrill_testmode__yes_no'] == 'y');
@@ -29,11 +29,11 @@ class TxService_Mandrill extends libraries\TxService\TxService
     }
     public function ident()
     {
-        ee()->dbg->c_log('Loaded: '.__CLASS__.' k:'.$this->getApiKey(), __METHOD__);
+        ee()->dbg->c_log('Loaded: '.__CLASS__.' k:'.$this->getApiKey(), __METHOD__ . '  ' . __LINE__);
     }
     public function sendEmail($email = array())
     {
-        ee()->dbg->c_log($email, __METHOD__);
+        ee()->dbg->c_log($email, __METHOD__ . '  ' . __LINE__);
         $sent = false;
         $missing_credentials = true;
         
@@ -44,7 +44,7 @@ class TxService_Mandrill extends libraries\TxService\TxService
                 $sent = $this->_send_email($email);
             }
         }
-        ee()->dbg->c_log(array('missing_credentials' => $missing_credentials, 'sent' => $sent), __METHOD__);
+        ee()->dbg->c_log(array('missing_credentials' => $missing_credentials, 'sent' => $sent), __METHOD__ . '  ' . __LINE__);
         return array('missing_credentials' => $missing_credentials, 'sent' => $sent);
     }
 
@@ -58,7 +58,7 @@ class TxService_Mandrill extends libraries\TxService\TxService
             'async' => true,
             'message' => $email,
         );
-        //ee()->dbg->c_log($content, __METHOD__);
+        //ee()->dbg->c_log($content, __METHOD__ . '  ' . __LINE__);
         // print_r($content);
         
         if (isset($content['message']['extras'])) {
@@ -89,16 +89,16 @@ class TxService_Mandrill extends libraries\TxService\TxService
                     // if ($chosen || $default) {
                     //     $message = $content['message']['html'];
                     //     $v = ($message !== '') ? $message : $v;
-                    //     ee()->dbg->c_log($v, __METHOD__);
+                    //     ee()->dbg->c_log($v, __METHOD__ . '  ' . __LINE__);
                     // }
                     array_push($t_content, array('name' => $k, 'content' => $v));
                 }
                 $content['template_content'] = $t_content;
             }
         }
+        unset($content['message']['extras']);
         
-        
-        // ee()->dbg->c_log($content, __METHOD__);
+        // ee()->dbg->c_log($content, __METHOD__ . '  ' . __LINE__);
         // if (!empty($subaccount)) {
         //     $content['message']['subaccount'] = $subaccount;
         // }
@@ -185,12 +185,12 @@ class TxService_Mandrill extends libraries\TxService\TxService
     {
         $obj[0]['template_name'] = str_replace(' ', '-', strtolower($obj[0]['template_name']));
         $req = $obj[0];
-        ee()->dbg->c_log($req, __METHOD__);
+        ee()->dbg->c_log($req, __METHOD__ . '  ' . __LINE__);
         return $this->getTemplates($req);
     }
     public function getTemplates($obj = array('template_name' => '', 'func' => 'list'))
     {
-        ee()->dbg->c_log($obj, __METHOD__);
+        ee()->dbg->c_log($obj, __METHOD__ . '  ' . __LINE__);
         $templates = array();
         $func = (isset($obj['func'])) ? $obj['func'] : 'list';
         $template_name = (isset($obj['template_name'])) ? $obj['template_name'] : null;
@@ -204,9 +204,9 @@ class TxService_Mandrill extends libraries\TxService\TxService
                 $data['name'] = $template_name;
             }
             $content = json_encode($data);
-            ee()->dbg->c_log($api_endpoint.$content, __METHOD__);
+            ee()->dbg->c_log($api_endpoint.$content, __METHOD__ . '  ' . __LINE__);
             $templates = $this->curlRequest($api_endpoint, array(), $content, true);
-            ee()->dbg->c_log($templates, __METHOD__);
+            ee()->dbg->c_log($templates, __METHOD__ . '  ' . __LINE__);
         }
 
         return $templates;
@@ -227,12 +227,12 @@ class TxService_Mandrill extends libraries\TxService\TxService
             // "labels",
         );
 
-        ee()->dbg->c_log($_POST, __METHOD__);
+        ee()->dbg->c_log($_POST, __METHOD__ . '  ' . __LINE__);
         foreach ($_POST as $key => $val) {
-            ee()->dbg->c_log("$key : ".ee()->input->post($key), __METHOD__);
+            ee()->dbg->c_log("$key : ".ee()->input->post($key), __METHOD__ . '  ' . __LINE__);
             if (in_array($key, $form_fields)) {
                 $$key = ee()->input->get_post($key);
-                ee()->dbg->c_log("$key : ".ee()->input	->post($key), __METHOD__);
+                ee()->dbg->c_log("$key : ".ee()->input	->post($key), __METHOD__ . '  ' . __LINE__);
             }
         }
 
@@ -250,7 +250,7 @@ class TxService_Mandrill extends libraries\TxService\TxService
         }
         $cache_data = array(
             'key' => $this->getApiKey(),
-            'name' => (isset($template_name) ? $template_name : $orig_template_name),
+            'name' => $template_name ?: $orig_template_name,
             'from_email' => $from_email,
             'from_name' => $from_name,
             'subject' => $subject,
@@ -262,14 +262,14 @@ class TxService_Mandrill extends libraries\TxService\TxService
         $function = ($created_at_hidden !== '') ? 'update' : 'add';
 
         $api_endpoint = 'https://mandrillapp.com/api/1.0/templates/'.$function.'.json';
-        ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__);
+        ee()->dbg->c_log($api_endpoint . json_encode($cache_data), __METHOD__ . '  ' . __LINE__);
         $result = $this->curlRequest($api_endpoint, $this->headers, $cache_data, true);
         if (isset($result['status'])) {
             ee()->view->set_message($result['status'], $result['message'], null, true);
             ee()->session->set_flashdata('result', $result['status'].':'.$result['message']);
         }
 
-        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'.(isset($template_name) ? $template_name : $orig_template_name)));
+        ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/edit_template/'. $template_name ?: $orig_template_name));
     }
 
     public function delete_template($template_name)
