@@ -31,6 +31,7 @@ class Debughelper
     {
         error_reporting(E_ALL);
         ini_set('display_errors', null);
+        // ob_start();
         foreach ($config as $key => $value) {
             if (in_array($key, array('debug'))) {
                 $this->{$key} = $value;
@@ -208,7 +209,7 @@ class Debughelper
                 throw $e;
             }
             if ($exit) {
-                echo ob_end_clean();
+                echo ob_end_flush();
                 exit();
             }
         }

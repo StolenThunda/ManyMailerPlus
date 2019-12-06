@@ -59,6 +59,18 @@ class Composer
         return $email_str;
     }
 
+    function progress()
+    {
+        $modal_vars = array(
+            'name' => 'hello',
+            'contents' => '<p>Hello, world!</p>'
+        );
+        $modal_html = ee('View')->make('ee:_shared/modal')->render($modal_vars);
+        ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
+       
+        ee('CP/Modal')->addModal('hello', $modal_html);
+    }
+     
     /**
      * compose.
      *
@@ -86,7 +98,6 @@ class Composer
             'markdown' => lang('markdown'),
             'html' => lang('html'),
         );
-
         $member_groups = array();
 
         if (!is_null($email)) {
@@ -137,8 +148,21 @@ class Composer
             ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
         }
 
-        // ee()->dbg->c_log($this->u_debug_enabled(), __METHOD__ . '  ' . __LINE__);
+        $modal_vars = array(
+            'name' => 'mail_progress',
+            'contents' => implode('', array(
+                '<div id="mail_progress_output">',
+                '<h1>Progress: </h1>',
+                '<span class="txt-wrap">',
+                '<textarea  placeholder="Remember, be nice!" cols="30" rows="5"></textarea>',
+                '</span>',
+                '</div>'
+            ))
+        );
+        $modal_html = ee('View')->make('ee:_shared/modal')->render($modal_vars);
+        ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
        
+        ee('CP/Modal')->addModal('hello', $modal_html);
         $vars['sections'] = array(
             'sender_info' => array(
                 array(

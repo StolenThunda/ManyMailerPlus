@@ -158,6 +158,15 @@ class ManyMailerPlus_mod {
             })
             .bind(this);
 
+        // $('a.m-link')
+        //     .bind('click', (e) => {
+        //         e.preventDefault();
+        //         e.stopImmediatePropagation();
+        //         var rel = e.target.rel;
+        //         this.mail_progress(`.${rel}`);
+        //     })
+        //     .bind(this);
+
         if (this.on_compose_page) {
             this.mail_type[0].addEventListener(
                 'change',
@@ -427,10 +436,22 @@ class ManyMailerPlus_mod {
         return this;
     }
 
+    mail_progress(id) {
+        var html = $(id).html();
+        var title = $($.parseHTML(html)).find('h1').text();
+        var info = $($.parseHTML(html)).find('.txt-wrap').html();
+        this.display_message({
+            title: title,
+            html: info,
+            type: 'info'
+        });
+    }
+
     display_message_by_id(id) {
         var html = $(id).html();
         var title = $($.parseHTML(html)).find('h1').text();
         var info = $($.parseHTML(html)).find('.txt-wrap').html();
+        debugger
         this.display_message({
             title: title,
             html: info,
