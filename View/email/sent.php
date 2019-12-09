@@ -25,7 +25,7 @@
 				<div class="col w-16">
 					<a class="m-close" href="#"></a>
 					<div class="box">
-						<h1><?=$email->subject?></h1>
+						<h1><?=$email->subject?> (~<?=$email->cache_id?>)</h1>
 						<div class="txt-wrap">
 							<ul class="checklist mb">
 								<li>

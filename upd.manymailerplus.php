@@ -19,7 +19,6 @@ class Manymailerplus_upd
 
     public function install()
     {
-        
         $this->settings = array();
         
         // ADD EXTENSION FOR SERVICES INTEGRATION
@@ -62,7 +61,7 @@ class Manymailerplus_upd
 
         ee()->load->dbforge();
         $sql[] = "DROP TABLE IF EXISTS exp_email_cache_plus";
-
+        $sql[] = "DROP TABLE IF EXISTS exp_email_queue_plus";
         foreach ($sql as $query) {
             ee()->db->query($query);
         }
@@ -84,8 +83,19 @@ class Manymailerplus_upd
     public function createCache()
     {
         ee()->load->dbforge();
+
+        
+        $sql[] = "CREATE TABLE IF NOT EXISTS `exp_email_queue_plus`(
+            `queue_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
+            `email_id` int(6) unsigned NOT NULL,
+            `recipient_count` int(6) unsigned NOT NULL,
+            `messages` text COLLATE utf8mb4_unicode_ci NULL,
+            PRIMARY KEY (`queue_id`)
+			) ENGINE=InnoDB AUTO_INCREMENT=2570 DEFAULT CHARACTER SET ".ee()->db->escape_str(ee()->db->char_set)." COLLATE ".ee()->db->escape_str(ee()->db->dbcollat);
+
         $sql[] = "CREATE TABLE IF NOT EXISTS `exp_email_cache_plus`(
 			`cache_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
+            `parent_id` int(6) unsigned NULL,
   			`cache_date` int(10) unsigned NOT NULL DEFAULT '0',
 			`total_sent` int(6) unsigned NOT NULL,
 			`from_name` varchar(70) COLLATE utf8mb4_unicode_ci NOT NULL,

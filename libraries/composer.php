@@ -3,7 +3,8 @@
  * This source file is part of the open source project
  */
 use EllisLab\ExpressionEngine\Library\CP\Table;
-use ManymailerPlus\Model\EmailCachePlus as EmailCache;
+
+use ManymailerPlus\Model\EmailCachePlus as EmailCachePlus;
 
 /**
  * Copy of Communicate Controller.
@@ -21,11 +22,32 @@ class Composer
      */
     public function __construct($settings = array())
     {
-          if (!ee()->cp->allowed_group('can_access_comm')) {
+        if (!ee()->cp->allowed_group('can_access_comm')) {
             show_error(lang('unauthorized_access'), 403);
-        }    
+        }
         $this->settings = $this->u_getCurrentSettings();
         $this->default_config = ee('Config')->getFile(EXT_SHORT_NAME.':settings_cfg')->get('options');
+    }
+    private function createModalProgress()
+    {
+        $modal_vars = array(
+            'name' => 'mail_progress',
+            'contents' => implode(
+                '',
+                array(
+                '<div id="mail_progress_output">',
+                '<h1>Progress: </h1>',
+                '<span class="txt-wrap">',
+                '<span id="percent">--</span>%<br />',
+                '<textarea id="result" style="white-space:pre-wrap" placeholder="Remember, be nice!" cols="30" rows="5"></textarea>',
+                '</span>',
+                '</div>'
+                )
+            )
+        );
+        $modal_html = ee('View')->make('ee:_shared/modal')->render($modal_vars);
+        ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
+        return $modal_html;
     }
 
     private function _getConfigValue($value, $default = null)
@@ -59,24 +81,13 @@ class Composer
         return $email_str;
     }
 
-    function progress()
-    {
-        $modal_vars = array(
-            'name' => 'hello',
-            'contents' => '<p>Hello, world!</p>'
-        );
-        $modal_html = ee('View')->make('ee:_shared/modal')->render($modal_vars);
-        ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
-       
-        ee('CP/Modal')->addModal('hello', $modal_html);
-    }
      
     /**
      * compose.
      *
-     * @param obj $email An EmailCache object for use in re-populating the form (see: resend())
+     * @param obj $email An EmailCachePlus object for use in re-populating the form (see: resend())
      */
-    public function compose(EmailCache $email = null)
+    public function compose(EmailCachePlus $email = null)
     {
         $default = array(
             'from' => ee()->session->userdata('email'),
@@ -148,21 +159,8 @@ class Composer
             ee()->javascript->output('$("textarea[name=\'plaintext_alt\']").parents("fieldset").eq(0).hide();');
         }
 
-        $modal_vars = array(
-            'name' => 'mail_progress',
-            'contents' => implode('', array(
-                '<div id="mail_progress_output">',
-                '<h1>Progress: </h1>',
-                '<span class="txt-wrap">',
-                '<textarea  placeholder="Remember, be nice!" cols="30" rows="5"></textarea>',
-                '</span>',
-                '</div>'
-            ))
-        );
-        $modal_html = ee('View')->make('ee:_shared/modal')->render($modal_vars);
-        ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
        
-        ee('CP/Modal')->addModal('hello', $modal_html);
+        ee('CP/Modal')->addModal('hello', $this->createModalProgress());
         $vars['sections'] = array(
             'sender_info' => array(
                 array(
@@ -395,6 +393,35 @@ class Composer
         return $vars;
     }
 
+    public function mail_progress()
+    {
+        session_start();
+
+        if (!array_key_exists('progress', $_SESSION)) {
+            $_SESSION['status'] = array('progress' => 0, 'messages' => '');
+        }
+
+        if ($_SESSION['status']['progress'] >= 100) {
+            unset($_SESSION['status']);
+            die('--');
+        }
+        // get current Id
+        $current_queue = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')->all()->last();
+        $total_to_be_sent = $current_queue->recipient_count;
+        $total_sent = ee('Model')
+            ->get(EXT_SHORT_NAME. ':EmailCachePlus')
+            ->filter('parent_id', $current_queue->email_id)
+            ->all()
+            ->count();
+        $_SESSION['status'] = array(
+            'current' => $total_sent,
+            'total' => $total_to_be_sent,
+            'progress' => round($total_sent / $total_to_be_sent * 100),
+            'messages' => ($total_sent !== $total_to_be_sent) ? $current_queue->messages : $current_queue->messages . "Done!!!\n"
+        );
+        return $_SESSION['status'];
+    }
+
     /**
      *  Returns the html rendered by view_templates
      *
@@ -409,10 +436,10 @@ class Composer
     /**
      *  Stepped version of composer
      *
-     * @param obj $email An EmailCache object for use in re-populating the form (see: resend())
+     * @param obj $email An EmailCachePlus object for use in re-populating the form (see: resend())
      *
      */
-    public function compose2(EmailCache $email = null)
+    public function compose2(EmailCachePlus $email = null)
     {
         ee()->dbg->c_log(__FUNCTION__, __METHOD__ . '  ' . __LINE__);
         $default = array(
@@ -898,7 +925,6 @@ class Composer
         ee()->dbg->c_log($cache_data, __METHOD__ . ' Cache Presave ' . __LINE__);
         $email = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
         $email->save();
-
         // Get member group emails
         $member_groups = ee('Model')->get('MemberGroup', $groups)
             ->with('Members')
@@ -920,6 +946,7 @@ class Composer
         /** ----------------------------------------*/
 
         //  If so, we'll send those separately first
+        
 
         $total_sent = 0;
 
@@ -946,7 +973,19 @@ class Composer
         $email->recipient_array = $email_addresses;
         // $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
         $email->save();
-        $id = $email->cache_id;
+   
+        // add to queued
+        $queue = ee('Model')->make(
+            EXT_SHORT_NAME. ':EmailQueue',
+            array(
+                'email_id' => $email->cache_id,
+                'recipient_count' => count($email_addresses),
+                'messages' => ''
+            )
+        );
+       
+        $queue->save();
+
 
         // Is Batch Mode set?
 
@@ -1083,13 +1122,13 @@ class Composer
     /**
      * Sends a single email handling errors.
      *
-     * @param obj    $email  An EmailCache object
+     * @param obj    $email  An EmailCachePlus object
      * @param string $to     An email address to send to
      * @param bool   $delete Delete email attachments after send?
      *
      * @return string A response messge as a result of sending the email
      */
-    private function deliverOneEmail(EmailCache $email, $to, $delete = true)
+    private function deliverOneEmail(EmailCachePlus $email, $to, $delete = true)
     {
         $error = false;
 
@@ -1125,11 +1164,11 @@ class Composer
     /**
      * Sends multiple emails handling errors.
      *
-     * @param EmailCache $email An EmailCache object
+     * @param EmailCachePlus $email An EmailCachePlus object
      *
      * @return int The number of emails sent
      */
-    private function _deliverManyEmails(EmailCache $email)
+    private function _deliverManyEmails(EmailCachePlus $email)
     {
         $recipient_array = array_slice($email->recipient_array, $email->total_sent);
         $number_to_send = count($recipient_array);
@@ -1164,6 +1203,7 @@ class Composer
 
                 $cache_data = array(
                     'cache_date' => ee()->localize->now,
+                    'parent_id' => $email->cache_id,
                     'total_sent' => 0,
                     'from_name' => $email->from_name,
                     'from_email' => $email->from_email,
@@ -1187,15 +1227,16 @@ class Composer
                 $cache_data['extras'] = $this->extras;
                 ee()->dbg->c_log($cache_data, __METHOD__ . ' Indiv Cache Presave ' . __LINE__);
                 
+                // ee()->dbg->c_log($email->cache_id, __METHOD__ . ' Template Email ' . __LINE__, true);
                 if ($this->email_send($cache_data)) {
                     $cache_data['message'] =  strtr($formatted_message, $record);
-                    $this->_saveSingleEmail($cache_data);
+                    $this->_saveSingleEmail($email, $cache_data);
                 } else {
                     $cache_data['message'] =  strtr($formatted_message, $record);
                     if (!$this->deliverEmail($email, $email_address)) {
                         $this->_removeMail($email);
                     }
-                    $this->_saveSingleEmail($cache_data);
+                    $this->_saveSingleEmail($email, $cache_data);
                 }
             } elseif (!$this->deliverEmail($email, $email_address)) {
                 $this->_removeMail($email);
@@ -1206,16 +1247,29 @@ class Composer
 
         return $email->total_sent;
     }
-    
-    private function _saveSingleEmail($data)
+    public function addItem($serializedArray, $item)
     {
+        $a = unserialize($serializedArray);
+        $a[] = $item;
+        return serialize($a);
+    }
+    private function _saveSingleEmail(EmailCachePlus $email, $data){
+        $queue = ee('Model')
+            ->get(EXT_SHORT_NAME. ':EmailQueue')
+            ->filter('email_id', $email->cache_id)->first();
+        
+        $queue->messages .= "Message sent to ".$data['recipient']."\n";
+        $queue->save();
+        
         $singleEmail = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $data);
         ++$singleEmail->total_sent;
         $singleEmail->save();
+        
+        ee()->dbg->c_log(sprintf("Parent: %s Child: %s", $data['parent_id'], $singleEmail->cache_id), __METHOD__ . ' Template Email ' . __LINE__);
         return $singleEmail->cache_id;
     }
 
-    private function _removeMail(EmailCache $email)
+    private function _removeMail(EmailCachePlus $email)
     {
         $errors[] = ee()->email->print_debugger();
         $email->clear();
@@ -1230,14 +1284,14 @@ class Composer
     /**
      * Delivers an email.
      *
-     * @param obj    $email An EmailCache object
+     * @param obj    $email An EmailCachePlus object
      * @param string $to    An email address to send to
      * @param string $cc    An email address to cc
      * @param string $bcc   An email address to bcc
      *
      * @return bool True on success; False on failure
      */
-    private function deliverEmail(EmailCache $email, $to, $cc = null, $bcc = null)
+    private function deliverEmail(EmailCachePlus $email, $to, $cc = null, $bcc = null)
     {
         ee()->email->clear(true);
         ee()->email->wordwrap = $email->wordwrap;
@@ -1267,11 +1321,11 @@ class Composer
     /**
      * Formats the message of an email based on the text format type.
      *
-     * @param obj $email An EmailCache object
+     * @param obj $email An EmailCachePlus object
      *
      * @return string The  message
      */
-    private function formatMessage(EmailCache $email, $markdown_only = false)
+    private function formatMessage(EmailCachePlus $email, $markdown_only = false)
     {
         $message = $email->message;
         if ($email->text_fmt != 'none' && $email->text_fmt != '') {
@@ -1302,11 +1356,11 @@ class Composer
     /**
      * Censors the subject of an email if necessary.
      *
-     * @param obj $email An EmailCache object
+     * @param obj $email An EmailCachePlus object
      *
      * @return string The censored subject
      */
-    private function censorSubject(EmailCache $email)
+    private function censorSubject(EmailCachePlus $email)
     {
         ee()->dbg->c_log($email, __METHOD__ . '  ' . __LINE__);
         $subject = $email->subject;
@@ -1704,7 +1758,7 @@ class Composer
     /**
      * View sent emails.
      */
-    public  function sent()
+    public function sent()
     {
         if (!ee()->cp->allowed_group('can_send_cached_email')) {
             show_error(lang('not_allowed_to_email_cache'));
@@ -1763,7 +1817,7 @@ class Composer
             'total_sent' => 'total_sent',
         );
         
-        $limit = $this->_getConfigValue('default_sent_rows.default', 500);
+        // $limit = $this->_getConfigValue('default_sent_rows.default', 500);
         // ee()->dbg->c_log($limit, __METHOD__.' '.__LINE__, true);
         // $emails = $emails->order($sort_map[$table->sort_col], $table->sort_dir)
         //     ->limit($limit)

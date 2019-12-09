@@ -19,7 +19,7 @@ if (!defined('BASEPATH')) {
  */
 class Manymailerplus_mcp
 {
-   use libraries\Utility_Functions;
+    use libraries\Utility_Functions;
     private $_vars = array();
     /**
      * Constructor.
@@ -40,7 +40,7 @@ class Manymailerplus_mcp
             ->_makeSidebar();
 
         $current_settings = $this->u_getCurrentSettings();
-        $service_list = $current_settings['service_order'] ?: array_keys($this->services);
+        $service_list = isset($current_settings['service_order']) ? $current_settings['service_order'] : array_keys($this->services);
         
         $this->_vars = array(
             'save_btn_text' => '',
@@ -62,7 +62,6 @@ class Manymailerplus_mcp
 
             return ee('View')->make(EXT_SHORT_NAME.':'. $this->view)->render($this->_vars);
         }
-       
     }
 
     /**
@@ -127,8 +126,7 @@ class Manymailerplus_mcp
     private function _makeSidebar()
     {
         if (!isset($this->sidebar)) {
-           
-        } 
+        }
         $this->sidebar = ee('CP/Sidebar')->make();
         foreach (array_keys($this->sidebar_options) as $category) {
             $left_nav = $this->sidebar->addHeader(lang("{$category}_title"), ee('CP/URL', EXT_SETTINGS_PATH.'/'.$category));
@@ -152,13 +150,12 @@ class Manymailerplus_mcp
     private function _updateServiceOptions($additional_links = array())
     {
         if (empty($additional_links)) {
-            
-            $current_settings = $this->u_getCurrentSettings();  
-            $additional_links =  $current_settings['service_order'] ?: array_keys($this->services);
+            $current_settings = $this->u_getCurrentSettings();
+            $additional_links =  isset($current_settings['service_order'])  ? $current_settings['service_order'] : array_keys($this->services);
         }
         $link_list = array_unique(
             array_merge(
-                $this->sidebar_options['services']['links'], 
+                $this->sidebar_options['services']['links'],
                 ee()->mail_svc->get_service_order()
             )
         );
@@ -198,8 +195,11 @@ class Manymailerplus_mcp
         $this->_vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
         switch ($func) {
+        case 'mail_progress':
+            echo(ee()->output->send_ajax_response(ee()->mail_funcs->{$func}()));
+            exit;
         case 'getTemplateView':
-            return ee()->mail_funcs->{$func}();        
+            return ee()->mail_funcs->{$func}();
         case 'compose2':
             $this->_vars['view'] = 'compose_view2';
             // no break
@@ -299,7 +299,7 @@ class Manymailerplus_mcp
             $this->_vars = array_merge($this->_vars, ee()->mail_settings->settings());
         
         }
-        ee()->dbg->c_log($this->_vars, __METHOD__ . '  ' . __LINE__);
+        // ee()->dbg->c_log($this->_vars, __METHOD__ . '  ' . __LINE__);
         return $this->view_page($breadcrumbs);
     }
     /**
@@ -324,7 +324,8 @@ class Manymailerplus_mcp
         return $return;
     }
 
-    public function ucArray(&$list){
+    public function ucArray(&$list)
+    {
         $list = ucfirt($list);
     }
 }

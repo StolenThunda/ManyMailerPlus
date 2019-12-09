@@ -8,11 +8,7 @@ return $config = array(
         'debug_mode' => array(
             'type' => 'yes_no',
             'default' => 'n'
-        ),
-        // 'default_sent_rows' => array(
-        //     'type' => 'text',
-        //     'default' => '10'
-        // )
+        )
     )
 );
 //EOF

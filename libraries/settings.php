@@ -46,7 +46,7 @@ class Settings
         $sections = array();
         $db_defaults = $this->u_getCurrentSettings();
         foreach ($this->settings_options as $key => $cfg) {
-            ee()->dbg->c_log($cfg, __METHOD__ . '  ' . __LINE__);
+            // ee()->dbg->c_log($cfg, __METHOD__ . '  ' . __LINE__);
             $field = array(
                 'title' => $key,
                 'desc'  => $key . '_desc',

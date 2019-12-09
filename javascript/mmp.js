@@ -1,7 +1,7 @@
 class ManyMailerPlus_mod {
     constructor(apiAvailable) {
         'use strict';
-        
+        this.base_url = "admin.php?/cp/addons/settings/manymailerplus/";
         this.b_isApiAvailable = apiAvailable || false;
         this.b_swalLoaded = Swal !== undefined;
         this.b_inEmailFunctions = false;
@@ -30,7 +30,7 @@ class ManyMailerPlus_mod {
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         this.con_errors = $('#csv_errors'); // container for error messages
         this.loader = $('.loader'); // css loading visuals
-
+       
         // modules
         this.DOMParser = new DOMParser();
         this.Stepper = new Stepper($('.form-section'));
@@ -116,11 +116,23 @@ class ManyMailerPlus_mod {
         return this;
     }
 
-    init_dom_events() {
-        this.doc_body
-            .on('query_so', function(e){
-                return e.data;
+    setDomAjax(){
+        var btn = $('<button/>', {
+                text: 'Mailer Progress',
+                id: 'btn-progress'
             })
+            .click(mail_progress_poll)
+            .addClass('btn')
+            .appendTo('.sidebar');
+
+            // btn.hide();
+    }
+    init_dom_events() {
+        $('form').on('submit',function(){            
+            $('a.m-link[rel=mail_progress]').trigger('click');
+            mail_progress_poll();
+        });
+        this.doc_body
             .on('click', '*[data-conditional-modal]', function (e) {
                 e.preventDefault();
                 $('.modal-confirm-remove').hide();
@@ -148,7 +160,7 @@ class ManyMailerPlus_mod {
                 $(this).nextAll('div').fadeToggle('slow');
             })
             .bind(this);
-        // hijacks default 'view email' button for SweetAlert2 action!
+        // hijacks default 'modal  windows' for SweetAlert2 action!
         $('a.m-link')
             .bind('click', (e) => {
                 e.preventDefault();
@@ -157,16 +169,8 @@ class ManyMailerPlus_mod {
                 this.display_message_by_id(`.${rel}`);
             })
             .bind(this);
-
-        // $('a.m-link')
-        //     .bind('click', (e) => {
-        //         e.preventDefault();
-        //         e.stopImmediatePropagation();
-        //         var rel = e.target.rel;
-        //         this.mail_progress(`.${rel}`);
-        //     })
-        //     .bind(this);
-
+            this.setDomAjax();
+       
         if (this.on_compose_page) {
             this.mail_type[0].addEventListener(
                 'change',
@@ -255,13 +259,14 @@ class ManyMailerPlus_mod {
                 });
             }
         }
+        
         return this;
     }
 
     init_service_list() {
         this.db_service_order; // get db service order and assign data to element
         this.service_list
-            .attr('action-url', 'admin.php?/cp/addons/settings/manymailerplus/services/update_service_order')
+            .attr('action-url', this.base_url + 'services/update_service_order')
             .addClass('service-list');
         if (window.location.href.split("/").includes('services')) {
             this
@@ -321,6 +326,14 @@ class ManyMailerPlus_mod {
     //#endregion Page Init
 
     //#region Page funcs
+    mail_progress_callback(el, response){
+    
+        // $.get('admin.php?/cp/addons/settings/manymailerplus/email/mail_progress', function(response){
+        //     let status = !(response === '--');
+        //     if (status) $('#percent').html(response);
+        //     return status;
+        //  });       
+    }
     compare_service_order(arr1, arr2) {
         return JSON.stringify(arr1) === JSON.stringify(arr2);
     }
@@ -343,7 +356,7 @@ class ManyMailerPlus_mod {
     
     get db_service_order(){
         var that = this;
-        $.get('/admin.php?/cp/addons/settings/manymailerplus/services/get_service_order')
+        $.get(this.base_url + 'services/get_service_order')
         .success(function(data){
             return data; 
         })
@@ -436,22 +449,10 @@ class ManyMailerPlus_mod {
         return this;
     }
 
-    mail_progress(id) {
+     display_message_by_id(id) {
         var html = $(id).html();
         var title = $($.parseHTML(html)).find('h1').text();
         var info = $($.parseHTML(html)).find('.txt-wrap').html();
-        this.display_message({
-            title: title,
-            html: info,
-            type: 'info'
-        });
-    }
-
-    display_message_by_id(id) {
-        var html = $(id).html();
-        var title = $($.parseHTML(html)).find('h1').text();
-        var info = $($.parseHTML(html)).find('.txt-wrap').html();
-        debugger
         this.display_message({
             title: title,
             html: info,
@@ -465,7 +466,7 @@ class ManyMailerPlus_mod {
             var onServices = window.location.href.split('/').slice(-1)[0].indexOf('services') > -1;
             if (onServices) this.update_sortable(this.DOMserviceOrder);
         }
-        var tables = $("form table:has(thead ~ tbody>tr)");
+        var tables = $("form table:has(thead ~ tbody>tr:not([class='no-data'])"); // non-empty tables
         tables.DataTable({
             "aoColumns" : null,
             "retrieve" : true,
@@ -475,14 +476,11 @@ class ManyMailerPlus_mod {
             "autoWidth":      true,
             "paging":         true
         });
-       
         if (tables.forEach){
             tables.forEach(el => {
-            el.columns.adjust().draw();
-        });
-        }
-        
-        
+                el.columns.adjust().draw();
+            });
+        }        
         return onCompose;
     }
 
@@ -659,7 +657,7 @@ class ManyMailerPlus_mod {
         if (toggle) {
             // 
             let current_base_url = 'http://' + window.location.hostname;
-            let url = new URL('/admin.php?/cp/addons/settings/manymailerplus/email/getTemplateView', current_base_url);
+            let url = new URL(this.base_url + 'email/getTemplateView', current_base_url);
             this.toggle_loading();
             $.get(url, {}, function (data) {
                 var htmlDoc = this.DOMParser.parseFromString(data, 'text/html');
@@ -1148,6 +1146,31 @@ class ManyMailerPlus_mod {
         // .sync_template_body_content();
     }    
     //#endregion Templates
+}
+function mail_progress_poll(){
+//    debugger
+    const url = 'admin.php?/cp/addons/settings/manymailerplus/email/mail_progress';
+    if (!$('.swal2-show #percent').is(':visible')) {
+            $('a.m-link[rel=mail_progress]').trigger('click');
+            // TLN.append_line_numbers('result');
+        }
+    $.ajax({
+        type: "POST",
+        // async: false,
+        url: url,
+        dataType: "json",
+        success: function(status){
+            debugger;
+            var progress = status.progress;
+            var messages = status.messages;
+            console.dir(messages);
+            $('.swal2-show #percent').html(progress);
+            $('.swal2-show #result')
+                .val(messages);
+            if (progress === '--' || parseInt(progress) < 100 || parseInt(progress) === NaN) mail_progress_poll();
+        },
+        error: function() {debugger; setTimeout(mail_progress_poll, 1000);}
+    })
 }
 
 // for running test only

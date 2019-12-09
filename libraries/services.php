@@ -173,7 +173,14 @@ class Services
     public function get_service_order()
     {
         $current_settings = $this->u_getCurrentSettings();
-        $current_service_order = $current_settings['service_order'] ?: array_keys($this->services);
+        
+        if (isset($current_settings['service_order'])) {
+            $current_service_order = $current_settings['service_order'];
+        } else {
+            $current_service_order = $current_settings['service_order'] = array_keys($this->services);
+            $settings = array_merge($this->u_getCurrentSettings(), $current_settings);
+            $this->u_saveSettings($settings);
+        }
         return $current_service_order;
     }
 
