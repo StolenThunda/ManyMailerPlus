@@ -38,8 +38,9 @@ class Composer
                 '<div id="mail_progress_output">',
                 '<h1>Progress: </h1>',
                 '<span class="txt-wrap">',
-                '<span id="percent">--</span>%<br />',
-                '<textarea id="result" style="white-space:pre-wrap" placeholder="Remember, be nice!" cols="30" rows="5"></textarea>',
+                '<p>Sending <span id="current">0</span> of <span id="total">--</span> emails.</span></br>',
+                '<span id="percent">--</span>% done</p><hr />',
+                '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
                 '</span>',
                 '</div>'
                 )
@@ -397,7 +398,7 @@ class Composer
     {
         session_start();
 
-        if (!array_key_exists('progress', $_SESSION)) {
+        if (!array_key_exists('status', $_SESSION)) {
             $_SESSION['status'] = array('progress' => 0, 'messages' => '');
         }
 
@@ -1015,6 +1016,7 @@ class Composer
             } else {
                 $debug_msg = sprintf(lang('sent_service'), ucfirst($service));
             }
+            ee()->db->query('truncate table exp_email_queue_plus');
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
             // ee()->dbg->c_log($debug_msg, __METHOD__. ' Result '.__LINE__, true);
             ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
@@ -1481,8 +1483,7 @@ class Composer
                     $this->log_array[] = sprintf(lang('missing_service_credentials'), ucfirst($service), ucfirst($service));
                 } elseif ($sent == false or count($sent) == 0) {
                     $this->log_array[] = sprintf(lang('could_not_deliver'), ucfirst($service));
-                }
-                
+                }                
                 $this->_service_unavailable($service);
             }
         }

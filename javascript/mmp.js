@@ -1156,20 +1156,21 @@ function mail_progress_poll(){
         }
     $.ajax({
         type: "POST",
-        // async: false,
         url: url,
         dataType: "json",
         success: function(status){
-            debugger;
+            // debugger;
             var progress = status.progress;
             var messages = status.messages;
             console.dir(messages);
             $('.swal2-show #percent').html(progress);
+            $('.swal2-show #current').html(status.current);
+            $('.swal2-show #total').html(status.total);
             $('.swal2-show #result')
                 .val(messages);
             if (progress === '--' || parseInt(progress) < 100 || parseInt(progress) === NaN) mail_progress_poll();
         },
-        error: function() {debugger; setTimeout(mail_progress_poll, 1000);}
+        error: function() {debugger; setTimeout(mail_progress_poll,500);}
     })
 }
 
