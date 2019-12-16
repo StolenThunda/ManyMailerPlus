@@ -38,9 +38,12 @@ class Composer
                 '<div id="mail_progress_output">',
                 '<h1>Progress: </h1>',
                 '<span class="txt-wrap">',
-                '<p>Sending <span id="current">0</span> of <span id="total">--</span> emails.</span></br>',
-                '<span id="percent">--</span>% done</p><hr />',
+                '<progress max="100" value="0">',
+                '</progress><br/></hr>',
+                '<p>'. lang('sent'). ' <span id="current">0</span> '.lang('of').' <span id="total">--</span> '. lang('emails').'.</span></br>',
+                '<span id="p-info"><span id="percent">--</span>% done</span></p><br />',
                 '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
+                '<br/><h3>Elapsed: <span id="time">--</span></h3><hr />',
                 '</span>',
                 '</div>'
                 )
@@ -401,25 +404,63 @@ class Composer
         if (!array_key_exists('status', $_SESSION)) {
             $_SESSION['status'] = array('progress' => 0, 'messages' => '');
         }
-
         if ($_SESSION['status']['progress'] >= 100) {
             unset($_SESSION['status']);
             die('--');
         }
-        // get current Id
         $current_queue = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')->all()->last();
-        $total_to_be_sent = $current_queue->recipient_count;
-        $total_sent = ee('Model')
-            ->get(EXT_SHORT_NAME. ':EmailCachePlus')
-            ->filter('parent_id', $current_queue->email_id)
-            ->all()
-            ->count();
-        $_SESSION['status'] = array(
-            'current' => $total_sent,
-            'total' => $total_to_be_sent,
-            'progress' => round($total_sent / $total_to_be_sent * 100),
-            'messages' => ($total_sent !== $total_to_be_sent) ? $current_queue->messages : $current_queue->messages . "Done!!!\n"
-        );
+        if (isset($current_queue->recipient_count)) {
+            $total_to_be_sent = $current_queue->recipient_count ?: 0;
+            $total_sent = ee('Model')
+                ->get(EXT_SHORT_NAME. ':EmailCachePlus')
+                ->filter('parent_id', $current_queue->email_id)
+                ->all()
+                ->count();
+                
+            $progress =  round($total_sent / $total_to_be_sent * 100);
+
+            //https://wordpress.stackexchange.com/questions/290488/how-get-exact-time-difference
+            $now = ($progress < 100) ? new DateTime() : $current_queue->queue_end;
+            $start = $current_queue->queue_start;
+            if ($progress <= 100) {
+                $current_queue->queue_end = $now->getTimestamp();
+                $current_queue->save();
+            }
+            
+            $diff = $start->diff($now);
+            $diff->w = floor($diff->d / 7);
+            $diff->d -= $diff->w * 7;
+        
+            $string = array(
+                'y' => 'year',
+                'm' => 'month',
+                'w' => 'week',
+                'd' => 'day',
+                'h' => 'hour',
+                'i' => 'minute',
+                's' => 'second',
+            );
+            foreach ($string as $k => &$v) {
+                if ($diff->$k) {
+                    $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+                } else {
+                    unset($string[$k]);
+                }
+            }
+            $elapsed_time = $string ? implode(', ', $string): '';
+
+            $_SESSION['status'] = array(
+                'start' => $start,
+                'req' => $now,
+                'time' => $elapsed_time,
+                'current' => $total_sent,
+                'total' => $total_to_be_sent,
+                'progress' => $progress,
+                'messages' => ($total_sent !== $total_to_be_sent) ? $current_queue->messages : $current_queue->messages . "Done!!!\n"
+            );
+        }
+
+       
         return $_SESSION['status'];
     }
 
@@ -975,11 +1016,12 @@ class Composer
         // $email->setMemberGroups(ee('Model')->get('MemberGroup', $groups)->all());
         $email->save();
    
-        // add to queued
+        // add to queue
         $queue = ee('Model')->make(
             EXT_SHORT_NAME. ':EmailQueue',
             array(
                 'email_id' => $email->cache_id,
+                'queue_start' => ee()->localize->now,
                 'recipient_count' => count($email_addresses),
                 'messages' => ''
             )
@@ -1016,7 +1058,7 @@ class Composer
             } else {
                 $debug_msg = sprintf(lang('sent_service'), ucfirst($service));
             }
-            ee()->db->query('truncate table exp_email_queue_plus');
+            // ee()->db->query('truncate table exp_email_queue_plus');
             ee()->view->set_message('success', lang('total_emails_sent').' '.$total_sent, $debug_msg, true);
             // ee()->dbg->c_log($debug_msg, __METHOD__. ' Result '.__LINE__, true);
             ee()->functions->redirect(ee('CP/URL', EXT_SETTINGS_PATH.'/email/'.$sender));
@@ -1255,7 +1297,8 @@ class Composer
         $a[] = $item;
         return serialize($a);
     }
-    private function _saveSingleEmail(EmailCachePlus $email, $data){
+    private function _saveSingleEmail(EmailCachePlus $email, $data)
+    {
         $queue = ee('Model')
             ->get(EXT_SHORT_NAME. ':EmailQueue')
             ->filter('email_id', $email->cache_id)->first();
@@ -1483,7 +1526,7 @@ class Composer
                     $this->log_array[] = sprintf(lang('missing_service_credentials'), ucfirst($service), ucfirst($service));
                 } elseif ($sent == false or count($sent) == 0) {
                     $this->log_array[] = sprintf(lang('could_not_deliver'), ucfirst($service));
-                }                
+                }
                 $this->_service_unavailable($service);
             }
         }
@@ -1794,7 +1837,6 @@ class Composer
 
         $count = 0;
 
-        // $emails =ee('Model')->get(EXT_SHORT_NAME.':');
         $emails = ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus');
         $search = $table->search;
         if (!empty($search)) {
@@ -1820,11 +1862,11 @@ class Composer
         
         // $limit = $this->_getConfigValue('default_sent_rows.default', 500);
         // ee()->dbg->c_log($limit, __METHOD__.' '.__LINE__, true);
-        // $emails = $emails->order($sort_map[$table->sort_col], $table->sort_dir)
-        //     ->limit($limit)
-        //     ->offset($offset)
-        //     ->all();
-        $emails = $emails->all();
+        $emails = $emails->order($sort_map[$table->sort_col], $table->sort_dir)
+            ->limit(500)
+            ->offset($offset)
+            ->all();
+        // $emails = $emails->all();
 
         $vars['emails'] = array();
         $data = array();
@@ -1900,10 +1942,6 @@ class Composer
         //     );
         // }
 
-        $vars['cp_page_title'] = lang('view_email_cache');
-        ee()->javascript->set_global('lang.remove_confirm', lang('view_email_cache').': <b>### '.lang('emails').'</b>');
-
-        // ee()->cp->add_js_script(array( 'file' => array('cp/confirm_remove'),));
         $vars['base_url'] = $base_url;
         $vars['cp_page_title'] = lang('view_email_cache');
         ee()->javascript->set_global('lang.remove_confirm', lang('view_email_cache').': <b>### '.lang('emails').'</b>');

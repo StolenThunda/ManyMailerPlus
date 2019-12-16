@@ -187,7 +187,8 @@ class Services
     public function get_initial_service()
     {
         $active = $this->get_active_services();
-        return  (empty($active)) ? null : $active[0];
+        ee()->dbg->c_log($active, __METHOD__ . '  ' . __LINE__);
+        return  (empty($active)) ? null : reset($active);
     }
 
     
@@ -196,7 +197,6 @@ class Services
         $active_services = array();
         $current_settings = empty($value_array) ? $this->u_getCurrentSettings() : $value_array;
         $svc_o =  $current_settings['service_order'] ?: array();
-        // ee()->dbg->c_log($current_settings, __METHOD__ . '  ' . __LINE__);
         // get active service names from current settings
         $active = array_filter(
             $current_settings, function ($v, $k) {
@@ -204,7 +204,7 @@ class Services
             },
             ARRAY_FILTER_USE_BOTH
         );
-        // ee()->dbg->c_log($active, __METHOD__ . '  ' . __LINE__);
+        ee()->dbg->c_log($active, __METHOD__ . '  ' . __LINE__);
         // strip '_active' from values 
         $active_services = array_unique(
             array_map(

@@ -117,21 +117,23 @@ class ManyMailerPlus_mod {
     }
 
     setDomAjax(){
-        var btn = $('<button/>', {
-                text: 'Mailer Progress',
-                id: 'btn-progress'
+        $('.form-btns:visible').each(function(){
+            var btn = $('<button/>', {
+                text: 'View Mailer Progress',
             })
             .click(mail_progress_poll)
-            .addClass('btn')
-            .appendTo('.sidebar');
+            .addClass('btn btn-progress')
+            .appendTo(this);
 
-            // btn.hide();
+            btn.hide();
+        });
     }
     init_dom_events() {
-        $('form').on('submit',function(){            
-            $('a.m-link[rel=mail_progress]').trigger('click');
-            mail_progress_poll();
-        });
+
+        $('form').on('submit',function() {
+                if (this.on_compose_page) $('.btn-progress').show();
+            }.bind(this)
+        );
         this.doc_body
             .on('click', '*[data-conditional-modal]', function (e) {
                 e.preventDefault();
@@ -269,12 +271,11 @@ class ManyMailerPlus_mod {
             .attr('action-url', this.base_url + 'services/update_service_order')
             .addClass('service-list');
         if (window.location.href.split("/").includes('services')) {
-            this
-                .init_sortable()
-                .toggle_active_services();
+            this.init_sortable();
         } else {
             this.service_list.hide();
         }
+        this.toggle_active_services();
         return this;
     }
 
@@ -343,15 +344,16 @@ class ManyMailerPlus_mod {
     }
 
     get DOMserviceOrder(){
-        var dataset, dom_SO = [];
+        var dataset, DOM_service_order = [];
 
         if (Array.isArray(this.service_list.data('order'))){
             dataset = this.service_list.data('order');
         }
+        // debugger;
         this.service_list.children().each(function() {
-            dom_SO.push($(this).data('service'));
+            DOM_service_order.push($(this).data('service'));
         });
-        return this.compare_service_order(dom_SO, dataset) ? dataset : dom_SO;
+        return this.compare_service_order(DOM_service_order, dataset) ? dataset : DOM_service_order;
     }
     
     get db_service_order(){
@@ -365,7 +367,7 @@ class ManyMailerPlus_mod {
         })
         .always(function (data) {
             console.dir(data);
-            that.service_list.attr('data-order', data);
+            that.service_list.attr('data-order', that.parseDbgFromJson(data));
         });
     }
 
@@ -466,7 +468,7 @@ class ManyMailerPlus_mod {
             var onServices = window.location.href.split('/').slice(-1)[0].indexOf('services') > -1;
             if (onServices) this.update_sortable(this.DOMserviceOrder);
         }
-        var tables = $("form table:has(thead ~ tbody>tr:not([class='no-data'])"); // non-empty tables
+        var tables = $("table:has(thead ~ tbody>tr:not('.no-results'))"); // non-empty tables
         tables.DataTable({
             "aoColumns" : null,
             "retrieve" : true,
@@ -514,7 +516,7 @@ class ManyMailerPlus_mod {
             XID: EE.XID
         })
         .fail(function (data) {
-            
+            data = that.parseDbgFromJson(data);
             that.update_sortable(data); 
         })
         .always(function (data) {
@@ -678,8 +680,8 @@ class ManyMailerPlus_mod {
                         );
                     });
                 }else{
-                    
-                    let order = this.service_list.data('order').split(',')[0];
+                    let order = $('li.enabled-service').data('service');
+                    // let order = this.service_list.data('order').split(',')[0];
                     order = order.charAt(0).toUpperCase() + order.slice(1);
                     this.display_message({
                         title: 'Information',
@@ -711,7 +713,6 @@ class ManyMailerPlus_mod {
 
     evt_convert_csv() {
         this.convertCSV();
-        // this.on_compose_page;
         this.sel_csv_entry
             .val('file_recipient')
             .trigger('change');
@@ -1150,28 +1151,36 @@ class ManyMailerPlus_mod {
 function mail_progress_poll(){
 //    debugger
     const url = 'admin.php?/cp/addons/settings/manymailerplus/email/mail_progress';
-    if (!$('.swal2-show #percent').is(':visible')) {
-            $('a.m-link[rel=mail_progress]').trigger('click');
-            // TLN.append_line_numbers('result');
-        }
+    if (!$('progress').is(':visible')) {
+        $('a.m-link[rel=mail_progress]').trigger('click');
+    }
     $.ajax({
         type: "POST",
         url: url,
         dataType: "json",
         success: function(status){
-            // debugger;
-            var progress = status.progress;
-            var messages = status.messages;
-            console.dir(messages);
-            $('.swal2-show #percent').html(progress);
+            debugger;
+            var p = status.progress;
+            $('.swal2-show #percent').html(p).hide();
             $('.swal2-show #current').html(status.current);
             $('.swal2-show #total').html(status.total);
-            $('.swal2-show #result')
-                .val(messages);
-            if (progress === '--' || parseInt(progress) < 100 || parseInt(progress) === NaN) mail_progress_poll();
+            $('.swal2-show #time').html(status.time);
+            $('.swal2-show #result').val(status.messages);
+            $('progress')
+                .html($('#p-info').html())
+                .val(p);
+            if (p === '--' || parseInt(p) < 100 || parseInt(p) === NaN) setTimeout(mail_progress_poll,500);
         },
-        error: function() {debugger; setTimeout(mail_progress_poll,500);}
-    })
+        error: function(jqXHR, status, e) {
+            debugger; 
+            var response = jqXHR.responseText;
+            if (jqXHR.hasOwnProperty('responseJson')){                
+                Swal.fire({title: status, type: 'error', html: response});    
+                var result = JSON.parse(response);
+                if (result.current !== result.total && result.total !== 0) setTimeout(mail_progress_poll,500);}
+            }        
+            
+    });
 }
 
 // for running test only

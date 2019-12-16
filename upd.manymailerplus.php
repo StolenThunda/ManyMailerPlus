@@ -62,9 +62,7 @@ class Manymailerplus_upd
         ee()->load->dbforge();
         $sql[] = "DROP TABLE IF EXISTS exp_email_cache_plus";
         $sql[] = "DROP TABLE IF EXISTS exp_email_queue_plus";
-        foreach ($sql as $query) {
-            ee()->db->query($query);
-        }
+        $this->runSQL($sql);
         return true;
     }
 
@@ -84,9 +82,12 @@ class Manymailerplus_upd
     {
         ee()->load->dbforge();
 
-        
+        $sql[] = "DROP TABLE IF EXISTS `exp_email_cache_plus`";
+        $sql[] = "DROP TABLE IF EXISTS `exp_email_queue_plus`";
         $sql[] = "CREATE TABLE IF NOT EXISTS `exp_email_queue_plus`(
             `queue_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
+            `queue_start` int(10) unsigned NOT NULL DEFAULT '0',            
+            `queue_end` int(10) unsigned NOT NULL DEFAULT '0',
             `email_id` int(6) unsigned NOT NULL,
             `recipient_count` int(6) unsigned NOT NULL,
             `messages` text COLLATE utf8mb4_unicode_ci NULL,
@@ -115,10 +116,15 @@ class Manymailerplus_upd
 			`mailKey` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 			PRIMARY KEY (`cache_id`)
 			) ENGINE=InnoDB AUTO_INCREMENT=2570 DEFAULT CHARACTER SET ".ee()->db->escape_str(ee()->db->char_set)." COLLATE ".ee()->db->escape_str(ee()->db->dbcollat);
+        $this->runSQL($sql);
+        return true;
+    }
 
+    private function runSQL($sql = array())
+    {
+        
         foreach ($sql as $query) {
             ee()->db->query($query);
         }
-        return true;
     }
 }

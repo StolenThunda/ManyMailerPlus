@@ -8,6 +8,7 @@
  * @license   https://expressionengine.com/license Licensed under Apache License, Version 2.0
  */
 namespace Manymailerplus\Model;
+
 use EllisLab\ExpressionEngine\Service\Model\Model;
 
 /**
@@ -20,15 +21,18 @@ class EmailQueue extends Model
 
     protected static $_typed_columns = array(
         'queue_id'      => 'int',
+        'queue_start'         => 'timestamp',
         'email_id'      => 'int',
         'recipient_count'      => 'int',
-        // 'messages' => 'serialized'
+        'queue_end'         => 'timestamp',
     );
     protected static $_validation_rules = array(
         'email_id'    => 'required',
         'recipient_count' => 'required',
     );
     protected $queue_id;
+    protected $queue_start;
+    protected $queue_end;
     protected $email_id;
     protected $recipient_count;
     protected $messages;
