@@ -11,7 +11,7 @@
         echo "<script>console.dir(". json_encode($current_settings).");</script>";
         echo "<script>console.groupEnd();</script>";
     }
-    ee()->dbg->c_log(get_defined_vars(), "Current Vars ". __FILE__.': '.__LINE__);
+    // ee()->dbg->c_log(get_defined_vars(), "Current Vars ". __FILE__.': '.__LINE__);
 
     ?>
 <div>
@@ -23,7 +23,7 @@
     </div>
 <div class="col-group ">
 <div class="col w-12">
-    <a href="" class="m-link" rel="mail_progress"></a>
+    
     <?php if (isset($table)) : ?>
 
         <?php $this->embed(EXT_SHORT_NAME.((isset($emails)) ? ':email/sent' : ':email/templates'), $table); ?>

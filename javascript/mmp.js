@@ -116,12 +116,19 @@ class ManyMailerPlus_mod {
         return this;
     }
 
-    setDomAjax(){
+    generateProgressButtons(){
         $('.form-btns:visible').each(function(){
-            var btn = $('<button/>', {
+            var btn = $('<button />', {
                 text: 'View Mailer Progress',
             })
-            .click(mail_progress_poll)
+            .click((e) => { 
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                mail_progress_poll();
+                if (!$('.swal2-show progress').is(':visible')) {
+                    $('a.m-link[rel=mail_progress]').trigger('click');
+                }
+            })
             .addClass('btn btn-progress')
             .appendTo(this);
 
@@ -131,9 +138,33 @@ class ManyMailerPlus_mod {
     init_dom_events() {
 
         $('form').on('submit',function() {
-                if (this.on_compose_page) $('.btn-progress').show();
+                if (this.on_compose_page) $('.btn-progress').toggle('slide');
             }.bind(this)
         );
+        $('[name=btnProgress]').on('click', function(){ 
+            // debugger
+            
+      
+            // var progressbar = $('progress'),
+            //     max = progressbar.attr('max'),
+            //     time = (1000/max)*5,
+            //     value = progressbar.val();
+
+            // var loading = function() {
+            //     value += 1;
+            //     let addValue = progressbar.val(value);
+
+            //     $('.progress-value').html(value + '%');
+
+            //     if (value == max) {
+            //         clearInterval(animate);
+            //     }
+            // };
+
+            // var animate = setInterval(function() {
+            //     loading();
+            // }, time);
+        });
         this.doc_body
             .on('click', '*[data-conditional-modal]', function (e) {
                 e.preventDefault();
@@ -171,7 +202,7 @@ class ManyMailerPlus_mod {
                 this.display_message_by_id(`.${rel}`);
             })
             .bind(this);
-            this.setDomAjax();
+            this.generateProgressButtons();
        
         if (this.on_compose_page) {
             this.mail_type[0].addEventListener(
@@ -1149,11 +1180,8 @@ class ManyMailerPlus_mod {
     //#endregion Templates
 }
 function mail_progress_poll(){
-//    debugger
-    const url = 'admin.php?/cp/addons/settings/manymailerplus/email/mail_progress';
-    if (!$('progress').is(':visible')) {
-        $('a.m-link[rel=mail_progress]').trigger('click');
-    }
+//    debugger;
+    const url = 'admin.php?/cp/addons/settings/manymailerplus/email/mail_progress';    
     $.ajax({
         type: "POST",
         url: url,
@@ -1161,14 +1189,14 @@ function mail_progress_poll(){
         success: function(status){
             debugger;
             var p = status.progress;
-            $('.swal2-show #percent').html(p).hide();
+            $('.swal2-show .progress-value').html(p + '%');
             $('.swal2-show #current').html(status.current);
             $('.swal2-show #total').html(status.total);
             $('.swal2-show #time').html(status.time);
-            $('.swal2-show #result').val(status.messages);
-            $('progress')
-                .html($('#p-info').html())
-                .val(p);
+            $('.swal2-show .pBar').val(p);
+            $('.swal2-show #result')
+                .val(status.messages)
+                .scrollTop($('.swal2-show #result')[0].scrollHeight);
             if (p === '--' || parseInt(p) < 100 || parseInt(p) === NaN) setTimeout(mail_progress_poll,500);
         },
         error: function(jqXHR, status, e) {
@@ -1178,8 +1206,7 @@ function mail_progress_poll(){
                 Swal.fire({title: status, type: 'error', html: response});    
                 var result = JSON.parse(response);
                 if (result.current !== result.total && result.total !== 0) setTimeout(mail_progress_poll,500);}
-            }        
-            
+            }       
     });
 }
 

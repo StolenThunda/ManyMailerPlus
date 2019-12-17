@@ -38,10 +38,8 @@ class Composer
                 '<div id="mail_progress_output">',
                 '<h1>Progress: </h1>',
                 '<span class="txt-wrap">',
-                '<progress max="100" value="0">',
-                '</progress><br/></hr>',
                 '<p>'. lang('sent'). ' <span id="current">0</span> '.lang('of').' <span id="total">--</span> '. lang('emails').'.</span></br>',
-                '<span id="p-info"><span id="percent">--</span>% done</span></p><br />',
+                $this->_generateProgressHTML(),
                 '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
                 '<br/><h3>Elapsed: <span id="time">--</span></h3><hr />',
                 '</span>',
@@ -52,6 +50,20 @@ class Composer
         $modal_html = ee('View')->make('ee:_shared/modal')->render($modal_vars);
         ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
         return $modal_html;
+    }
+
+    private function _generateProgressHTML()
+    {
+        return implode('',
+            array(
+                '<div class="demo-wrapper html5-progress-bar">',
+                '<div class="progress-bar-wrapper">',
+                '<progress class="pBar" max="100" value="0"></progress>',
+                '<span class="progress-value">0%</span>',
+                '</div>',
+                '</div>'
+            )
+        );
     }
 
     private function _getConfigValue($value, $default = null)
@@ -207,7 +219,13 @@ class Composer
                     'fields' => array(
                         'files[]' => array(
                             'type' => 'html',
-                            'content' => '<input type="file" name="file_recipient" accept=".csv" value="CHoose file"  />',
+                            'content' => implode(
+                                '',
+                                array(
+                                    '<input type="file" name="file_recipient" accept=".csv" value="CHoose file"  />',
+                                    '<a href="" class="m-link" rel="mail_progress"></a>'
+                                )
+                            )
                         ),
                         'csv_object' => array(
                             'type' => 'hidden',
@@ -341,7 +359,19 @@ class Composer
                 'fields' => array(
                     'btn' => array(
                         'type' => ($this->u_debug_enabled()) ? 'html' : 'hidden',
-                        'content' => '<div class="form-btns">'.form_button('btnDump', 'Dump Hidden Values', "class='btn'").BR.form_button('btnDump2', 'Dump Form Values', 'class="btn dbg"').'</div>',
+                        'content' => implode(
+                            '',
+                            array(
+                                '<div class="form-btns dbg-btns">',
+                                form_button('btnDump', 'Dump Hidden Values', "class='btn'"),
+                                BR,
+                                form_button('btnDump2', 'Dump Form Values', 'class="btn dbg"'),
+                                // BR,
+                                // form_button('btnProgress', 'Progressbar()', 'class="btn dbg"'),
+                                // BR,
+                                '</div>',
+                            )
+                        )
                     ),
                 )
             ),
