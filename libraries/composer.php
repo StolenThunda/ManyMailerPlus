@@ -39,9 +39,9 @@ class Composer
                 '<h1>Progress: </h1>',
                 '<span class="txt-wrap">',
                 '<p>'. lang('sent'). ' <span id="current">0</span> '.lang('of').' <span id="total">--</span> '. lang('emails').'.</span></br>',
+                '<br/>'. lang('elapsed'). ': <span id="time">--</span><hr />',
                 $this->_generateProgressHTML(),
                 '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
-                '<br/><h3>Elapsed: <span id="time">--</span></h3><hr />',
                 '</span>',
                 '</div>'
                 )
@@ -54,7 +54,8 @@ class Composer
 
     private function _generateProgressHTML()
     {
-        return implode('',
+        return implode(
+            '',
             array(
                 '<div class="demo-wrapper html5-progress-bar">',
                 '<div class="progress-bar-wrapper">',
@@ -266,7 +267,7 @@ class Composer
                         ),
                         'csv_content' => array(
                             'type' => 'html',
-                            'content' => '<table class=\'fixed_header\' id=\'csv_content\'></table>',
+                            'content' => '<table id="csv_content" class="display cell-border nowrap compact" style="width:100%"></table>',
                         ),
                     ),
                 ),

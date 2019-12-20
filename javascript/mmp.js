@@ -122,8 +122,6 @@ class ManyMailerPlus_mod {
                 text: 'View Mailer Progress',
             })
             .click((e) => { 
-                e.preventDefault();
-                e.stopImmediatePropagation();
                 mail_progress_poll();
                 if (!$('.swal2-show progress').is(':visible')) {
                     $('a.m-link[rel=mail_progress]').trigger('click');
@@ -311,22 +309,57 @@ class ManyMailerPlus_mod {
     }
 
     init_datatable() {
-        $('#csv_content').addClass('fixed_header display').DataTable({
-            destroy: true,
-            defaultContent: '',
-            dom: '<"top"i>rt<"bottom"flp><"clear">',
-            initComplete: function () {
-                var api = this.api();
-                api.$('td').click(function () {
-                    api.search(this.innerHTML).draw();
-                });
-            },
-            columns: this.tableData.columns,
-            data: this.tableData.data,
-            // paging: false,
-            // ordering: false
-        });
-        return this;
+        // debugger
+        this.toggle_loading();
+        var table = $('#csv_content')
+            .wrap('<div style="width:60vh"></div>')
+            .DataTable({
+                // fixedHeader: true,
+                defaultContent: '',
+                // deferRender: true,
+                // scroller: true,
+                dom: '<"top"i>rt<"bottom"flp><"clear">',
+                scrollY: 400,
+                scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
+                pageLength: 100,
+                lengthMenu:  [[10, 50, 100, 500, -1], [10, 50, 100, 500, "All"]],
+                responsive: {
+                    details: {
+                        display: function(row, update, render){
+                            var data = row.data();
+                            var header = 'Details for '+data[0];
+                            var config = {
+                                title: header,
+                                type: 'info',
+                                html: render()[0].outerHTML,
+                                width: '50vw'
+                            };
+                            if (Swal && update){
+                                 Swal.fire(config);
+                                 return false;
+                            }else{
+                                 $.fn.dataTable.Responsive.display.modal({
+                                    header: header
+                                }) 
+                            }
+                           
+                        },
+                        renderer: $.fn.dataTable.Responsive.renderer.tableAll()
+                    }
+                },
+                initComplete: function () {
+                    var api = this.api();
+                    api.columns.adjust();
+                    api.$('td').click(function () {
+                        api.search(this.innerHTML).draw();
+                    });
+                },
+                columns: this.tableData.columns,
+                data: this.tableData.data,
+            });
+        return this.toggle_loading();
     }
 
     init_sortable(){
@@ -432,7 +465,8 @@ class ManyMailerPlus_mod {
         $('<div />', {
             id: 'stick-here',
             class: 'stick-here',
-            height: $('div.col.w-12').height()
+            height: $('div.col.w-12').height(),
+            width: '30vh'
         })
             .append(
                 $('<table />', {
@@ -986,7 +1020,7 @@ class ManyMailerPlus_mod {
 
         var parent = $('#csv_content_wrapper').parent();
         parent.empty();
-        var table = $("<table id='csv_content' class='fixed_header'></table>");
+        var table = $("<table id='csv_content' class='display cell-border nowrap compact' style='width:100%'></table>");
         parent.wrapInner(table);
 
         this.btn_reset.toggle(false);
@@ -1019,6 +1053,7 @@ class ManyMailerPlus_mod {
         let obj_parsed = this.parse_csv_data();
         if (this.validate(obj_parsed)) {
             this.init_datatable().setFormValues().toggle_fs_csv_recipient(false).resetFileInput();
+            this.con_errors.toggle(false);
         } else {
             this.con_errors.toggle(true);
         }
@@ -1187,7 +1222,7 @@ function mail_progress_poll(){
         url: url,
         dataType: "json",
         success: function(status){
-            debugger;
+            // debugger;
             var p = status.progress;
             $('.swal2-show .progress-value').html(p + '%');
             $('.swal2-show #current').html(status.current);
@@ -1200,7 +1235,7 @@ function mail_progress_poll(){
             if (p === '--' || parseInt(p) < 100 || parseInt(p) === NaN) setTimeout(mail_progress_poll,500);
         },
         error: function(jqXHR, status, e) {
-            debugger; 
+            // debugger; 
             var response = jqXHR.responseText;
             if (jqXHR.hasOwnProperty('responseJson')){                
                 Swal.fire({title: status, type: 'error', html: response});    
