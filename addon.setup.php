@@ -25,6 +25,7 @@ return array(
       'settings_exist' => true,
       'version' => EXT_VERSION,
       'models' => array(
-            'EmailCachePlus' => 'Model\EmailCachePlus'
+            'EmailCachePlus' => 'Model\EmailCachePlus',
+            "EmailQueue" => 'Model\EmailQueue'
       )
 );

@@ -5,13 +5,14 @@
     <div class="loader loader-bar" data-text data-rounded></div>
     
    <?php
-   ee()->dbg->c_log(get_defined_vars(), "Current Settings");
     if (isset($current_settings)) {
-        ee()->dbg->c_log($current_settings, "Current Settings");
+        ee()->dbg->c_log($current_settings, __FILE__ ." Current Settings ".__LINE__);
         echo "<script>console.groupCollapsed('Current Services Settings');</script>";
         echo "<script>console.dir(". json_encode($current_settings).");</script>";
         echo "<script>console.groupEnd();</script>";
     }
+    // ee()->dbg->c_log(get_defined_vars(), "Current Vars ". __FILE__.': '.__LINE__);
+
     ?>
 <div>
    

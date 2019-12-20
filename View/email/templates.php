@@ -2,10 +2,6 @@
 <div class="box table-list-wrap">
 	<div class="tbl-ctrls">
 	<?=form_open($table['base_url'])?>
-		<fieldset class="tbl-search right">
-			<input placeholder="<?=lang('type_phrase')?>" type="text" name="search" value="<?=htmlentities($table['search'], ENT_QUOTES, 'UTF-8')?>">
-			<input class="btn submit" type="submit" value="<?=lang('search_templates_button')?>">
-		</fieldset>
 		
 		<h1><?=$cp_page_title?></h1>
 	
@@ -13,7 +9,7 @@
 		<div class="app-notice-wrap"><?=ee('CP/Alert')->getAllInlines()?></div>
 		<?php $this->embed('ee:_shared/table', $table); ?>
 
-		<?=$pagination?>
+		
 
 		<?php if (! empty($table['columns']) && ! empty($table['data'])): ?>
 			<?php if ($this->enabled('remove')): ?>

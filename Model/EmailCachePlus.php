@@ -57,6 +57,7 @@ class EmailCachePlus extends Model
     );
 
     protected $cache_id;
+    protected $parent_id;
     protected $cache_date;
     protected $total_sent;
     protected $from_name;

@@ -39,7 +39,7 @@ trait TX
         // );
         // $headers =  !empty($headers) ? $headers : $defaultHeaders;
         $content = (is_array($content) ? json_encode($content) : $content);
-        ee()->dbg->c_log($server.$content, __METHOD__);
+        ee()->dbg->c_log($server.$content, __METHOD__ . '  ' . __LINE__);
         $ch = curl_init($server);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POST, 1);
@@ -68,9 +68,9 @@ trait TX
         $curl_error = curl_error($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        ee()->dbg->c_log($curl_error, __METHOD__);
+        ee()->dbg->c_log($curl_error, __METHOD__ . ' Curl Error ' . __LINE__);
         $result = ($return_data) ? json_decode($status) : true;
-        ee()->dbg->c_log($result, __METHOD__);
+        ee()->dbg->c_log($result, __METHOD__ . ' Return Data ' . __LINE__);
         if ($http_code !== 200) {
             ee()->logger->developer($server . BR . BR . $content . BR . BR . $status);
         }

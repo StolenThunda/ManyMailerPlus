@@ -31,6 +31,7 @@ class Debughelper
     {
         error_reporting(E_ALL);
         ini_set('display_errors', null);
+        // ob_start();
         foreach ($config as $key => $value) {
             if (in_array($key, array('debug'))) {
                 $this->{$key} = $value;
@@ -45,11 +46,12 @@ class Debughelper
     {
         $model = ee('Model')->get('Extension')->filter('class', ucfirst(EXT_SHORT_NAME).'_ext')->first();
         // var_dump($model->settings);
-        if (array_key_exists('debug_mode', $model->settings)) {
-            return ($model->settings['debug_mode'] === 'y');
-        } else {
-            return false;
+        if (array_key_exists('config', $model->settings)) {
+            if (array_key_exists('debug_mode', $model->settings['config'])) {
+                return ($model->settings['config']['debug_mode'] === 'y');
+            }
         }
+        return false;
     }
 
     public function add_message($str = '', $type = 'content', $method = 'log', $style = null, $obj = null)
@@ -194,11 +196,20 @@ class Debughelper
             $this->_generate_messages($this->_get_stack_info($valueObj));
             //  ee()->logger->developer((string) $this->messages);
             //  ee()->logger->developer(mb_strimwidth("ADDING MESSAGE: ".$this, 0, 50000, '...(truncated)'));
-        
+            $lvl = ob_get_level();
             ob_start();
-            echo $this;
-            $value = ob_get_contents();
+            try {
+                echo $this;
+                $value = ob_get_contents();
+                // echo ob_end_clean();
+            } catch (Exception $e) {
+                while (ob_get_level() > $lvl) {
+                    echo ob_end_clean();
+                }
+                throw $e;
+            }
             if ($exit) {
+                echo ob_end_flush();
                 exit();
             }
         }
@@ -250,7 +261,7 @@ class Debughelper
         // $caller_class = (isset($bt_obj['class'])) ? $bt_obj['class'] : isset($prev_bt_obj['class']) ? $prev_bt_obj['class'] : "";
         $caller_class = (isset($bt_obj['class'])) ? $bt_obj['class'] : $this->lastClass($bt, self::BT_OFFSET + $unknown_error_offset + 1);
         $caller_function = (isset($bt_obj['class'])) ? $bt_obj['function'] : "{$prev_bt_obj['function']}->{$bt_obj['function']}";
-        $caller_line = isset($bt[self::BT_LINE_OFFSET + $unknown_error_offset]['line']) ? $bt[self::BT_LINE_OFFSET + $unknown_error_offset]['line'] : $line_num;
+        $caller_line = $bt[self::BT_LINE_OFFSET + $unknown_error_offset]['line'] ?: $line_num;
 
         // string builder
         $titleHeader = array(
