@@ -256,10 +256,6 @@ class Composer
                     'title' => 'primary_recipients',
                     'desc' => 'primary_recipients_desc',
                     'fields' => array(
-                        'csv_reset' => array(
-                            'type' => 'html',
-                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
-                        ),
                         'recipient' => array(
                             'type' => 'text',
                             'value' => $default['recipient'],
@@ -267,7 +263,11 @@ class Composer
                         ),
                         'csv_content' => array(
                             'type' => 'html',
-                            'content' => '<table id="csv_content" class="display cell-border nowrap compact" style="width:100%"></table>',
+                            'content' => '<table id="csv_content" class="display cell-border nowrap compact"></table>',
+                        ),
+                        'csv_reset' => array(
+                            'type' => 'html',
+                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
                         ),
                     ),
                 ),
@@ -424,22 +424,23 @@ class Composer
         );
         
         ee()->dbg->c_log($vars, __METHOD__ . '  ' . __LINE__);
-
+        
         return $vars;
     }
-
+    
     public function mail_progress()
     {
         session_start();
-
+        
         if (!array_key_exists('status', $_SESSION)) {
             $_SESSION['status'] = array('progress' => 0, 'messages' => '');
         }
-        if ($_SESSION['status']['progress'] >= 100) {
-            unset($_SESSION['status']);
-            die('--');
-        }
+        // if ($_SESSION['status']['progress'] >= 100) {
+        //     unset($_SESSION['status']);
+        //     die('--');
+        // }
         $current_queue = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')->all()->last();
+        ee()->dbg->c_log($current_queue, __METHOD__ . '  ' . __LINE__);
         if (isset($current_queue->recipient_count)) {
             $total_to_be_sent = $current_queue->recipient_count ?: 0;
             $total_sent = ee('Model')
@@ -1531,12 +1532,12 @@ class Composer
         foreach ($this->available_services as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
-                ee()->dbg->c_log($this->available_services, __METHOD__. ' Available svc ' . memory_get_usage());
+                // ee()->dbg->c_log($this->available_services, __METHOD__. ' Available svc ' . memory_get_usage());
                 ee()->dbg->c_log($service, __METHOD__ . ' attempt svc ' . __LINE__);
-                ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' loaded? ' . memory_get_usage());
+                // ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' loaded? ' . memory_get_usage());
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->u_debug_enabled())), $service);
-                    ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' reload? ' . memory_get_usage());
+                    // ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' reload? ' . memory_get_usage());
                 }
                 $result = ee()->{$service}->sendEmail($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
@@ -1546,12 +1547,13 @@ class Composer
                 
                 if ($success) {
                     ee()->extensions->end_script = true;
-                    ee()->dbg->c_log($success, __METHOD__. ' - ' . memory_get_usage() . ' Success? :' . $service);
+                    // ee()->dbg->c_log($success, __METHOD__. ' - ' . memory_get_usage() . ' Success? :' . $service);
                     break;
                 } else {
-                    ee()->dbg->c_log($result, __METHOD__. ' - ' . memory_get_usage() . ' Faild result:' . $service);
+                    continue;
+                    // ee()->dbg->c_log($result, __METHOD__. ' - ' . memory_get_usage() . ' Faild result:' . $service);
                 }
-                    
+                
                 //collect errors and don't use service again until next "Send";
                 if ($missing_credentials === true) {
                     $this->log_array[] = sprintf(lang('missing_service_credentials'), ucfirst($service), ucfirst($service));
@@ -1564,6 +1566,7 @@ class Composer
         if (count($this->log_array) > 0) {
             ee()->logger->developer(implode('\n', $this->log_array));
         }
+        ee()->dbg->c_log($success, __METHOD__. ' - ' . $service);
         return $success;
     }
 

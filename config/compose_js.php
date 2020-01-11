@@ -10,7 +10,10 @@ return $config = array(
         '<script src="https://unpkg.com/papaparse@4.6.3/papaparse.min.js"></script>',
         '<script src="https://cdn.datatables.net/v/dt/dt-1.10.20/b-1.6.1/b-colvis-1.6.1/fc-3.3.0/fh-3.1.6/r-2.2.3/sc-2.0.1/datatables.min.js"></script>',
         '<script src="http://parsleyjs.org/dist/parsley.min.js"></script>',
-        // '<script src="https://cdn.lr-ingest.io/LogRocket.min.js" crossorigin="anonymous"></script>'
+        '<script src="https://cdn.lr-ingest.io/LogRocket.min.js" crossorigin="anonymous"></script>'
     ),
+    'css' => array(
+        'https://cdn.datatables.net/v/dt/dt-1.10.20/b-1.6.1/b-colvis-1.6.1/fc-3.3.0/fh-3.1.6/r-2.2.3/sc-2.0.1/datatables.min.css'
+    )
 );
 //EOF
