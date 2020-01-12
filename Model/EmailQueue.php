@@ -23,6 +23,7 @@ class EmailQueue extends Model
         'queue_id'      => 'int',
         'queue_start'         => 'timestamp',
         'email_id'      => 'int',
+        'sent'      => 'int',
         'recipient_count'      => 'int',
         'queue_end'         => 'timestamp',
     );
@@ -34,6 +35,7 @@ class EmailQueue extends Model
     protected $queue_start;
     protected $queue_end;
     protected $email_id;
+    protected $sent;
     protected $recipient_count;
     protected $messages;
 }

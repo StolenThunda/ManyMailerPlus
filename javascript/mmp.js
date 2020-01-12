@@ -30,7 +30,19 @@ class ManyMailerPlus_mod {
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         this.con_errors = $('#csv_errors'); // container for error messages
         this.loader = $('.loader'); // css loading visuals
-       
+        this.dTableOpts = {
+            dom: '<"top"i>rt<"bottom"flp><"clear">',
+            pageLength: 100,
+            lengthMenu: [[10, 50, 100, 500, -1], [10, 50, 100, 500, "All"]],
+            aoColumns : null,
+            retrieve :  true,
+            pagingType: "full_numbers",
+            scrollY:    "400px",
+            scrollX:    true,
+            info:       true,
+            autoWidth:  true,
+            paging:     true
+        };
         // modules
         this.DOMParser = new DOMParser();
         this.Stepper = new Stepper($('.form-section'));
@@ -152,7 +164,7 @@ class ManyMailerPlus_mod {
         $('form[action$=send]').submit(function() {
             var btn = $('button.progress');
             // debugger;
-                if (this.on_compose_page && btn && !btn.is(':visible')) btn.toggle('slide');
+                if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {btn.toggle('slide')}, 10000);
                 return true;
             }.bind(this));
 
@@ -304,25 +316,13 @@ class ManyMailerPlus_mod {
     }
 
     init_datatable() {
-        // debugger// 
         this.toggle_loading();
         var table = $('#csv_content')
             .wrap('<div style="width:62vh"></div>')
-            .DataTable({
-                // defaultContent: '',
-                // dom: '<"top"i>rt<"bottom"flp><"clear">',
-                scrollY: 400,
-                scrollX: true,
-                scrollCollapse: true,
-                pageLength: 100,
-                lengthMenu:  [[10, 50, 100, 500, -1], [10, 50, 100, 500, "All"]],
-                responsive: true,
-                initComplete: function () {
-                    var api = this.api();
-                },
+            .DataTable(Object.assign({},this.dTableOpts, {
                 columns: this.tableData.columns,
                 data: this.tableData.data,
-            });
+            }));
         return this.toggle_loading();
     }
 
@@ -491,15 +491,7 @@ class ManyMailerPlus_mod {
             if (onServices) this.update_sortable(this.DOMserviceOrder);
         }
         var tables = $("table:has(thead ~ tbody>tr:not('.no-results'))"); // non-empty tables
-        tables.DataTable({
-            "aoColumns" : null,
-            "retrieve" : true,
-            "pagingType": "full_numbers",
-            "scrollY":        "400px",
-            "info":           true,
-            "autoWidth":      true,
-            "paging":         true
-        });
+        tables.DataTable(this.dTableOpts);
         if (tables.forEach){
             tables.forEach(el => {
                 el.columns.adjust().draw();

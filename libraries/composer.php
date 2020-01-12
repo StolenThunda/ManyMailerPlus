@@ -456,6 +456,7 @@ class Composer
             $start = $current_queue->queue_start;
             if ($progress <= 100) {
                 $current_queue->queue_end = $now->getTimestamp();
+                $current_queue->sent = $total_sent;
                 $current_queue->save();
             }
             
@@ -1528,6 +1529,7 @@ class Composer
         // $this->_body_and_attachments();
        
         $this->log_array = array();
+        $success = false;
         //TODO: fix whatever is causing a memory leak https://trello.com/c/uSm8oQEO/23-memory-error
         foreach ($this->available_services as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
