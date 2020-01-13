@@ -93,6 +93,7 @@ class Manymailerplus_upd
             `recipient_count` int(6) unsigned NOT NULL DEFAULT '0',
             `sent` int(6) unsigned NOT NULL  DEFAULT '0',
             `messages` text COLLATE utf8mb4_unicode_ci NULL,
+            `active` tinyint(1) unsigned DEFAULT '1',
             PRIMARY KEY (`queue_id`)
 			) ENGINE=InnoDB AUTO_INCREMENT=2570 DEFAULT CHARACTER SET ".ee()->db->escape_str(ee()->db->char_set)." COLLATE ".ee()->db->escape_str(ee()->db->dbcollat);
 

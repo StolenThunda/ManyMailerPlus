@@ -30,20 +30,17 @@ class Composer
     }
     private function createModalProgress()
     {
+      
         $modal_vars = array(
             'name' => 'mail_progress',
             'contents' => implode(
                 '',
                 array(
-                '<div id="mail_progress_output">',
-                '<h1>Progress: </h1>',
-                '<span class="txt-wrap">',
-                '<p>'. lang('sent'). ' <span id="current">0</span> '.lang('of').' <span id="total">--</span> '. lang('emails').'.</span></br>',
-                '<br/>'. lang('elapsed'). ': <span id="time">--</span><hr />',
-                $this->_generateProgressHTML(),
-                '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
-                '</span>',
-                '</div>'
+                    '<div id="mail_progress_output">',
+                    '<h1>Progress: </h1>',
+                    '<span class="txt-wrap">',
+                    '</span>',
+                    '</div>'
                 )
             )
         );
@@ -51,20 +48,192 @@ class Composer
         ee()->dbg->c_log($modal_html, __METHOD__ . '  ' . __LINE__);
         return $modal_html;
     }
-
-    private function _generateProgressHTML()
+   
+    private function _generateProgressHTML($data = array())
     {
-        return implode(
-            '',
-            array(
-                '<div class="demo-wrapper html5-progress-bar">',
-                '<div class="progress-bar-wrapper">',
-                '<progress class="pBar" max="100" value="0"></progress>',
-                '<span class="progress-value">0%</span>',
-                '</div>',
-                '</div>'
-            )
+        if (empty(array_filter($data))) {
+            return implode(
+                '',
+                array(
+                    '<div class="demo-wrapper html5-progress-bar">',
+                    '<div class="progress-bar-wrapper">',
+                    '<progress class="pBar" max="100" value="0"></progress>',
+                    '<span class="progress-value">0%</span>',
+                    '</div>',
+                    '<div class="progress-detail">',
+                    lang('sent'). ' <span id="current">0</span> '.lang('of').' <span id="total">--</span> '. lang('emails').'.</span>',
+                    '<details>',
+                    '<summary>'. lang('details').'</summary>',
+                    lang('elapsed'). ': <span id="time">--</span>',
+                    '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
+                    '</div>',
+                    '</details>',
+                    '</div>'
+                )
+            );
+        } else {
+            $idx = $data['index'];
+            return implode(
+                '',
+                array(
+                    "<div class='demo-wrapper html5-progress-bar'>",
+                    "<div class='progress-bar-wrapper'>",
+                    "<progress class='pBar' max='100' value='{$data['progress']}'></progress>",
+                    "<span class='progress-value'>{$data['progress']}%</span>",
+                    "</div>",
+                    "<div class='progress-detail'>",
+                    lang('sent') . "<span id='{$idx}_current'>{$data['current']}</span> ". lang('of'),
+                    "<span id='{$idx}_total'>{$data['total']}</span> ".lang('emails') ."</span>",
+                    '<details>',
+                    '<summary>Task ' . $idx . ' ' . lang('details') . '</summary>',
+                    lang('elapsed'). ": <span id='{$idx}_time'>{$data['time']}</span>'",
+                    "<textarea id='{$idx}_result' style='white-space:pre-wrap' placeholder='" . lang('initalizing') ."' cols='30' rows='5'></textarea>",
+                    '</div>',
+                    '</details>',
+                    '</div>'
+                )
+            );
+        }
+    }
+
+    public function getElapsed($start, $now)
+    {
+        $diff = $start->diff($now);
+        $diff->w = floor($diff->d / 7);
+        $diff->d -= $diff->w * 7;
+    
+        $string = array(
+            'y' => 'year',
+            'm' => 'month',
+            'w' => 'week',
+            'd' => 'day',
+            'h' => 'hour',
+            'i' => 'minute',
+            's' => 'second',
         );
+        foreach ($string as $k => &$v) {
+            if ($diff->$k) {
+                $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+            } else {
+                unset($string[$k]);
+            }
+        }
+        $elapsed_time = $string ? implode(', ', $string): '';
+        return $elapsed_time;
+    }
+
+    public function mail_progress($id = null)
+    {
+        session_start();
+        
+        if (!array_key_exists('status', $_SESSION)) {
+            $_SESSION['status'] = array('progress' => 0, 'messages' => '');
+        }
+        // if ($_SESSION['status']['progress'] >= 100) {
+        //     unset($_SESSION['status']);
+        //     die('--');
+        // }
+        $current_queue = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')->all()->last();
+        ee()->dbg->c_log($current_queue, __METHOD__ . '  ' . __LINE__, true);
+        if (isset($current_queue->recipient_count)) {
+            $total_to_be_sent = $current_queue->recipient_count ?: 0;
+            $total_sent = ee('Model')
+                ->get(EXT_SHORT_NAME. ':EmailCachePlus')
+                ->filter('parent_id', $current_queue->email_id)
+                ->all()
+                ->count();
+                
+            $progress =  round($total_sent / $total_to_be_sent * 100);
+
+            //https://wordpress.stackexchange.com/questions/290488/how-get-exact-time-difference
+            $now = ($progress < 100) ? new DateTime() : $current_queue->queue_end;
+            $start = $current_queue->queue_start;
+            if ($progress <= 100) {
+                $current_queue->queue_end = $now->getTimestamp();
+                $current_queue->sent = $total_sent;
+                if ($total_sent === $current_queue->recipient_count) {
+                    $current_queue->active = 0;
+                }
+                $current_queue->save();
+            }
+            
+            $elapsed_time = $this->getElapsed($start, $now);
+            $_SESSION['status'] = array(
+                'start' => $start,
+                'req' => $now,
+                'time' => $elapsed_time,
+                'current' => $total_sent,
+                'total' => $total_to_be_sent,
+                'progress' => $progress,
+                'messages' => ($total_sent !== $total_to_be_sent) ? $current_queue->messages : $current_queue->messages . "Done!!!\n"
+            );
+        }
+
+       
+        return $_SESSION['status'];
+    }
+
+    public function all_mail_progress()
+    {
+        session_start();
+        if (!array_key_exists('status', $_SESSION)) {
+            $_SESSION['status'] = array();
+        }
+        $last = end($_SESSION['status']);
+         
+        if ($last['progress']  && $last['progress'] >= 1070) {
+            unset($_SESSION['status']);
+            die('--');
+        }
+        
+        $current_queued = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')
+        ->filter('active', '!=', true)
+        ->all();
+            
+       
+        foreach ($current_queued as $key=>$queue) {
+            $id = $queue->email_id;
+            if (isset($queue->recipient_count)) {
+                $total_to_be_sent = $queue->recipient_count ?: 0;
+                $total_sent = ee('Model')
+                    ->get(EXT_SHORT_NAME. ':EmailCachePlus')
+                    ->filter('parent_id', $id)
+                    ->all()
+                    ->count();
+                
+                $progress =  round($total_sent / $total_to_be_sent * 100);
+
+                //https://wordpress.stackexchange.com/questions/290488/how-get-exact-time-difference
+                $now = ($progress < 100) ? new DateTime() : $queue->queue_end;
+                $start = $queue->queue_start;
+                if ($progress <= 100) {
+                    $queue->queue_end = $now->getTimestamp();
+                    $queue->sent = $total_sent;
+                    if ($total_sent === $queue->recipient_count) {
+                        $queue->active = 0;
+                    }
+                    $queue->save();
+                }
+            
+                $elapsed_time = $this->getElapsed($start, $now);
+                $data = array(
+                    'index' => $id,
+                    'start' => $start,
+                    'req' => $now,
+                    'time' => $elapsed_time,
+                    'current' => $total_sent,
+                    'total' => $total_to_be_sent,
+                    'progress' => $progress,
+                    'messages' => ($total_sent !== $total_to_be_sent) ? $queue->messages : $queue->messages . "Done!!!\n"
+                );
+                $data['html'] = $this->_generateProgressHTML($data);
+                if (!in_array($data['index'], array_column($_SESSION['status'], 'index'))) $_SESSION['status'][] = $data;
+            }
+        }
+        $all_html = implode('', array_column($_SESSION['status'], 'html'));
+        $last = end($_SESSION['status']);
+
+        return array('progress' => $last['progress'], 'html' => $all_html);
     }
 
     private function _getConfigValue($value, $default = null)
@@ -428,75 +597,7 @@ class Composer
         return $vars;
     }
     
-    public function mail_progress()
-    {
-        session_start();
-        
-        if (!array_key_exists('status', $_SESSION)) {
-            $_SESSION['status'] = array('progress' => 0, 'messages' => '');
-        }
-        // if ($_SESSION['status']['progress'] >= 100) {
-        //     unset($_SESSION['status']);
-        //     die('--');
-        // }
-        $current_queue = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')->all()->last();
-        ee()->dbg->c_log($current_queue, __METHOD__ . '  ' . __LINE__);
-        if (isset($current_queue->recipient_count)) {
-            $total_to_be_sent = $current_queue->recipient_count ?: 0;
-            $total_sent = ee('Model')
-                ->get(EXT_SHORT_NAME. ':EmailCachePlus')
-                ->filter('parent_id', $current_queue->email_id)
-                ->all()
-                ->count();
-                
-            $progress =  round($total_sent / $total_to_be_sent * 100);
-
-            //https://wordpress.stackexchange.com/questions/290488/how-get-exact-time-difference
-            $now = ($progress < 100) ? new DateTime() : $current_queue->queue_end;
-            $start = $current_queue->queue_start;
-            if ($progress <= 100) {
-                $current_queue->queue_end = $now->getTimestamp();
-                $current_queue->sent = $total_sent;
-                $current_queue->save();
-            }
-            
-            $diff = $start->diff($now);
-            $diff->w = floor($diff->d / 7);
-            $diff->d -= $diff->w * 7;
-        
-            $string = array(
-                'y' => 'year',
-                'm' => 'month',
-                'w' => 'week',
-                'd' => 'day',
-                'h' => 'hour',
-                'i' => 'minute',
-                's' => 'second',
-            );
-            foreach ($string as $k => &$v) {
-                if ($diff->$k) {
-                    $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
-                } else {
-                    unset($string[$k]);
-                }
-            }
-            $elapsed_time = $string ? implode(', ', $string): '';
-
-            $_SESSION['status'] = array(
-                'start' => $start,
-                'req' => $now,
-                'time' => $elapsed_time,
-                'current' => $total_sent,
-                'total' => $total_to_be_sent,
-                'progress' => $progress,
-                'messages' => ($total_sent !== $total_to_be_sent) ? $current_queue->messages : $current_queue->messages . "Done!!!\n"
-            );
-        }
-
-       
-        return $_SESSION['status'];
-    }
-
+    
     /**
      *  Returns the html rendered by view_templates
      *

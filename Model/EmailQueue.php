@@ -26,6 +26,7 @@ class EmailQueue extends Model
         'sent'      => 'int',
         'recipient_count'      => 'int',
         'queue_end'         => 'timestamp',
+        'active' => 'int',
     );
     protected static $_validation_rules = array(
         'email_id'    => 'required',
@@ -38,5 +39,6 @@ class EmailQueue extends Model
     protected $sent;
     protected $recipient_count;
     protected $messages;
+    protected $active;
 }
 // EOF

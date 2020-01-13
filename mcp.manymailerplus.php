@@ -201,6 +201,7 @@ class Manymailerplus_mcp
         $this->_vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
         switch ($func) {
+        case 'all_mail_progress':
         case 'mail_progress':
             echo(ee()->output->send_ajax_response(ee()->mail_funcs->{$func}()));
             exit;

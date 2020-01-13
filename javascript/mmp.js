@@ -70,7 +70,9 @@ class ManyMailerPlus_mod {
         if (this.b_isApiAvailable) {                       
             inProgress()
             .then(function(data){ 
-                if (this.on_compose_page && data.progress < 100) {                        
+                data = (data.length) ? data[data.length - 1] : data;
+                console.log(data);
+                if (this.on_compose_page && (data && data.progress < 100)) {                        
                     console.log(data);
                     
                         $('button.progress').show(); 
@@ -148,14 +150,14 @@ class ManyMailerPlus_mod {
                 text: 'View Mailer Progress',
                 class: 'progress'
             })
+            .addClass('btn btn-progress')
             .click((e) => {
                 e.preventDefault();
-                if (!$('.swal2-show progress').is(':visible')) {
+                if (!$('.swal2-show .progress').is(':visible')) {
                     $('a.m-link[rel=mail_progress]').trigger('click');
                 }
                 progress_poller();
             })
-            .addClass('btn btn-progress')
             .appendTo($(this).parent());
             btn.hide();
         });
@@ -1173,17 +1175,58 @@ class ManyMailerPlus_mod {
 
 
 function inProgress() {
-    return $.get('admin.php?/cp/addons/settings/manymailerplus/email/mail_progress');
+    return $.get('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress');
 }
 
 function progress_poller(){
     return inProgress()
         .done(function(data){
-            var p =  update_progress(data);
+            var p =  update_progress3(data);
             if (p === '--' || parseInt(p) < 100 || parseInt(p) === NaN) setTimeout(progress_poller,500);
-    });
+    }); 
 }
 
+function update_progress3(status){
+    debugger;
+    $('.swal2-content').html(status.html);
+    var progress_pct = status.progress;
+    // if (status.length && status.length > 0){
+    //     for(idx in status) {    
+    //         // debugger;
+    //         task = status[idx];
+    //         var result_div = $('#' + task.index + '_result');
+    //         if (result_div.length > 0) dest.innerHTML += task.html;
+    //         result_div.val(task.messages);
+    //         result_div.scrollTop($('#' + task.index + '_result')[0].scrollHeight);
+    //     }
+    //     var keys = Object.keys(status);
+    //     progress_pct = status[keys.slice(-1).pop()]['progress']
+    // } else {
+    //     dest.innerHTML = "No Running Processes";
+    //     progress_pct = 100;
+    // }
+    return progress_pct;
+}
+function update_progress2(status){
+    dest = $('.swal2-content')[0];
+    var progress_pct = 0;
+    if (status.length && status.length > 0){
+        for(idx in status) {    
+            // debugger;
+            task = status[idx];
+            var result_div = $('#' + task.index + '_result');
+            if (result_div.length > 0) dest.innerHTML += task.html;
+            result_div.val(task.messages);
+            result_div.scrollTop($('#' + task.index + '_result')[0].scrollHeight);
+        }
+        var keys = Object.keys(status);
+        progress_pct = status[keys.slice(-1).pop()]['progress']
+    } else {
+        dest.innerHTML = "No Running Processes";
+        progress_pct = 100;
+    }
+    return progress_pct;
+}
 function update_progress(status){
     var p = status.progress;
     var result = $('.swal2-show #result');
