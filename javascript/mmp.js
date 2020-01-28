@@ -163,7 +163,11 @@ class ManyMailerPlus_mod {
         $('form[action$=send]').submit(function() {
             var btn = $('button.progress');
             // debugger;
-                if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {btn.toggle('slide')}, 5000);
+                if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {
+                    // btn.toggle('slide');
+                    showProgress();
+                    progess_poller();
+                }, 5000);
                 return true;
             }.bind(this));
 

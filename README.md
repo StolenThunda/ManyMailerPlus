@@ -28,11 +28,16 @@ Enables uploads of local file
 
 This method accepts a pasted CSV file. After pressing the "Convert" button the pasted text will be verified.
 If the csv file is a valid email listing, the results(see below) will be posted to the page. on a table to be
-reviewed and the harvested emails will be inserted into the "Recipients Emails" textbox[^1].
+reviewed and the harvested emails will be inserted into the "Recipients Emails" textbox[1].
 
 Any errors validate the data are prominently displayed along with suggestions for fixes
 
 ![CSV Paste](images/csv_raw_errors.png)
+
+##### Individual (in beta)
+
+This option will let you use the form as if it were the default EE Communicate.
+![CSV Paste](images/individual.png)
 
 ##### CSV Results
 
@@ -67,5 +72,11 @@ Thanks to ***Derek Hogue*** @ **[Amphibian Design](https://www.sparkpost.com/)**
 
 All other columns will be automatically injested to create tokenized placeholder buttons for use during email composition.
 
-[^1]: Recipient Emails textbox is disabled by default
+### Features
+- Usage of Datatables
+  - all tables have enhanced features (sortable, search, etc)
+- Progress Modal  
+  - You have the ability to keep track of the progress of all active tasks (More than one instance mailing simultaneously)
+  ![CSV Result](images/multi_progress.png)
+[1]: Recipient Emails textbox is disabled by default
 ## [Changelog](./CHANGELOG.md)

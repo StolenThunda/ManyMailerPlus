@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ## ChangeLog
 
+## [1.8.4] - 2020-01-28
+### Milestones
+- [x] Fix css for tables (sent/templates)
+- [x] Added multi-progress modal for long mailing lists 
+
+### Features
+- [x] Added primary service indicator in breadcrumbs
+
 ## [1.8.1] - 2019-11-19
 ### TODO
 - [ ] Fix css for tables (sent/templates)
