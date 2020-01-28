@@ -70,18 +70,17 @@ class ManyMailerPlus_mod {
         if (this.b_isApiAvailable) {                       
             inProgress()
             .then(function(data){ 
-                data = (data.length) ? data[data.length - 1] : data;
+                // debugger
+                data = (data.length && data.progress) ? data[data.length - 1] : data;
                 console.log(data);
                 if (this.on_compose_page && (data && data.progress < 100)) {                        
                     console.log(data);
-                    
-                        $('button.progress').show(); 
-                    }
-                    
-                }.bind(this))
-                .done(function(){
-                    this.useApi().init_placeholder_funcs(); 
-                }.bind(this));
+                    $('button.progress').show(); 
+                }
+            }.bind(this))
+            .done(function(){
+                this.useApi().init_placeholder_funcs(); 
+            }.bind(this));
         }
         $('button').parent().addClass('form-btns');
     }
@@ -153,9 +152,7 @@ class ManyMailerPlus_mod {
             .addClass('btn btn-progress')
             .click((e) => {
                 e.preventDefault();
-                if (!$('.swal2-show .progress').is(':visible')) {
-                    $('a.m-link[rel=mail_progress]').trigger('click');
-                }
+                showProgress();
                 progress_poller();
             })
             .appendTo($(this).parent());
@@ -166,7 +163,7 @@ class ManyMailerPlus_mod {
         $('form[action$=send]').submit(function() {
             var btn = $('button.progress');
             // debugger;
-                if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {btn.toggle('slide')}, 10000);
+                if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {btn.toggle('slide')}, 5000);
                 return true;
             }.bind(this));
 
@@ -234,13 +231,14 @@ class ManyMailerPlus_mod {
                     }
                 })
                 .wrap('<div id="csv_recipient_wrapper" ></div>');
-            this.file_recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_load_csv_file(e);
-                }.bind(this),
-                false
-            );
+            this.file_recipient[0]
+                .addEventListener(
+                    'change',
+                    function (e) {
+                        this.evt_load_csv_file(e);
+                    }.bind(this),
+                    false
+                );
             this.recipient[0].addEventListener(
                 'change',
                 function () {
@@ -251,11 +249,13 @@ class ManyMailerPlus_mod {
             this.recipient[0].addEventListener(
                 'click',
                 function () {
-                    this.display_message({
-                        title: 'Invalid!',
-                        html: 'Please enter emails using csv entry (file upload/paste).',
-                        type: 'error'
-                    });
+                    if (this.sel_csv_entry.val() !== 'none') {
+                        return this.display_message({
+                            title: 'Invalid!',
+                            html: 'Please enter emails using csv entry (file upload/paste).',
+                            type: 'error'
+                        });
+                    }
                 }.bind(this),
                 false
             );
@@ -346,7 +346,7 @@ class ManyMailerPlus_mod {
             this.con_embed_tmps.toggle(show);
             this.con_tmp_name.toggle(show);
             this.con_errors.toggle(show);
-            this.recipient.prop('readonly', true);
+            this.recipient.attr('readonly', true);
         }
         this
             .toggle_composer_list()
@@ -389,7 +389,8 @@ class ManyMailerPlus_mod {
             return that.parseDbgFromJson(data); 
         })
         .always(function (data) {
-            console.dir(data);
+            // console.dir(data);
+            $('.breadcrumb li.last').append(`<span title="Primary Service"><b>(${capitalizeFirstLetter(data[0])})</b></span>`);
             that.service_list.attr('data-order', that.parseDbgFromJson(data));
         });
     }
@@ -427,17 +428,17 @@ class ManyMailerPlus_mod {
             height: $('div.col.w-12').height(),
             width: $('div.col.w-4').width() 
         })
-            .append(
-                $('<table />', {
-                    id: 'csv_placeholder',
-                    class: 'placeholder no-border form-btns form-btns-top'
-                }).append(
-                    $('<caption />', {
-                        text: 'Placeholders'
-                    })
-                )
+        .append(
+            $('<table />', {
+                id: 'csv_placeholder',
+                class: 'placeholder no-border form-btns form-btns-top'
+            }).append(
+                $('<caption />', {
+                    text: 'Placeholders'
+                })
             )
-            .appendTo('.sidebar');
+        )
+        .appendTo('.sidebar');
         // reinitialize placeholder var because it is dynamically generated
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         Object.entries(this.csvObj.headerKeyMap).forEach(([key, value]) => {
@@ -539,7 +540,7 @@ class ManyMailerPlus_mod {
         .always(function (data) {
             data = that.parseDbgFromJson(data);
             if (data !== "") that.update_sortable(data); 
-            
+          
         });
         return that;
     }
@@ -743,9 +744,26 @@ class ManyMailerPlus_mod {
     }
 
     evt_toggle_csv_entry(e) {
-        let showTextEntry = e.target.value === 'csv_recipient';
-        this.con_file_recipient.toggle(!showTextEntry);
-        this.con_csv_recipient.toggle(showTextEntry);
+        var readonly = true;
+        var show = true;
+        switch(e.target.value) {
+            case 'csv_recipient':
+                this.con_file_recipient.toggle(!show);
+                this.con_csv_recipient.toggle(show);
+                break;
+            case 'file_recipient':
+                this.con_file_recipient.toggle(show);
+                this.con_csv_recipient.toggle(!show);
+                break;
+            default:
+                $('#reset').trigger('click');
+                readonly = false;
+                this.con_file_recipient.toggle(!show);
+                this.con_csv_recipient.toggle(!show);                    
+                this.recipient.focus();                        
+            }
+        this.recipient.attr('readonly', readonly);
+                    
         return this;
     }
 
@@ -1173,83 +1191,118 @@ class ManyMailerPlus_mod {
     //#endregion Templates
 }
 
-
+//# region Mail Polling
 function inProgress() {
-    return $.get('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress');
+    return $.post('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress');
 }
 
-function progress_poller(){
+function progress_poller_old(){
     return inProgress()
-        .done(function(data){
-            var p =  update_progress3(data);
-            if (p === '--' || parseInt(p) < 100 || parseInt(p) === NaN) setTimeout(progress_poller,500);
+        .then(function(data){
+            var p = update_progress(data);
+            // debugger
+            console.log(`p: ${p}`);
+            if (p < 100) setInterval(progress_poller, 5000);
     }); 
 }
 
-function update_progress3(status){
-    debugger;
-    $('.swal2-content').html(status.html);
-    var progress_pct = status.progress;
-    // if (status.length && status.length > 0){
-    //     for(idx in status) {    
-    //         // debugger;
-    //         task = status[idx];
-    //         var result_div = $('#' + task.index + '_result');
-    //         if (result_div.length > 0) dest.innerHTML += task.html;
-    //         result_div.val(task.messages);
-    //         result_div.scrollTop($('#' + task.index + '_result')[0].scrollHeight);
-    //     }
-    //     var keys = Object.keys(status);
-    //     progress_pct = status[keys.slice(-1).pop()]['progress']
-    // } else {
-    //     dest.innerHTML = "No Running Processes";
-    //     progress_pct = 100;
-    // }
-    return progress_pct;
-}
-function update_progress2(status){
-    dest = $('.swal2-content')[0];
-    var progress_pct = 0;
-    if (status.length && status.length > 0){
-        for(idx in status) {    
-            // debugger;
-            task = status[idx];
-            var result_div = $('#' + task.index + '_result');
-            if (result_div.length > 0) dest.innerHTML += task.html;
-            result_div.val(task.messages);
-            result_div.scrollTop($('#' + task.index + '_result')[0].scrollHeight);
-        }
-        var keys = Object.keys(status);
-        progress_pct = status[keys.slice(-1).pop()]['progress']
-    } else {
-        dest.innerHTML = "No Running Processes";
-        progress_pct = 100;
-    }
-    return progress_pct;
+
+function progress_poller(){
+    $.getJSON('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress',
+        function(data){
+            console.log(data);
+            var p = update_progress(data);
+            console.log(`p: ${p}`);
+            if (p < 100) progress_poller();
+        });
 }
 function update_progress(status){
-    var p = status.progress;
-    var result = $('.swal2-show #result');
-    $('.swal2-show .progress-value').html(p + '%');
-    $('.swal2-show #current').html(status.current);
-    $('.swal2-show #total').html(status.total);
-    $('.swal2-show #time').html(status.time);
-    $('.swal2-show .pBar').val(p);
-    if (result.length > 0){
-        $('.swal2-show #result')
-        .val(status.messages)
-        .scrollTop($('.swal2-show #result')[0].scrollHeight);
-    }
-    return p;
+    console.log(Object.keys(status).length);
+    let max = 100;
+    let latest = max;
+    // debugger;
+    // showProgress();
+    // loop through current statuses
+    Object.values(status).forEach(task => {
+        if (task.index){
+            idx = task.index;
+            if (task.progress === max) {
+                $(`#${idx}_result`).parents('.demo-wrapper').remove();
+            }else{
+                if ($(`#${idx}_result`).length > 0){
+                    //if elements exist update elements
+                    $(`#${idx}_pBar`).val(task.progress);
+                    $(`#${idx}_progress-value`).text(task.progress + '%');
+                    $(`#${idx}_current`).text(task.current);               
+                    $(`#${idx}_total`).text(task.total);
+                    $(`#${idx}_time`).text(task.time);
+                    
+                }else{
+                    //if elements do not exist, create elements
+                    $('.swal2-content').append(generateProgressModule(task, status.lang));
+                    // latest = task.progress;
+                }
+                latest = task.progress <= latest ? task.progress : latest;
+                $(`#${idx}_result`)
+                .val(task.messages)
+                .scrollTop($(`#${idx}_result`)[0].scrollHeight);
+            }
+        }
+        console.log(`latest: ${latest}`);
+    });
+    //return the progress of the most recent mail job or end recursion with val of 100
+    return Object.keys(status).length > 1 ? latest : max;
 }
 
+function generateProgressModule(data, lang){
+    idx = data.index;
+    return `
+        <div class='demo-wrapper html5-progress-bar'>
+            <div class='progress-detail'>
+                <details>
+                    <summary>Task: ${idx} ${lang['details']}</summary> 
+                    <p>
+                        ${lang['sent']}
+                        <span id='${idx}_current'>${data['current']}</span>${lang['of']}
+                        <span id='${idx}_total'>${data['total']}</span>${lang['emails']}</span><br/>
+                        ${lang['elapsed']} : <span id='${idx}_time'>${data['time']}</span>
+                    </p>
+                    <textarea id='${idx}_result' style='white-space:pre-wrap' placeholder='${lang['init']}' cols='30' rows='5'></textarea>
+                </details>
+            </div>
+           
+            <div class='progress-bar-wrapper'>
+                <progress id='${idx}_pBar' class='pBar' max='100' value='${data['progress']}'></progress>
+                <span id='${idx}_progress-value'class='progress-value'>${data['progress']}%</span>
+            </div>
+        </div>`;
+}
+
+function showProgress(){
+    if (!$('.swal2-show .progress').is(':visible')) {
+        $('a.m-link[rel=mail_progress]').trigger('click');
+    }
+}
+//capitalize only the first letter of the string. 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+//capitalize all words of a string. 
+function capitalizeWords(string) {
+    return string.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+};
+function update_progress_old(status){
+    // debugger;
+    $('.swal2-content').html(status.html);
+    var progress_pct = status.progress;
+    return progress_pct;
+}
+//#endregion  Mail Poller
 
 // for running test only
 (function testable() {
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        module.exports = ManyMailerPlus_mod;
-        module.exports = MailPoller;
-     
+        module.exports = ManyMailerPlus_mod;     
     }
 })();
 
