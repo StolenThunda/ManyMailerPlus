@@ -1,12 +1,16 @@
 vendor/
 .history/
-# .vscode/
+.vscode/
 .nyc_output/
 coverage/
 src/
 tests/
 node_modules/
+v8-compile-cache-0/
 
+*.json
+*.log
+*.conf
 *phpunit*
 *phar*
 composer*
@@ -18,6 +22,8 @@ composer*
 .babelrc
 .bashrc
 .jshintrc
+.eslintrc
+
 
 
 View/email/csv-field.php

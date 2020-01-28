@@ -75,6 +75,7 @@ $lang = array(
     'disabled' => 'Disabled',
     'edit_template_name' => 'Create/Edit Templates',
     'edit_template' => 'Create/Edit Template',
+    'elapsed' => 'Run Time',
     'email_heading' => 'Email Functions',
     'email_subject' => 'Email Subject',
     'email_text' => $email_detail,
