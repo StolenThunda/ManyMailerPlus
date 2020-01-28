@@ -100,22 +100,28 @@ class Manymailerplus_mcp
         ee()->config->load('compose_js');
 
         $internal_js = ee()->config->item('internal_js');
+        $external_js = ee()->config->item('external_js');
+        $css = ee()->config->item('css');
+
         foreach ($internal_js as $js) {
             ee()->cp->load_package_js($js);
         }
-        $external_js = ee()->config->item('external_js');
+        
         foreach ($external_js as $script) {
             ee()->cp->add_to_foot($script);
         }
-        ee()->cp->add_to_foot(
-            link_tag(
-                array(
-                    'href' => 'https://cdn.datatables.net/v/dt/dt-1.10.20/b-1.6.1/b-colvis-1.6.1/fc-3.3.0/fh-3.1.6/r-2.2.3/sc-2.0.1/datatables.min.css',
-                    'rel' => 'stylesheet',
-                    'type' => 'text/css',
+       
+        foreach ($css as $href) {
+            ee()->cp->add_to_foot(
+                link_tag(
+                    array(
+                        'href' => $href,
+                        'rel' => 'stylesheet',
+                        'type' => 'text/css',
+                    )
                 )
-            )
-        );
+            );
+        }
         return $this;
     }
     /**
@@ -195,6 +201,7 @@ class Manymailerplus_mcp
         $this->_vars['cp_page_title'] = lang('email_title');
         $id = ee()->uri->segment(7, '');
         switch ($func) {
+        case 'all_mail_progress':
         case 'mail_progress':
             echo(ee()->output->send_ajax_response(ee()->mail_funcs->{$func}()));
             exit;

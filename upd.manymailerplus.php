@@ -75,6 +75,7 @@ class Manymailerplus_upd
         if (version_compare($version, $this->version) === 0) {
             return false;
         }
+       
         return true;
     }
 
@@ -89,8 +90,10 @@ class Manymailerplus_upd
             `queue_start` int(10) unsigned NOT NULL DEFAULT '0',            
             `queue_end` int(10) unsigned NOT NULL DEFAULT '0',
             `email_id` int(6) unsigned NOT NULL,
-            `recipient_count` int(6) unsigned NOT NULL,
+            `recipient_count` int(6) unsigned NOT NULL DEFAULT '0',
+            `sent` int(6) unsigned NOT NULL  DEFAULT '0',
             `messages` text COLLATE utf8mb4_unicode_ci NULL,
+            `active` tinyint(1) unsigned DEFAULT '1',
             PRIMARY KEY (`queue_id`)
 			) ENGINE=InnoDB AUTO_INCREMENT=2570 DEFAULT CHARACTER SET ".ee()->db->escape_str(ee()->db->char_set)." COLLATE ".ee()->db->escape_str(ee()->db->dbcollat);
 
@@ -122,7 +125,6 @@ class Manymailerplus_upd
 
     private function runSQL($sql = array())
     {
-        
         foreach ($sql as $query) {
             ee()->db->query($query);
         }

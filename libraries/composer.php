@@ -35,15 +35,11 @@ class Composer
             'contents' => implode(
                 '',
                 array(
-                '<div id="mail_progress_output">',
-                '<h1>Progress: </h1>',
-                '<span class="txt-wrap">',
-                '<p>'. lang('sent'). ' <span id="current">0</span> '.lang('of').' <span id="total">--</span> '. lang('emails').'.</span></br>',
-                '<br/>'. lang('elapsed'). ': <span id="time">--</span><hr />',
-                $this->_generateProgressHTML(),
-                '<textarea id="result" style="white-space:pre-wrap" placeholder="Initializing..." cols="30" rows="5"></textarea>',
-                '</span>',
-                '</div>'
+                    '<div id="mail_progress_output">',
+                    '<h1>Progress: </h1>',
+                    '<span class="txt-wrap">',
+                    '</span>',
+                    '</div>'
                 )
             )
         );
@@ -52,19 +48,91 @@ class Composer
         return $modal_html;
     }
 
-    private function _generateProgressHTML()
+    public function getElapsed($start, $now)
     {
-        return implode(
-            '',
-            array(
-                '<div class="demo-wrapper html5-progress-bar">',
-                '<div class="progress-bar-wrapper">',
-                '<progress class="pBar" max="100" value="0"></progress>',
-                '<span class="progress-value">0%</span>',
-                '</div>',
-                '</div>'
-            )
+        $diff = $start->diff($now);
+        $diff->w = floor($diff->d / 7);
+        $diff->d -= $diff->w * 7;
+    
+        $string = array(
+            'y' => 'year',
+            'm' => 'month',
+            'w' => 'week',
+            'd' => 'day',
+            'h' => 'hour',
+            'i' => 'minute',
+            's' => 'second',
         );
+        foreach ($string as $k => &$v) {
+            if ($diff->$k) {
+                $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+            } else {
+                unset($string[$k]);
+            }
+        }
+        $elapsed_time = $string ? implode(', ', $string): '';
+        return $elapsed_time;
+    }
+    
+    public function all_mail_progress()
+    {
+        session_start();
+        if (!array_key_exists('status', $_SESSION)) {
+            $_SESSION['status'] = array();
+        }
+        $_SESSION['status']['lang'] = array(
+            'sent' => lang('sent'),
+            'of' => lang('of'),
+            'emails' => lang('emails'),
+            'details' => lang('details'),
+            'elapsed' => lang('elapsed'),
+            'init' => lang('init')
+        );
+        
+        $current_queued = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')
+        ->filter('active', '==', '1')
+        ->all();
+        
+        //   return $current_queued->count();
+        if (in_array(101, array_column($_SESSION['status'], 'progress')) || $current_queued->count() === 0) {
+            unset($_SESSION['status']);
+            return array();
+        }
+        foreach ($current_queued as $queue) {
+            $id = $queue->email_id;
+            $total_to_be_sent = $queue->recipient_count;
+            $total_sent = ee('Model')
+                    ->get(EXT_SHORT_NAME. ':EmailCachePlus')
+                    ->filter('parent_id', $id)
+                    ->all()
+                    ->count();
+            $progress =  round($total_sent / $total_to_be_sent * 100);
+                    
+            //https://wordpress.stackexchange.com/questions/290488/how-get-exact-time-difference
+            $now = ($progress < 100) ? new DateTime() : $queue->queue_end;
+            $start = $queue->queue_start;
+            $elapsed_time = $this->getElapsed($start, $now);
+            if ($progress <= 100) {
+                $queue->queue_end = $now->getTimestamp();
+                $queue->sent = $total_sent;
+                if ($total_sent === $queue->recipient_count) {
+                    $queue->active = 0;
+                }
+                $queue->save();
+            }
+            $data = array(
+                'index' => $id,
+                'start' => $start,
+                'req' => $now,
+                'time' => $elapsed_time,
+                'current' => $total_sent,
+                'total' => $total_to_be_sent,
+                'progress' => $progress,
+                'messages' => ($total_sent !== $total_to_be_sent) ? $queue->messages : $queue->messages . "Done!!!\n"
+            );
+            $_SESSION['status'][$id] = $data;
+        }
+        return $_SESSION['status'];
     }
 
     private function _getConfigValue($value, $default = null)
@@ -209,7 +277,8 @@ class Composer
                             'type' => 'select',
                             'choices' => array(
                                 'file_recipient' => lang('upload'),
-                                'csv_recipient' => lang('manual'),
+                                'csv_recipient'  => lang('manual'),
+                                'none'           => lang('no_csv')
                             ),
                         ),
                     ),
@@ -256,10 +325,6 @@ class Composer
                     'title' => 'primary_recipients',
                     'desc' => 'primary_recipients_desc',
                     'fields' => array(
-                        'csv_reset' => array(
-                            'type' => 'html',
-                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
-                        ),
                         'recipient' => array(
                             'type' => 'text',
                             'value' => $default['recipient'],
@@ -267,7 +332,11 @@ class Composer
                         ),
                         'csv_content' => array(
                             'type' => 'html',
-                            'content' => '<table id="csv_content" class="display cell-border nowrap compact" style="width:100%"></table>',
+                            'content' => '<table id="csv_content" class="display cell-border nowrap compact"></table>',
+                        ),
+                        'csv_reset' => array(
+                            'type' => 'html',
+                            'content' => form_button('btnReset', 'Reset CSV Data', 'id="reset" class="btn"'),
                         ),
                     ),
                 ),
@@ -424,77 +493,11 @@ class Composer
         );
         
         ee()->dbg->c_log($vars, __METHOD__ . '  ' . __LINE__);
-
+        
         return $vars;
     }
-
-    public function mail_progress()
-    {
-        session_start();
-
-        if (!array_key_exists('status', $_SESSION)) {
-            $_SESSION['status'] = array('progress' => 0, 'messages' => '');
-        }
-        if ($_SESSION['status']['progress'] >= 100) {
-            unset($_SESSION['status']);
-            die('--');
-        }
-        $current_queue = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')->all()->last();
-        if (isset($current_queue->recipient_count)) {
-            $total_to_be_sent = $current_queue->recipient_count ?: 0;
-            $total_sent = ee('Model')
-                ->get(EXT_SHORT_NAME. ':EmailCachePlus')
-                ->filter('parent_id', $current_queue->email_id)
-                ->all()
-                ->count();
-                
-            $progress =  round($total_sent / $total_to_be_sent * 100);
-
-            //https://wordpress.stackexchange.com/questions/290488/how-get-exact-time-difference
-            $now = ($progress < 100) ? new DateTime() : $current_queue->queue_end;
-            $start = $current_queue->queue_start;
-            if ($progress <= 100) {
-                $current_queue->queue_end = $now->getTimestamp();
-                $current_queue->save();
-            }
-            
-            $diff = $start->diff($now);
-            $diff->w = floor($diff->d / 7);
-            $diff->d -= $diff->w * 7;
-        
-            $string = array(
-                'y' => 'year',
-                'm' => 'month',
-                'w' => 'week',
-                'd' => 'day',
-                'h' => 'hour',
-                'i' => 'minute',
-                's' => 'second',
-            );
-            foreach ($string as $k => &$v) {
-                if ($diff->$k) {
-                    $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
-                } else {
-                    unset($string[$k]);
-                }
-            }
-            $elapsed_time = $string ? implode(', ', $string): '';
-
-            $_SESSION['status'] = array(
-                'start' => $start,
-                'req' => $now,
-                'time' => $elapsed_time,
-                'current' => $total_sent,
-                'total' => $total_to_be_sent,
-                'progress' => $progress,
-                'messages' => ($total_sent !== $total_to_be_sent) ? $current_queue->messages : $current_queue->messages . "Done!!!\n"
-            );
-        }
-
-       
-        return $_SESSION['status'];
-    }
-
+    
+    
     /**
      *  Returns the html rendered by view_templates
      *
@@ -1527,16 +1530,17 @@ class Composer
         // $this->_body_and_attachments();
        
         $this->log_array = array();
+        $success = false;
         //TODO: fix whatever is causing a memory leak https://trello.com/c/uSm8oQEO/23-memory-error
         foreach ($this->available_services as $service) {
             if (!empty($settings[$service.'_active']) && $settings[$service.'_active'] == 'y') {
                 $missing_credentials = true;
-                ee()->dbg->c_log($this->available_services, __METHOD__. ' Available svc ' . memory_get_usage());
+                // ee()->dbg->c_log($this->available_services, __METHOD__. ' Available svc ' . memory_get_usage());
                 ee()->dbg->c_log($service, __METHOD__ . ' attempt svc ' . __LINE__);
-                ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' loaded? ' . memory_get_usage());
+                // ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' loaded? ' . memory_get_usage());
                 if (!ee()->load->is_loaded($service)) {
                     ee()->load->library('TxService/drivers/TxService_'.ucfirst($service), array_merge($settings, array('debug' => $this->u_debug_enabled())), $service);
-                    ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' reload? ' . memory_get_usage());
+                    // ee()->dbg->c_log(ee()->load->is_loaded($service), __METHOD__. ' reload? ' . memory_get_usage());
                 }
                 $result = ee()->{$service}->sendEmail($this->email_out);
                 $missing_credentials = $result['missing_credentials'];
@@ -1546,12 +1550,13 @@ class Composer
                 
                 if ($success) {
                     ee()->extensions->end_script = true;
-                    ee()->dbg->c_log($success, __METHOD__. ' - ' . memory_get_usage() . ' Success? :' . $service);
+                    // ee()->dbg->c_log($success, __METHOD__. ' - ' . memory_get_usage() . ' Success? :' . $service);
                     break;
                 } else {
-                    ee()->dbg->c_log($result, __METHOD__. ' - ' . memory_get_usage() . ' Faild result:' . $service);
+                    continue;
+                    // ee()->dbg->c_log($result, __METHOD__. ' - ' . memory_get_usage() . ' Faild result:' . $service);
                 }
-                    
+                
                 //collect errors and don't use service again until next "Send";
                 if ($missing_credentials === true) {
                     $this->log_array[] = sprintf(lang('missing_service_credentials'), ucfirst($service), ucfirst($service));
@@ -1564,6 +1569,7 @@ class Composer
         if (count($this->log_array) > 0) {
             ee()->logger->developer(implode('\n', $this->log_array));
         }
+        ee()->dbg->c_log($success, __METHOD__. ' - ' . $service);
         return $success;
     }
 
