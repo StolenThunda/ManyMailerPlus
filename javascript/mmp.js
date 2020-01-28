@@ -30,7 +30,19 @@ class ManyMailerPlus_mod {
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         this.con_errors = $('#csv_errors'); // container for error messages
         this.loader = $('.loader'); // css loading visuals
-       
+        this.dTableOpts = {
+            dom: '<"top"i>rt<"bottom"flp><"clear">',
+            pageLength: 100,
+            lengthMenu: [[10, 50, 100, 500, -1], [10, 50, 100, 500, "All"]],
+            aoColumns : null,
+            retrieve :  true,
+            pagingType: "full_numbers",
+            scrollY:    "400px",
+            scrollX:    true,
+            info:       true,
+            autoWidth:  true,
+            paging:     true
+        };
         // modules
         this.DOMParser = new DOMParser();
         this.Stepper = new Stepper($('.form-section'));
@@ -52,10 +64,25 @@ class ManyMailerPlus_mod {
     }
     
     initializePage() {
-        this.toggleInitState(false);
-        if (this.b_isApiAvailable) {
-            this.useApi().init_placeholder_funcs();
+        this
+            .toggleInitState(false)
+            .generateProgressButtons();
+        if (this.b_isApiAvailable) {                       
+            inProgress()
+            .then(function(data){ 
+                // debugger
+                data = (data.length && data.progress) ? data[data.length - 1] : data;
+                console.log(data);
+                if (this.on_compose_page && (data && data.progress < 100)) {                        
+                    console.log(data);
+                    $('button.progress').show(); 
+                }
+            }.bind(this))
+            .done(function(){
+                this.useApi().init_placeholder_funcs(); 
+            }.bind(this));
         }
+        $('button').parent().addClass('form-btns');
     }
 
     init_placeholder_funcs() {
@@ -117,52 +144,33 @@ class ManyMailerPlus_mod {
     }
 
     generateProgressButtons(){
-        $('.form-btns:visible').each(function(){
+        $('[type=submit][value^=Send]').each(function(){
             var btn = $('<button />', {
                 text: 'View Mailer Progress',
-            })
-            .click((e) => { 
-                mail_progress_poll();
-                if (!$('.swal2-show progress').is(':visible')) {
-                    $('a.m-link[rel=mail_progress]').trigger('click');
-                }
+                class: 'progress'
             })
             .addClass('btn btn-progress')
-            .appendTo(this);
-
+            .click((e) => {
+                e.preventDefault();
+                showProgress();
+                progress_poller();
+            })
+            .appendTo($(this).parent());
             btn.hide();
         });
     }
     init_dom_events() {
+        $('form[action$=send]').submit(function() {
+            var btn = $('button.progress');
+            // debugger;
+                if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {
+                    // btn.toggle('slide');
+                    showProgress();
+                    progess_poller();
+                }, 5000);
+                return true;
+            }.bind(this));
 
-        $('form').on('submit',function() {
-                if (this.on_compose_page) $('.btn-progress').toggle('slide');
-            }.bind(this)
-        );
-        $('[name=btnProgress]').on('click', function(){ 
-            // debugger
-            
-      
-            // var progressbar = $('progress'),
-            //     max = progressbar.attr('max'),
-            //     time = (1000/max)*5,
-            //     value = progressbar.val();
-
-            // var loading = function() {
-            //     value += 1;
-            //     let addValue = progressbar.val(value);
-
-            //     $('.progress-value').html(value + '%');
-
-            //     if (value == max) {
-            //         clearInterval(animate);
-            //     }
-            // };
-
-            // var animate = setInterval(function() {
-            //     loading();
-            // }, time);
-        });
         this.doc_body
             .on('click', '*[data-conditional-modal]', function (e) {
                 e.preventDefault();
@@ -200,7 +208,6 @@ class ManyMailerPlus_mod {
                 this.display_message_by_id(`.${rel}`);
             })
             .bind(this);
-            this.generateProgressButtons();
        
         if (this.on_compose_page) {
             this.mail_type[0].addEventListener(
@@ -228,13 +235,14 @@ class ManyMailerPlus_mod {
                     }
                 })
                 .wrap('<div id="csv_recipient_wrapper" ></div>');
-            this.file_recipient[0].addEventListener(
-                'change',
-                function (e) {
-                    this.evt_load_csv_file(e);
-                }.bind(this),
-                false
-            );
+            this.file_recipient[0]
+                .addEventListener(
+                    'change',
+                    function (e) {
+                        this.evt_load_csv_file(e);
+                    }.bind(this),
+                    false
+                );
             this.recipient[0].addEventListener(
                 'change',
                 function () {
@@ -245,11 +253,13 @@ class ManyMailerPlus_mod {
             this.recipient[0].addEventListener(
                 'click',
                 function () {
-                    this.display_message({
-                        title: 'Invalid!',
-                        html: 'Please enter emails using csv entry (file upload/paste).',
-                        type: 'error'
-                    });
+                    if (this.sel_csv_entry.val() !== 'none') {
+                        return this.display_message({
+                            title: 'Invalid!',
+                            html: 'Please enter emails using csv entry (file upload/paste).',
+                            type: 'error'
+                        });
+                    }
                 }.bind(this),
                 false
             );
@@ -277,7 +287,10 @@ class ManyMailerPlus_mod {
             $('button[name=convert_csv]')[0].addEventListener(
                 'click',
                 function (e) {
-                    this.evt_convert_csv(e);
+                    this
+                        .toggle_loading()
+                        .evt_convert_csv(e)
+                        .toggle_loading();
                 }.bind(this),
                 false
             );
@@ -295,7 +308,7 @@ class ManyMailerPlus_mod {
     }
 
     init_service_list() {
-        this.db_service_order; // get db service order and assign data to element
+        this.db_service_order(); // get db service order and assign data to element
         this.service_list
             .attr('action-url', this.base_url + 'services/update_service_order')
             .addClass('service-list');
@@ -309,56 +322,13 @@ class ManyMailerPlus_mod {
     }
 
     init_datatable() {
-        // debugger
         this.toggle_loading();
         var table = $('#csv_content')
-            .wrap('<div style="width:60vh"></div>')
-            .DataTable({
-                // fixedHeader: true,
-                defaultContent: '',
-                // deferRender: true,
-                // scroller: true,
-                dom: '<"top"i>rt<"bottom"flp><"clear">',
-                scrollY: 400,
-                scrollX: true,
-                scrollCollapse: true,
-                autoWidth: false,
-                pageLength: 100,
-                lengthMenu:  [[10, 50, 100, 500, -1], [10, 50, 100, 500, "All"]],
-                responsive: {
-                    details: {
-                        display: function(row, update, render){
-                            var data = row.data();
-                            var header = 'Details for '+data[0];
-                            var config = {
-                                title: header,
-                                type: 'info',
-                                html: render()[0].outerHTML,
-                                width: '50vw'
-                            };
-                            if (Swal && update){
-                                 Swal.fire(config);
-                                 return false;
-                            }else{
-                                 $.fn.dataTable.Responsive.display.modal({
-                                    header: header
-                                }) 
-                            }
-                           
-                        },
-                        renderer: $.fn.dataTable.Responsive.renderer.tableAll()
-                    }
-                },
-                initComplete: function () {
-                    var api = this.api();
-                    api.columns.adjust();
-                    api.$('td').click(function () {
-                        api.search(this.innerHTML).draw();
-                    });
-                },
+            .wrap('<div style="width:62vh"></div>')
+            .DataTable(Object.assign({},this.dTableOpts, {
                 columns: this.tableData.columns,
                 data: this.tableData.data,
-            });
+            }));
         return this.toggle_loading();
     }
 
@@ -380,7 +350,7 @@ class ManyMailerPlus_mod {
             this.con_embed_tmps.toggle(show);
             this.con_tmp_name.toggle(show);
             this.con_errors.toggle(show);
-            this.recipient.prop('readonly', true);
+            this.recipient.attr('readonly', true);
         }
         this
             .toggle_composer_list()
@@ -391,14 +361,7 @@ class ManyMailerPlus_mod {
     //#endregion Page Init
 
     //#region Page funcs
-    mail_progress_callback(el, response){
-    
-        // $.get('admin.php?/cp/addons/settings/manymailerplus/email/mail_progress', function(response){
-        //     let status = !(response === '--');
-        //     if (status) $('#percent').html(response);
-        //     return status;
-        //  });       
-    }
+ 
     compare_service_order(arr1, arr2) {
         return JSON.stringify(arr1) === JSON.stringify(arr2);
     }
@@ -420,7 +383,7 @@ class ManyMailerPlus_mod {
         return this.compare_service_order(DOM_service_order, dataset) ? dataset : DOM_service_order;
     }
     
-    get db_service_order(){
+    db_service_order(){
         var that = this;
         $.get(this.base_url + 'services/get_service_order')
         .success(function(data){
@@ -430,7 +393,8 @@ class ManyMailerPlus_mod {
             return that.parseDbgFromJson(data); 
         })
         .always(function (data) {
-            console.dir(data);
+            // console.dir(data);
+            $('.breadcrumb li.last').append(`<span title="Primary Service"><b>(${capitalizeFirstLetter(data[0])})</b></span>`);
             that.service_list.attr('data-order', that.parseDbgFromJson(data));
         });
     }
@@ -459,26 +423,26 @@ class ManyMailerPlus_mod {
         });
         return this;
     }
-
+//'30vh'
     toggle_placeholders() {
         $('#stick-here').remove();
         $('<div />', {
             id: 'stick-here',
             class: 'stick-here',
             height: $('div.col.w-12').height(),
-            width: '30vh'
+            width: $('div.col.w-4').width() 
         })
-            .append(
-                $('<table />', {
-                    id: 'csv_placeholder',
-                    class: 'placeholder'
-                }).append(
-                    $('<caption />', {
-                        text: 'Placeholders'
-                    })
-                )
+        .append(
+            $('<table />', {
+                id: 'csv_placeholder',
+                class: 'placeholder no-border form-btns form-btns-top'
+            }).append(
+                $('<caption />', {
+                    text: 'Placeholders'
+                })
             )
-            .appendTo('.sidebar');
+        )
+        .appendTo('.sidebar');
         // reinitialize placeholder var because it is dynamically generated
         this.con_placeholder = $('#csv_placeholder'); // container for placeholders
         Object.entries(this.csvObj.headerKeyMap).forEach(([key, value]) => {
@@ -534,15 +498,7 @@ class ManyMailerPlus_mod {
             if (onServices) this.update_sortable(this.DOMserviceOrder);
         }
         var tables = $("table:has(thead ~ tbody>tr:not('.no-results'))"); // non-empty tables
-        tables.DataTable({
-            "aoColumns" : null,
-            "retrieve" : true,
-            "pagingType": "full_numbers",
-            "scrollY":        "400px",
-            "info":           true,
-            "autoWidth":      true,
-            "paging":         true
-        });
+        tables.DataTable(this.dTableOpts);
         if (tables.forEach){
             tables.forEach(el => {
                 el.columns.adjust().draw();
@@ -556,6 +512,7 @@ class ManyMailerPlus_mod {
         if (Array.isArray(data)){
             return data;
         } else if (htmlDoc.body.innerText === 'undefined') {
+            debugger
             let script = data
                     .replace(/<script async='true' defer='true'>/g, '')
                     .replace(/<\/?script>/g,'');
@@ -587,7 +544,7 @@ class ManyMailerPlus_mod {
         .always(function (data) {
             data = that.parseDbgFromJson(data);
             if (data !== "") that.update_sortable(data); 
-            
+          
         });
         return that;
     }
@@ -774,6 +731,7 @@ class ManyMailerPlus_mod {
         } else {
             this.dumpFormVals();
         }
+        return this;
     }
 
     evt_convert_csv() {
@@ -781,16 +739,36 @@ class ManyMailerPlus_mod {
         this.sel_csv_entry
             .val('file_recipient')
             .trigger('change');
+        return this;
     }
 
     evt_change_mail_type(e) {
         this.plaintext.toggle(e.currentTarget.value === 'html');
+        return this;
     }
 
     evt_toggle_csv_entry(e) {
-        let showTextEntry = e.target.value === 'csv_recipient';
-        this.con_file_recipient.toggle(!showTextEntry);
-        this.con_csv_recipient.toggle(showTextEntry);
+        var readonly = true;
+        var show = true;
+        switch(e.target.value) {
+            case 'csv_recipient':
+                this.con_file_recipient.toggle(!show);
+                this.con_csv_recipient.toggle(show);
+                break;
+            case 'file_recipient':
+                this.con_file_recipient.toggle(show);
+                this.con_csv_recipient.toggle(!show);
+                break;
+            default:
+                $('#reset').trigger('click');
+                readonly = false;
+                this.con_file_recipient.toggle(!show);
+                this.con_csv_recipient.toggle(!show);                    
+                this.recipient.focus();                        
+            }
+        this.recipient.attr('readonly', readonly);
+                    
+        return this;
     }
 
     evt_select_template(e) {
@@ -841,6 +819,7 @@ class ManyMailerPlus_mod {
         }
         this.tmp_name.val(name);
         $('input[name=subject]').val(subject);
+        return this;
     }
 
     evt_placeholder_btn(btn) {
@@ -860,7 +839,7 @@ class ManyMailerPlus_mod {
             .caretTo(insertedText, true)
             .trigger('change')
             .focus();
-
+        return this;
     }
     //#endregion EVENT FUNCTIONS
 
@@ -1211,50 +1190,130 @@ class ManyMailerPlus_mod {
         this
             .toggle_message_div(this.template_editables.template_body);
         // .sync_template_body_content();
+        return this;
     }    
     //#endregion Templates
 }
-function mail_progress_poll(){
-//    debugger;
-    const url = 'admin.php?/cp/addons/settings/manymailerplus/email/mail_progress';    
-    $.ajax({
-        type: "POST",
-        url: url,
-        dataType: "json",
-        success: function(status){
-            // debugger;
-            var p = status.progress;
-            $('.swal2-show .progress-value').html(p + '%');
-            $('.swal2-show #current').html(status.current);
-            $('.swal2-show #total').html(status.total);
-            $('.swal2-show #time').html(status.time);
-            $('.swal2-show .pBar').val(p);
-            $('.swal2-show #result')
-                .val(status.messages)
-                .scrollTop($('.swal2-show #result')[0].scrollHeight);
-            if (p === '--' || parseInt(p) < 100 || parseInt(p) === NaN) setTimeout(mail_progress_poll,500);
-        },
-        error: function(jqXHR, status, e) {
-            // debugger; 
-            var response = jqXHR.responseText;
-            if (jqXHR.hasOwnProperty('responseJson')){                
-                Swal.fire({title: status, type: 'error', html: response});    
-                var result = JSON.parse(response);
-                if (result.current !== result.total && result.total !== 0) setTimeout(mail_progress_poll,500);}
-            }       
-    });
+
+//# region Mail Polling
+function inProgress() {
+    return $.post('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress');
 }
+
+function progress_poller_old(){
+    return inProgress()
+        .then(function(data){
+            var p = update_progress(data);
+            // debugger
+            console.log(`p: ${p}`);
+            if (p < 100) setInterval(progress_poller, 5000);
+    }); 
+}
+
+
+function progress_poller(){
+    $.getJSON('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress',
+        function(data){
+            console.log(data);
+            var p = update_progress(data);
+            console.log(`p: ${p}`);
+            if (p < 100) progress_poller();
+        });
+}
+function update_progress(status){
+    console.log(Object.keys(status).length);
+    let max = 100;
+    let latest = max;
+    // debugger;
+    // showProgress();
+    // loop through current statuses
+    Object.values(status).forEach(task => {
+        if (task.index){
+            idx = task.index;
+            if (task.progress === max) {
+                $(`#${idx}_result`).parents('.demo-wrapper').remove();
+            }else{
+                if ($(`#${idx}_result`).length > 0){
+                    //if elements exist update elements
+                    $(`#${idx}_pBar`).val(task.progress);
+                    $(`#${idx}_progress-value`).text(task.progress + '%');
+                    $(`#${idx}_current`).text(task.current);               
+                    $(`#${idx}_total`).text(task.total);
+                    $(`#${idx}_time`).text(task.time);
+                    
+                }else{
+                    //if elements do not exist, create elements
+                    $('.swal2-content').append(generateProgressModule(task, status.lang));
+                    // latest = task.progress;
+                }
+                latest = task.progress <= latest ? task.progress : latest;
+                $(`#${idx}_result`)
+                .val(task.messages)
+                .scrollTop($(`#${idx}_result`)[0].scrollHeight);
+            }
+        }
+        console.log(`latest: ${latest}`);
+    });
+    //return the progress of the most recent mail job or end recursion with val of 100
+    return Object.keys(status).length > 1 ? latest : max;
+}
+
+function generateProgressModule(data, lang){
+    idx = data.index;
+    return `
+        <div class='demo-wrapper html5-progress-bar'>
+            <div class='progress-detail'>
+                <details>
+                    <summary>Task: ${idx} ${lang['details']}</summary> 
+                    <p>
+                        ${lang['sent']}
+                        <span id='${idx}_current'>${data['current']}</span>${lang['of']}
+                        <span id='${idx}_total'>${data['total']}</span>${lang['emails']}</span><br/>
+                        ${lang['elapsed']} : <span id='${idx}_time'>${data['time']}</span>
+                    </p>
+                    <textarea id='${idx}_result' style='white-space:pre-wrap' placeholder='${lang['init']}' cols='30' rows='5'></textarea>
+                </details>
+            </div>
+           
+            <div class='progress-bar-wrapper'>
+                <progress id='${idx}_pBar' class='pBar' max='100' value='${data['progress']}'></progress>
+                <span id='${idx}_progress-value'class='progress-value'>${data['progress']}%</span>
+            </div>
+        </div>`;
+}
+
+function showProgress(){
+    if (!$('.swal2-show .progress').is(':visible')) {
+        $('a.m-link[rel=mail_progress]').trigger('click');
+    }
+}
+//capitalize only the first letter of the string. 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+//capitalize all words of a string. 
+function capitalizeWords(string) {
+    return string.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+};
+function update_progress_old(status){
+    // debugger;
+    $('.swal2-content').html(status.html);
+    var progress_pct = status.progress;
+    return progress_pct;
+}
+//#endregion  Mail Poller
 
 // for running test only
 (function testable() {
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        module.exports = ManyMailerPlus_mod;
+        module.exports = ManyMailerPlus_mod;     
     }
 })();
 
 $(document).ready(function () {
     'use strict';
     // window.LogRocket && window.LogRocket.init('jj0vrm/manymailerplus');
+    // LogRocket.identify(EE.XID ,{ username:EE.username});
     function isAPIAvailable() {
         // Check for the various File API support.
         if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -1271,17 +1330,21 @@ $(document).ready(function () {
             warning += ' - Internet Explorer: Not supported (partial support expected in 10.0)<br />'; // 10.0 File API & 10.0 <output>
             warning += ' - Safari: Not supported<br />'; // ? File API & 5.1 <output>
             warning += ' - Opera: Not supported'; // ? File API & 9.2 <output>
-            Swal.fire({
-                title: title,
-                type: 'warning',
-                html: warning
-            });
+            if (Swal !== undefined) {
+                Swal.fire({
+                    title: title,
+                    type: 'warning',
+                    html: warning
+                });
+            }else{
+                alert(warning);
+            }
 
             return false;
         }
     }
 
-    
+    // debugger
     var MMP = new ManyMailerPlus_mod(isAPIAvailable());
     MMP.init();
 

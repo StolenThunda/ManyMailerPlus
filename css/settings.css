@@ -1,7 +1,7 @@
 :root {
     --service-list-color: #4ba508;
     --disabled-service-list-color: #E6E6E6;
-    --btn-bg-color: #01bf75;
+    --btn-hov-color: #01bf75;
     --btn-color: #17aa56;
     --white: #ffffff;
     --black: #000000;
@@ -110,19 +110,21 @@ h1 {
 
 button.btn.placeholder {
     font-size: large;
-    box-shadow: -4px 4px var(--btn-color);
-    background: var(--btn-bg-color);
+    /* box-shadow: -4px 4px var(--btn-color); */
+    background: var(--btn-color);
     border-radius: 15px;
 }
 
-.placeholder {
-    width: 100%;
-    overflow: hidden;
+.placeholder {    
+    overflow: visible;
     color: var(--white);
-    border-radius: 7px;
-    padding: 12px 30px 12px 45px;
+    border: 0px !important;
+    padding: 2px 3px 2px 5px;
 }
 
+.no-border td, .no-border {
+    border: 0px !important;
+}
 #csv_placeholder>caption {
     color: var(--black);
     font-size: x-large;
@@ -134,8 +136,15 @@ button.btn.placeholder {
     top: 4rem !important;
 }
 
-.placeholder:hover {
-    background-color: #476e9e;
+.placeholder.btn {
+    width: 100%;
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+    width: stretch;
+}
+.placeholder.btn:hover {
+    /* background-color: #476e9e; */
+    background-color: var(--btn-hov-color);
 }
 
 .placeholder:active {
@@ -149,7 +158,7 @@ button.btn.placeholder {
     width: 40%;
     font-size: 160%;
     line-height: 0.8;
-    color: var(--btn-bg-color);
+    color: var(--btn-hov-color);
 }
 
 #placeholder>tr>td {
@@ -309,8 +318,8 @@ parsley-errors-list>ul {
 
 .btn {
     /* display: block !important; */
-    background-color: var(--btn-bg-color);
-    border: 1px solid var(--btn-bg-color);
+    background-color: var(--btn-hov-color);
+    border: 1px solid var(--btn-hov-color);
     color: var(--white);
     cursor: pointer;
     display: inline-block;
