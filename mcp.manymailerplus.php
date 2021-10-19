@@ -29,7 +29,7 @@ class Manymailerplus_mcp
         $CI = ee();
         // ini_set('memory_limit', '2G');
         ee()->extensions->end_script = true;
-        if (!ee()->cp->allowed_group('can_access_comm')) {
+        if (!ee('Permission')->hasAll()) {
             show_error(lang('unauthorized_access'), 403);
         }
         $this
