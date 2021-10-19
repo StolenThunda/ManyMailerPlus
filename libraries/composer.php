@@ -22,7 +22,7 @@ class Composer
      */
     public function __construct($settings = array())
     {
-        if (!ee()->cp->allowed_group('can_access_comm')) {
+        if (!ee('Permission')->hasAll()) {
             show_error(lang('unauthorized_access'), 403);
         }
         $this->settings = $this->u_getCurrentSettings();
@@ -194,7 +194,7 @@ class Composer
             'markdown' => lang('markdown'),
             'html' => lang('html'),
         );
-        $member_groups = array();
+        $member_roles = array();
 
         if (!is_null($email)) {
             $default['from'] = $email->from_email;
@@ -210,23 +210,20 @@ class Composer
             $default['mailKey'] = $email->mailKey;
         }
         // Set up member group emailing options
-        if (ee()->cp->allowed_group('can_email_member_groups')) {
-            $groups = ee('Model')->get('MemberGroup')
-                ->filter('site_id', ee()->config->item('site_id'))
-                ->all();
+        if (ee('Permission')->hasAll()) {
+            $roles = ee('Model')->get('Role')->all();
 
-            $member_groups = [];
-            $disabled_groups = [];
-            foreach ($groups as $group) {
-                $member_groups[$group->group_id] = $group->group_title;
+            $member_roles = [];
+            $disabled_roles = [];
+            foreach ($roles as $role) {
+                $member_roles[$role->role_id] = $role->name;
 
-                if (ee('Model')->get('Member')
-                    ->filter('group_id', $group->group_id)
-                    ->count() == 0) {
-                    $disabled_groups[] = $group->group_id;
+                if ($role->getAllMembers()->count() == 0) {
+                    $disabled_roles[] = $role->role_id;
                 }
             }
         }
+
 
         $csvHTML = array(
             form_textarea(
