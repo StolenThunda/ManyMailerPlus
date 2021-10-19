@@ -47,28 +47,28 @@
                     'mandrill_testmode__yes_no',
                     'mandrill_test_api_key',
                 ),
-                'mailgun' => array(
-                    'mailgun_api_key',
-                    'mailgun_domain'
-                ),
-                'postageapp' => array(
-                    'postageapp_api_key'
-                ),
-                'postmark' => array(
-                    'postmark_api_key'
-                ),
-                'sendgrid' => array(
-                    'sendgrid_api_key',
-                ),
-                'sparkpost' => array(
-                    'sparkpost_api_key',
-                    array(
-                        'sparkpost_options__select' => array(
-                            'test1' => 'test1',
-                            'test2' => 'test2',
-                            'test3' => 'test3',
-                        )
-                    ),
-                )
+                // 'mailgun' => array(
+                //     'mailgun_api_key',
+                //     'mailgun_domain'
+                // ),
+                // 'postageapp' => array(
+                //     'postageapp_api_key'
+                // ),
+                // 'postmark' => array(
+                //     'postmark_api_key'
+                // ),
+                // 'sendgrid' => array(
+                //     'sendgrid_api_key',
+                // ),
+                // 'sparkpost' => array(
+                //     'sparkpost_api_key',
+                //     array(
+                //         'sparkpost_options__select' => array(
+                //             'test1' => 'test1',
+                //             'test2' => 'test2',
+                //             'test3' => 'test3',
+                //         )
+                //     ),
+                // )
             )
     );

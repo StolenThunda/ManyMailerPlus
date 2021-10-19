@@ -49,12 +49,10 @@
 			"path": "/var/log"
 		},
 		{
-			"name": "ee",
-			"path": "/var/www/ee"
+			"path": "../../../ee"
 		},
 		{
-			"name": "manymailerplus",
-			"path": "/var/www/ee/system/user/addons/manymailerplus"
+			"path": ".."
 		}
 	]
 }
