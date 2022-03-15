@@ -80,19 +80,21 @@ class Composer
         if (!array_key_exists('status', $_SESSION)) {
             $_SESSION['status'] = array();
         }
-        $_SESSION['status']['lang'] = array(
-            'sent' => lang('sent'),
-            'of' => lang('of'),
-            'emails' => lang('emails'),
-            'details' => lang('details'),
-            'elapsed' => lang('elapsed'),
-            'init' => lang('init')
-        );
-        
-        $current_queued = ee('Model')->get(EXT_SHORT_NAME. ':EmailQueue')
-        ->filter('active', '==', '1')
-        ->all();
-        
+// print("<pre>" . print_r($_SESSION['status'], true) . "</pre>");
+$_SESSION['status']['lang'] = array(
+    'sent' => lang('sent'),
+    'of' => lang('of'),
+    'emails' => lang('emails'),
+    'details' => lang('details'),
+    'elapsed' => lang('elapsed'),
+    'init' => lang('init')
+);
+
+$current_queued = ee('Model')->get(EXT_SHORT_NAME . ':EmailQueuePlus')
+->filter('active', '==', '1')
+->all();
+
+ee()->dbg->c_log($_SESSION['status'], __METHOD__ . '  ' . __LINE__);
         //   return $current_queued->count();
         if (in_array(101, array_column($_SESSION['status'], 'progress')) || $current_queued->count() === 0) {
             unset($_SESSION['status']);
@@ -132,6 +134,9 @@ class Composer
             );
             $_SESSION['status'][$id] = $data;
         }
+
+        ee()->dbg->c_log($_SESSION['status'], __METHOD__ . '  ' . __LINE__);
+
         return $_SESSION['status'];
     }
 
@@ -405,19 +410,19 @@ class Composer
             ),
         );
 
-        // if (ee()->cp->allowed_group('can_email_member_groups')) {
-        //     $vars['sections']['other_recipient_options'][] = array(
-        //         'title' => 'add_member_groups',
-        //         'desc' => 'add_member_groups_desc',
-        //         'fields' => array(
-        //             'member_groups' => array(
-        //                 'type' => 'checkbox',
-        //                 'choices' => $member_groups,
-        //                 'disabled_choices' => $disabled_groups,
-        //             ),
-        //         ),
-        //     );
-        // }
+        if (ee('Permission')->hasAll()) {
+            $vars['sections']['other_recipient_options'][] = array(
+                'title' => 'add_member_groups',
+                'desc' => 'add_member_groups_desc',
+                'fields' => array(
+                    'member_groups' => array(
+                        'type' => 'checkbox',
+                        'choices' => $member_roles,
+                        'disabled_choices' => $disabled_roles,
+                    ),
+                ),
+            );
+        }
         
         array_unshift(
             $vars['sections']['compose_email_detail'],
@@ -553,7 +558,7 @@ class Composer
         }
         // Set up member group emailing options
         if (ee()->cp->allowed_group('can_email_member_groups')) {
-            $groups = ee('Model')->get('MemberGroup')
+            $groups = ee('Model')->get('Role')
                 ->filter('site_id', ee()->config->item('site_id'))
                 ->all();
 
@@ -854,7 +859,7 @@ class Composer
         $last = end($tmp);
         $sender = is_numeric($last) ? $tmp[count($tmp) - 2] . '/' . $last : $last;
         $this->available_services = $this->u_getCurrentSettings()['service_order'];
-        ee()->dbg->c_log($_POST, __METHOD__ . ' POST ' . __LINE__);
+        ee()->dbg->c_log($_POST, __METHOD__ . ' POST ' . __LINE__, true);
         ee()->load->library('email');
 
         $groups = array();
@@ -878,6 +883,7 @@ class Composer
 
         // Fetch $_POST data
         // We'll turn the $_POST data into variables for simplicity
+        ee()->dbg->c_log($_POST, __METHOD__ . '  ' . __LINE__);
         foreach ($_POST as $key => $val) {
             if ($key == 'member_groups') {
                 // filter empty inputs, like a hidden no-value input from React
@@ -919,9 +925,9 @@ class Composer
         // $recipient = $this->extractBracketedEmail($recipient);
         
         $recipient = $this->_recipient_str($recipient_array);
-        
-        // ee()->dbg->c_log($recipient, __METHOD__ . '  ' . __LINE__);
-        // ee()->dbg->c_log((bool) valid_email($recipient), __METHOD__ . '  ' . __LINE__);
+
+        ee()->dbg->c_log($recipient, __METHOD__ . '  ' . __LINE__);
+        ee()->dbg->c_log((bool)valid_email($recipient), __METHOD__ . '  ' . __LINE__);
         // Set to allow a check for at least one recipient
         $_POST['total_gl_recipients'] = count($groups);
 
@@ -999,12 +1005,12 @@ class Composer
         $email = ee('Model')->make(EXT_SHORT_NAME. ':EmailCachePlus', $cache_data);
         $email->save();
         // Get member group emails
-        $member_groups = ee('Model')->get('MemberGroup', $groups)
+        $member_roles = ee('Model')->get('Role', $groups)
             ->with('Members')
             ->all();
 
         $email_addresses = array();
-        foreach ($member_groups as $group) {
+        foreach ($member_roles as $group) {
             foreach ($group->getMembers() as $member) {
                 $email_addresses[] = $member->email;
             }
@@ -1049,7 +1055,7 @@ class Composer
    
         // add to queue
         $queue = ee('Model')->make(
-            EXT_SHORT_NAME. ':EmailQueue',
+            EXT_SHORT_NAME. ':EmailQueuePlus',
             array(
                 'email_id' => $email->cache_id,
                 'queue_start' => ee()->localize->now,
@@ -1179,17 +1185,19 @@ class Composer
             show_error(lang('problem_with_id'));
         }
 
-        $caches = ee('Model')->get(EXT_SHORT_NAME. ':EmailCachePlus', $id)
-            ->with('MemberGroups')
+        $caches = ee('Model')
+            ->get(EXT_SHORT_NAME. ':EmailCachePlus', $id)
+            // ->with('Roles')
             ->all();
 
         $email = $caches[0];
 
         if (is_null($email)) {
+            ee()->dbg->c_log($caches, __METHOD__ . '  ' . __LINE__,true);
             show_error(lang('cache_data_missing'));
         }
 
-        ee()->dbg->c_log($email->subject, __METHOD__ . '  ' . __LINE__);
+        ee()->dbg->c_log($email->subject, __METHOD__ . '  ' . __LINE__,true);
 
         return $this->compose($email);
     }
@@ -1331,7 +1339,7 @@ class Composer
     private function _saveSingleEmail(EmailCachePlus $email, $data)
     {
         $queue = ee('Model')
-            ->get(EXT_SHORT_NAME. ':EmailQueue')
+            ->get(EXT_SHORT_NAME. ':EmailQueuePlus')
             ->filter('email_id', $email->cache_id)->first();
         
         $queue->messages .= "Message sent to ".$data['recipient']."\n";

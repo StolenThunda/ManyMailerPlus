@@ -9,7 +9,7 @@
  */
 namespace Manymailerplus\Model;
 
-use EllisLab\ExpressionEngine\Service\Model\Model;
+use ExpressionEngine\Service\Model\Model;
 
 /**
  *

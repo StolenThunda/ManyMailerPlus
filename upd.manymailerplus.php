@@ -1,12 +1,13 @@
 <?php  if (! defined('BASEPATH')) {
     exit('No direct script access allowed');
 }
-
-require_once(PATH_THIRD.EXT_SHORT_NAME.'/config.php');
-
-class Manymailerplus_upd
+require_once(PATH_THIRD . '/manymailerplus/config.php');
+use ExpressionEngine\Service\Addon\Installer; //required
+class Manymailerplus_upd extends Installer
 {
     public $version = EXT_VERSION;
+    public $has_cp_backend = 'n';
+    public $has_publish_fields = 'n';
 
     // function __construct(){
     // 	if (!ee()->load->is_loaded('dbg')) ee()->load->library('debughelper', array('debug'=>true), 'dbg');
@@ -15,12 +16,25 @@ class Manymailerplus_upd
     {
         return substr(APP_VER, 0, 1);
     }
-    
 
+    public $methods = [
+        [
+            'hook' => 'email_send',
+            'priority' => 1,
+            'enabled' => 'y'
+        ]
+    ];
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
     public function install()
     {
         $this->settings = array();
         
+
+
         // ADD EXTENSION FOR SERVICES INTEGRATION
         $ext_data = array(
             'class'     => ucfirst(EXT_SHORT_NAME).'_ext',
@@ -44,7 +58,8 @@ class Manymailerplus_upd
         if ($previousInstall->num_rows() == 0) {
             ee()->db->insert('modules', $mod_data);
         }
-        return $this->createCache();
+        $this->createCache();
+        return parent::install();
     }
     
 
@@ -63,20 +78,19 @@ class Manymailerplus_upd
         $sql[] = "DROP TABLE IF EXISTS exp_email_cache_plus";
         $sql[] = "DROP TABLE IF EXISTS exp_email_queue_plus";
         $this->runSQL($sql);
-        return true;
+        return parent::uninstall();
     }
 
 
     public function update($version = '')
     {
-        if (version_compare($version, '0.1.4', '>=')) {
+        // if (version_compare($version, '0.0.0', '>=')) {
+           
+        // }
+        if (version_compare($version, '4.0.0', '<=')) {            
             return $this->createCache();
-        }
-        if (version_compare($version, $this->version) === 0) {
-            return false;
-        }
+        } 
        
-        return true;
     }
 
     public function createCache()

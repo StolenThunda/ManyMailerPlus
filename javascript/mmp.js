@@ -67,19 +67,31 @@ class ManyMailerPlus_mod {
         this
             .toggleInitState(false)
             .generateProgressButtons();
-        if (this.b_isApiAvailable) {                       
-            inProgress()
+        if (this.on_compose_page && this.b_isApiAvailable) {                       
+            this.inProgress()
             .then(function(data){ 
                 // debugger
-                data = (data.length && data.progress) ? data[data.length - 1] : data;
-                console.log(data);
-                if (this.on_compose_page && (data && data.progress < 100)) {                        
+                if ( !data ) {
+                     return []
+                }
+                if ( data.hasOwnProperty( 'lang' ) ) {
+                    let len = Object.keys( data ).length
+                    if  (len > 1) {
+                        // get latest entry
+                        data = Object.values( data )[len - 2]
+                    }             
+                }
+                data = (data?.progress) ? data[data.length - 1] : data;
+                // console.log(data);
+                if ((data && data.progress < 100)) {                        
                     console.log(data);
                     $('button.progress').show(); 
                 }
             }.bind(this))
             .done(function(){
-                this.useApi().init_placeholder_funcs(); 
+                this
+                    .useApi()
+                    .init_placeholder_funcs(); 
             }.bind(this));
         }
         $('button').parent().addClass('form-btns');
@@ -143,6 +155,109 @@ class ManyMailerPlus_mod {
         return this;
     }
 
+// #region Mail Polling
+inProgress() {
+    return $.post( 'admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress' )
+        .then( data => {
+            // console.log(data)
+            let lData = data.length
+            if (  typeof data !== 'object' && data.includes( 'console' ) ) {
+                let lastScript = data.lastIndexOf('</script>') + '</script>'.length
+                console.log( `len: ${lData} \n last index: ${lastScript}` )
+                let debugData = data.slice( lastScript, lData )
+                data = data.substr( lastScript, lData - lastScript )
+                console.log(`new data: ${data}`)
+                return data
+            } 
+                // console.log(`'has no debug data': ${data.lastIndexOf('</script>')}`)
+                 return data
+             
+        } )
+        .fail(err => console.log(`Error: ${err.name} => ${err.message}`));
+}
+
+progressPoller(){
+    return ManyMailerPlus_mod.prototype.inProgress()
+        .then(function(data){
+            var p = ManyMailerPlus_mod.prototype.update_progress(data);
+            // debugger
+            console.log(`p: ${p}`);
+            if (p < 100) setInterval(ManyMailerPlus_mod.prototype.progressPoller, 5000);
+    })
+    .fail(); 
+}
+
+update_progress(status){
+    console.log(Object.keys(status).length);
+    let max = 100;
+    let latest = max;
+    // loop through current statuses
+    Object.values(status).forEach(task => {
+        if (task.index){
+            let idx = task.index;
+            if (task.progress === max) {
+                // $(`#${idx}_result`).parents('.demo-wrapper').remove();
+                $(`#${idx}_result`).innerHTML = `Task ${idx}: Completed`;
+            }else{
+                if ($(`#${idx}_result`).length > 0){
+                    //if elements exist update elements
+                    $(`#${idx}_pBar`).val(task.progress);
+                    $(`#${idx}_progress-value`).text(task.progress + '%');
+                    $(`#${idx}_current`).text(task.current);               
+                    $(`#${idx}_total`).text(task.total);
+                    $(`#${idx}_time`).text(task.time);
+                    
+                }else{
+                    //if elements do not exist, create elements
+                    let template = this.generateProgressModule(task, status.lang)
+                    $('.swal2-content').append(template);
+                    // latest = task.progress;
+                }
+                latest = task.progress <= latest ? task.progress : latest;
+                $(`#${idx}_result`)
+                .val(task.messages)
+                .scrollTop($(`#${idx}_result`)[0].scrollHeight);
+            }
+        }
+        console.log(`latest: ${latest}`);
+    });
+    //return the progress of the most recent mail job or end recursion with val of 100
+    return Object.keys(status).length > 1 ? latest : max;
+}
+
+generateProgressModule(data, lang){
+    let idx = data.index;
+    return `
+        <div class='demo-wrapper html5-progress-bar'>
+            <div class='progress-detail'>
+                <details>
+                    <summary>Task: ${idx} ${lang['details']}</summary> 
+                    <p>
+                        ${lang['sent']}
+                        <span id='${idx}_current'>${data['current']} </span>${lang['of']}
+                        <span id='${idx}_total'>${data['total']}</span>${lang['emails']}</span><br/>
+                        ${lang['elapsed']} : <span id='${idx}_time'>${data['time']}</span>
+                    </p>
+                    <textarea id='${idx}_result' style='white-space:pre-wrap' placeholder='${lang['init']}' cols='30' rows='5'></textarea>
+                </details>
+            </div>
+           
+            <div class='progress-bar-wrapper'>
+                <progress id='${idx}_pBar' class='pBar' max='100' value='${data['progress']}'></progress>
+                <span id='${idx}_progress-value'class='progress-value'>${data['progress']}%</span>
+            </div>
+        </div>`;
+}
+
+showProgress(){
+    if (!$('.swal2-show .progress').is(':visible')) {
+        $('a.m-link[rel=mail_progress]').trigger('click');
+    }
+}
+
+
+//#endregion  Mail Poller
+
     generateProgressButtons(){
         $('[type=submit][value^=Send]').each(function(){
             var btn = $('<button />', {
@@ -152,12 +267,12 @@ class ManyMailerPlus_mod {
             .addClass('btn btn-progress')
             .click((e) => {
                 e.preventDefault();
-                showProgress();
-                progress_poller();
+                ManyMailerPlus_mod.prototype.showProgress();
+                ManyMailerPlus_mod.prototype.progressPoller();
             })
             .appendTo($(this).parent());
             btn.hide();
-        });
+        }).bind(this);
     }
     init_dom_events() {
         $('form[action$=send]').submit(function() {
@@ -165,9 +280,9 @@ class ManyMailerPlus_mod {
             // debugger;
                 if (this.on_compose_page && btn && !btn.is(':visible')) setTimeout(() => {
                     // btn.toggle('slide');
-                    showProgress();
-                    progess_poller();
-                }, 5000);
+                    ManyMailerPlus_mod.prototype.showProgress();
+                    ManyMailerPlus_mod.prototype.progessPoller();
+                }, 2000);
                 return true;
             }.bind(this));
 
@@ -178,10 +293,9 @@ class ManyMailerPlus_mod {
                 swal
                     .fire({
                         type: 'warning',
-                        html: $('.modal-confirm-remove').find('.form-standard'),
+                        html: $('.modal-confirm-remove'),//.find('.form-standard'),
                         showCloseButton: true,
-                        showCancelButton: false,
-                        showConfirmButton: false
+                        confirmButtonText: 'Ok'
                     })
                     .then((result) => {
                         if (result.value) {
@@ -514,7 +628,7 @@ class ManyMailerPlus_mod {
         } else if (htmlDoc.body.innerText === 'undefined') {
             debugger
             let script = data
-                    .replace(/<script async='true' defer='true'>/g, '')
+                    .replace(/<scrip async='true' defer='true'>/g, '')
                     .replace(/<\/?script>/g,'');
             eval(script);
         } else {
@@ -1195,113 +1309,10 @@ class ManyMailerPlus_mod {
     //#endregion Templates
 }
 
-//# region Mail Polling
-function inProgress() {
-    return $.post('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress');
-}
-
-function progress_poller_old(){
-    return inProgress()
-        .then(function(data){
-            var p = update_progress(data);
-            // debugger
-            console.log(`p: ${p}`);
-            if (p < 100) setInterval(progress_poller, 5000);
-    }); 
-}
-
-
-function progress_poller(){
-    $.getJSON('admin.php?/cp/addons/settings/manymailerplus/email/all_mail_progress',
-        function(data){
-            console.log(data);
-            var p = update_progress(data);
-            console.log(`p: ${p}`);
-            if (p < 100) progress_poller();
-        });
-}
-function update_progress(status){
-    console.log(Object.keys(status).length);
-    let max = 100;
-    let latest = max;
-    // debugger;
-    // showProgress();
-    // loop through current statuses
-    Object.values(status).forEach(task => {
-        if (task.index){
-            idx = task.index;
-            if (task.progress === max) {
-                $(`#${idx}_result`).parents('.demo-wrapper').remove();
-            }else{
-                if ($(`#${idx}_result`).length > 0){
-                    //if elements exist update elements
-                    $(`#${idx}_pBar`).val(task.progress);
-                    $(`#${idx}_progress-value`).text(task.progress + '%');
-                    $(`#${idx}_current`).text(task.current);               
-                    $(`#${idx}_total`).text(task.total);
-                    $(`#${idx}_time`).text(task.time);
-                    
-                }else{
-                    //if elements do not exist, create elements
-                    $('.swal2-content').append(generateProgressModule(task, status.lang));
-                    // latest = task.progress;
-                }
-                latest = task.progress <= latest ? task.progress : latest;
-                $(`#${idx}_result`)
-                .val(task.messages)
-                .scrollTop($(`#${idx}_result`)[0].scrollHeight);
-            }
-        }
-        console.log(`latest: ${latest}`);
-    });
-    //return the progress of the most recent mail job or end recursion with val of 100
-    return Object.keys(status).length > 1 ? latest : max;
-}
-
-function generateProgressModule(data, lang){
-    idx = data.index;
-    return `
-        <div class='demo-wrapper html5-progress-bar'>
-            <div class='progress-detail'>
-                <details>
-                    <summary>Task: ${idx} ${lang['details']}</summary> 
-                    <p>
-                        ${lang['sent']}
-                        <span id='${idx}_current'>${data['current']}</span>${lang['of']}
-                        <span id='${idx}_total'>${data['total']}</span>${lang['emails']}</span><br/>
-                        ${lang['elapsed']} : <span id='${idx}_time'>${data['time']}</span>
-                    </p>
-                    <textarea id='${idx}_result' style='white-space:pre-wrap' placeholder='${lang['init']}' cols='30' rows='5'></textarea>
-                </details>
-            </div>
-           
-            <div class='progress-bar-wrapper'>
-                <progress id='${idx}_pBar' class='pBar' max='100' value='${data['progress']}'></progress>
-                <span id='${idx}_progress-value'class='progress-value'>${data['progress']}%</span>
-            </div>
-        </div>`;
-}
-
-function showProgress(){
-    if (!$('.swal2-show .progress').is(':visible')) {
-        $('a.m-link[rel=mail_progress]').trigger('click');
-    }
-}
 //capitalize only the first letter of the string. 
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
-//capitalize all words of a string. 
-function capitalizeWords(string) {
-    return string.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
-};
-function update_progress_old(status){
-    // debugger;
-    $('.swal2-content').html(status.html);
-    var progress_pct = status.progress;
-    return progress_pct;
-}
-//#endregion  Mail Poller
 
 // for running test only
 (function testable() {

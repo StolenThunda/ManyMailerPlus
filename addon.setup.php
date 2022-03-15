@@ -24,8 +24,8 @@ return array(
       'namespace' => EXT_NAME,
       'settings_exist' => true,
       'version' => EXT_VERSION,
-      'models' => array(
-            'EmailCachePlus' => 'Model\EmailCachePlus',
-            "EmailQueue" => 'Model\EmailQueue'
+      'models' => array(        
+        'EmailCachePlus' => 'Model\EmailCachePlus', 
+        "EmailQueuePlus" => 'Model\EmailQueuePlus'
       )
 );

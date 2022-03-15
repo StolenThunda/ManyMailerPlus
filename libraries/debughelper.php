@@ -183,8 +183,6 @@ class Debughelper
                 $value = json_encode($value);
             } elseif (is_bool($value)) {
                 $value = $value ? 'TRUE' : 'FALSE';
-            } else { // $value stays the same
-                $value = $value;
             }
             $valueObj = array(
                 'title' => $title,

@@ -9,12 +9,12 @@
  */
 namespace Manymailerplus\Model;
 
-use EllisLab\ExpressionEngine\Service\Model\Model;
+use ExpressionEngine\Service\Model\Model;
 
 /**
  *
  */
-class EmailQueue extends Model
+class EmailQueuePlus extends Model
 {
     protected static $_primary_key = 'queue_id';
     protected static $_table_name = 'email_queue_plus';
