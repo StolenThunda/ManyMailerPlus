@@ -468,8 +468,8 @@ showProgress(){
         }
         this
             .toggle_composer_list()
-            .init_service_list()
-            .init_dom_events();
+            .init_dom_events()
+            // .init_service_list()
         return this;
     }
     //#endregion Page Init
